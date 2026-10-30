@@ -69,6 +69,54 @@ struct ChatTurnTests {
         #expect(!turn.isAwaiting)
     }
 
+    /// Titik bergerak sampai pertanyaan tampil (lewat `client_msg_id` atau seq ack), lalu stop.
+    @Test
+    func questionFromTheStreamTurnsSendingIntoAwaitingReply() {
+        var turn = ChatTurn()
+        #expect(turn.phase == .idle)
+        turn.start(clientMessageID: "q")
+        #expect(turn.phase == .sending)
+        let other = ChatMessage(id: "m-1", seq: 1, author: .customer, text: "lain", status: .active)
+        let bot = ChatMessage(id: "m-3", seq: 3, author: .bot, text: "x", status: .active, clientMessageID: "q")
+        #expect(!turn.isQuestionArriving(in: [other, bot]), "pesan bot atau pertanyaan lain tidak dihitung")
+        let question = ChatMessage(
+            id: "m-2", seq: 2, author: .customer, text: "q", status: .active, clientMessageID: "q")
+        #expect(turn.isQuestionArriving(in: [other, question]))
+        turn.showQuestion()
+        #expect(turn.phase == .awaitingReply)
+        #expect(!turn.isQuestionArriving(in: [other, question]), "sudah tampil: tidak diubah lagi")
+    }
+
+    @Test
+    func questionWithoutClientIDIsMatchedByTheAckSeq() {
+        var turn = ChatTurn()
+        turn.start(clientMessageID: "q")
+        let question = ChatMessage(id: "m-5", seq: 5, author: .customer, text: "q", status: .active)
+        #expect(!turn.isQuestionArriving(in: [question]))
+        turn.accept(questionSeq: 5, for: "q")
+        #expect(turn.isQuestionArriving(in: [question]))
+    }
+
+    /// Stop hanya setelah pertanyaan tampil; gagal = stop bisa ditekan lagi, `turn_end` = selesai.
+    @Test
+    func stopIsOnlyAvailableOnceTheQuestionIsShown() {
+        var turn = ChatTurn()
+        turn.start(clientMessageID: "q")
+        turn.accept(questionSeq: 2, for: "q")
+        #expect(turn.startCanceling() == nil)
+        turn.showQuestion()
+        #expect(turn.startCanceling() == "q")
+        #expect(turn.phase == .canceling)
+        #expect(turn.startCanceling() == nil, "stop yang sedang diproses tidak dikirim dua kali")
+        turn.stopCanceling(clientMessageID: "lama")
+        #expect(turn.phase == .canceling)
+        turn.stopCanceling(clientMessageID: "q")
+        #expect(turn.phase == .awaitingReply)
+        _ = turn.startCanceling()
+        turn.end(seq: 4)
+        #expect(turn.phase == .idle)
+    }
+
     @Test
     func turnEndWhileIdleChangesNothing() {
         var turn = ChatTurn()

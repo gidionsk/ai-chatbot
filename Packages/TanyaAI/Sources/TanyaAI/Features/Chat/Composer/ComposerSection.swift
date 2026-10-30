@@ -18,14 +18,21 @@ struct ComposerSection: View {
     @State
     private var draft = String()
     private let isEnabled: Bool
-    private let isAwaitingReply: Bool
+    private let phase: ChatTurnPhase
     private let onSend: (String) async -> Bool
+    private let onStop: () -> Void
 
     /// `onSend` true = pesan diterima; draft dikosongkan bila belum diubah selama menunggu jawaban gateway.
-    init(isEnabled: Bool, isAwaitingReply: Bool, onSend: @escaping (String) async -> Bool) {
+    /// Selama `.sending` draft dikunci; setelah pertanyaan tampil, nasabah boleh mengetik pertanyaan berikutnya
+    /// tetapi harus menekan stop (atau menunggu jawaban selesai) untuk mengirimnya.
+    init(
+        isEnabled: Bool, phase: ChatTurnPhase, onSend: @escaping (String) async -> Bool,
+        onStop: @escaping () -> Void
+    ) {
         self.isEnabled = isEnabled
-        self.isAwaitingReply = isAwaitingReply
+        self.phase = phase
         self.onSend = onSend
+        self.onStop = onStop
     }
 
     var body: some View {
@@ -33,8 +40,8 @@ struct ComposerSection: View {
             divider
             MessageComposer(
                 text: $draft, placeholder: String(ChatCopy.placeholder, locale: locale),
-                sendLabel: String(isAwaitingReply ? ChatCopy.replying : ChatCopy.send, locale: locale),
-                isEnabled: isEnabled, isLoading: isAwaitingReply, onSend: submit
+                actionLabel: String(actionCopy, locale: locale),
+                isEnabled: isEnabled, action: action, onSend: submit, onStop: onStop
             )
             .padding(FigmaSize.spacingLarge.scaledToArtwork)
         }
@@ -45,6 +52,34 @@ struct ComposerSection: View {
         colors.colorsOutlineNetral
             .frame(height: FigmaSize.weightOutline.scaledToArtwork)
             .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Helpers
+
+private extension ComposerSection {
+    var action: MessageComposerAction {
+        switch phase {
+        case .idle:
+            return .send
+        case .sending:
+            return .loading
+        case .awaitingReply:
+            return .stop
+        case .canceling:
+            return .stopping
+        }
+    }
+
+    var actionCopy: ChatCopy {
+        switch phase {
+        case .idle:
+            return .send
+        case .sending:
+            return .sending
+        case .awaitingReply, .canceling:
+            return .stop
+        }
     }
 }
 

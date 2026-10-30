@@ -21,9 +21,10 @@ struct ComposerSectionTests {
         try FontFace.registerFonts()
         let width: CGFloat = 375
         let inset = FigmaSize.spacingLarge.scaledToArtwork
-        let section = measure(ComposerSection(isEnabled: true, isAwaitingReply: false) { _ in true }, width: width)
+        let section = measure(
+            ComposerSection(isEnabled: true, phase: .idle, onSend: { _ in true }, onStop: {}), width: width)
         let composer = measure(
-            MessageComposer(text: .constant(String()), placeholder: "Tanya", sendLabel: "Kirim", onSend: {}),
+            MessageComposer(text: .constant(String()), placeholder: "Tanya", actionLabel: "Kirim", onSend: {}),
             width: width - inset * 2
         )
         let expected =

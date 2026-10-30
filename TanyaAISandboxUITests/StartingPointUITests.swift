@@ -59,6 +59,9 @@ final class StartingPointUITests: XCTestCase {
         capture("starter-four-lines-keyboard")
         send.tap()
         XCTAssertEqual(input.value as? String, "")
+        // Titik bergerak → stop → jawaban selesai; draft kosong membuat kirim tetap nonaktif.
+        let answered = expectation(for: NSPredicate(format: "label == %@", "Send message"), evaluatedWith: send)
+        wait(for: [answered], timeout: 5)
         XCTAssertFalse(send.isEnabled)
         XCTAssertEqual(input.frame.midY, send.frame.midY, accuracy: 1)
     }
@@ -71,13 +74,14 @@ final class StartingPointUITests: XCTestCase {
         input.tap()
         let send = application.buttons["composer.send"]
         for (horizontal, vertical) in [(0.05, 0.5), (0.95, 0.5), (0.5, 0.05), (0.5, 0.95)] {
+            // Draft dikunci selama titik bergerak; tunggu jawaban sebelumnya selesai (`turn_end`) baru mengetik.
+            let idle = expectation(for: NSPredicate(format: "label == %@", "Send message"), evaluatedWith: send)
+            wait(for: [idle], timeout: 5)
             input.typeText("Tap edge")
-            // Chat diterima = menunggu jawaban; jawaban bot tiruan (`turn_end`) membuka kirim untuk sisi berikutnya.
-            let unlocked = expectation(for: NSPredicate(format: "isEnabled == true"), evaluatedWith: send)
-            wait(for: [unlocked], timeout: 5)
+            XCTAssertTrue(send.isEnabled)
             send.coordinate(withNormalizedOffset: CGVector(dx: horizontal, dy: vertical)).tap()
             XCTAssertEqual(input.value as? String, "")
-            XCTAssertFalse(send.isEnabled)
+            XCTAssertNotEqual(send.label, "Send message", "tap di tepi tombol harus mengirim")
         }
     }
 

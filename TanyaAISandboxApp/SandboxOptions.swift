@@ -21,6 +21,8 @@ struct SandboxOptions {
     static let demoStartIdentifier = "sandbox.demo.start"
     static let demoEndIdentifier = "sandbox.demo.end"
     static let demoParagraphCount = 12
+    /// Jeda pertanyaan nasabah muncul di stream setelah ack; titik bergerak di composer terlihat selama ini.
+    static let echoDelay: TimeInterval = 0.6
     /// Jeda jawaban bot tiruan setelah pertanyaan muncul di stream.
     static let replyDelay: TimeInterval = 1
     /// File yang tidak ada: unduhan ikon pasti gagal tanpa bergantung pada jaringan.

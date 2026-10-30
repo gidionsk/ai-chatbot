@@ -23,9 +23,10 @@ di-decode TanyaAI karena khusus Tanya AI dan sama di semua host.
 | `initialize()` | `POST /chat/init`, body `{}` |
 | `history(conversationID:before:limit:)` | `GET /chat/conversations/{id}/messages?limit=&before=` |
 | `sendMessage(conversationID:clientMessageID:text:)` | `POST /chat/messages`, body `{conversation_id, client_msg_id, type:"text", payload}` → 202 |
+| `cancelTurn(conversationID:)` | `POST /chat/conversations/{id}/cancel`, tanpa body → 200 `{canceled}` |
 | `events(conversationID:lastEventID:)` | `GET /chat/conversations/{id}/events`, `Accept: text/event-stream`, `Last-Event-ID` bila ada |
 
-Typing, cancel, limits, list conversations, dan close belum dipakai.
+Typing, limits, list conversations, dan close belum dipakai.
 
 ## Alur
 
@@ -48,6 +49,14 @@ Typing, cancel, limits, list conversations, dan close belum dipakai.
    snackbar TanyaAI di PR tampilan, bukan callback host).
    Respons kirim dicocokkan lewat `client_msg_id`: respons yang datang terlambat untuk pertanyaan lama
    (mis. setelah percakapan berganti) tidak mengubah pertanyaan yang sedang ditunggu.
+5. Fase composer (keputusan user 30 Oktober 2026): titik bergerak dari kirim sampai pertanyaan nasabah
+   datang dari stream atau history (dicocokkan lewat `client_msg_id`, atau seq ack bila kosong); selama itu
+   draft dikunci tanpa menurunkan keyboard. Setelah pertanyaan tampil tombol menjadi stop; nasabah boleh
+   mengetik pertanyaan berikutnya tetapi harus menekan stop (atau menunggu `turn_end`) untuk mengirimnya.
+6. Stop: `POST .../cancel`. `canceled:true` = kunci tetap sampai `turn_end {"status":"canceled"}` dari
+   stream; tombstone pertanyaan (`status:"canceled"`, `message_id` sama) menggantikan pesan aslinya.
+   `canceled:false` = gateway tidak punya turn aktif, jadi kunci dibuka langsung karena `turn_end` tidak
+   datang. Gagal (selain 401/404/410 yang ditangani seperti kirim) = stop bisa ditekan lagi; cancel idempoten.
 
 Frame SSE selesai di baris `data:` (contract: `data` JSON satu baris dan field terakhir), jadi host
 boleh membuang baris kosong tanpa menahan event terakhir.
@@ -86,7 +95,7 @@ final class TanyaAIChatService: TanyaAIChatTransport {
                                        headers: headers))
     }
 
-    // history dan sendMessage sama: buat DataRequest lalu `try await data(request)`.
+    // history, sendMessage, dan cancelTurn sama: buat DataRequest lalu `try await data(request)`.
 
     /// Callback Alamofire → async. Non-2xx dilempar beserta body mentah; TanyaAI yang membaca isinya.
     private func data(_ request: DataRequest) async throws -> Data {
@@ -156,5 +165,5 @@ menjaga stream tidak kena timeout idle. Jangan log isi pesan.
 
 - Percakapan baru: belum ada (menu ⋮ dihapus 28 Oktober 2026 karena belum ada kebutuhan).
   Bila dibutuhkan: `X-New-Conversation: true` dibatasi 1 percakapan per CIF (409), jadi perlu close.
-- Paging history lebih lama saat scroll ke atas, tampilan pesan `canceled`, payload non-teks,
-  typing indicator, dan tombol stop (`cancel`).
+- Paging history lebih lama saat scroll ke atas, tampilan pesan `canceled`, payload non-teks, dan
+  typing indicator.

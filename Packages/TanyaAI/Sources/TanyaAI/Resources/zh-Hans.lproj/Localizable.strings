@@ -9,5 +9,6 @@
 "chat.send" = "发送消息";
 "chat.title" = "Tanya AI";
 "chat.back" = "返回";
-"chat.replying" = "正在等待回复";
+"chat.sending" = "正在发送消息";
+"chat.stop" = "停止回答";
 "welcome.shortcutsTitle" = "从这里开始：";

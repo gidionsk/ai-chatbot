@@ -20,6 +20,11 @@ struct SandboxGatewayFrames {
         #"{"success":false,"error_code":"bad_request","data":null,"retryable":false,"request_id":"sandbox"}"#.utf8
     )
     static let badRequestStatus = 400
+    /// Respons cancel: turn yang berjalan dihentikan / tidak ada turn aktif.
+    static let canceled = Data(#"{"success":true,"data":{"canceled":true}}"#.utf8)
+    static let nothingToCancel = Data(#"{"success":true,"data":{"canceled":false}}"#.utf8)
+    static let canceledStatus = "canceled"
+    static let completedStatus = "completed"
     /// Data dummy: jawaban bot mengulang pertanyaan.
     static func reply(to question: String) -> String { "Jawaban contoh untuk: \(question)" }
 
@@ -36,20 +41,42 @@ struct SandboxGatewayFrames {
         Data(#"{"success":true,"data":{"message_id":"ack","seq":"\#(seq + 1)"}}"#.utf8)
     }
 
-    mutating func message(direction: String, text: String, clientMessageID: String? = nil) -> [String] {
+    /// Pesan baru dengan seq berikutnya; dikirim lewat `frame(_:)`.
+    mutating func newMessage(direction: String, text: String, clientMessageID: String? = nil) -> SandboxWireMessage {
         seq += 1
-        let message = SandboxWireMessage(
+        return SandboxWireMessage(
             messageId: UUID().uuidString, seq: String(seq), direction: direction, payload: text,
-            clientMsgId: clientMessageID
+            status: SandboxWireMessage.active, clientMsgId: clientMessageID
         )
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-        let json = (try? encoder.encode(message)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
-        return ["id: \(seq)", "event: message", "data: \(json)", ""]
     }
 
-    mutating func turnEnd() -> [String] {
+    /// Frame `message`; `id:` = seq pesan.
+    func frame(_ message: SandboxWireMessage) -> [String] {
+        ["id: \(message.seq)", "event: message", "data: \(Self.json(message))", ""]
+    }
+
+    mutating func message(direction: String, text: String, clientMessageID: String? = nil) -> [String] {
+        frame(newMessage(direction: direction, text: text, clientMessageID: clientMessageID))
+    }
+
+    /// Pertanyaan yang dihentikan dikirim ulang utuh dengan status `canceled`; `id:` frame memakai seq baru.
+    mutating func tombstone(of question: SandboxWireMessage) -> [String] {
         seq += 1
-        return ["id: \(seq)", "event: turn_end", #"data: {"status":"completed","active_turn_id":"sandbox"}"#, ""]
+        let canceled = SandboxWireMessage(
+            messageId: question.messageId, seq: question.seq, direction: question.direction,
+            payload: question.payload, status: SandboxWireMessage.canceled, clientMsgId: question.clientMsgId
+        )
+        return ["id: \(seq)", "event: message", "data: \(Self.json(canceled))", ""]
+    }
+
+    mutating func turnEnd(status: String = completedStatus) -> [String] {
+        seq += 1
+        return ["id: \(seq)", "event: turn_end", #"data: {"status":"\#(status)","active_turn_id":"sandbox"}"#, ""]
+    }
+
+    private static func json(_ message: SandboxWireMessage) -> String {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        return (try? encoder.encode(message)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
     }
 }

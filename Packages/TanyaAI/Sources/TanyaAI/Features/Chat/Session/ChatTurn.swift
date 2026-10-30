@@ -17,8 +17,44 @@ struct ChatTurn: Equatable {
     private var questionSeq: Int?
     /// Seq `turn_end` terbesar sejak pertanyaan dikirim.
     private var latestEndSeq: Int?
+    /// Pertanyaan yang ditunggu sudah datang dari stream atau history (bubble tampil).
+    private var isQuestionShown = false
+    /// Stop sudah ditekan dan belum selesai.
+    private var isCanceling = false
 
     var isAwaiting: Bool { clientMessageID != nil }
+
+    var phase: ChatTurnPhase {
+        guard isAwaiting else { return .idle }
+        if isCanceling { return .canceling }
+        return isQuestionShown ? .awaitingReply : .sending
+    }
+
+    /// True bila pertanyaan yang ditunggu ada di `messages` tetapi belum ditandai tampil. Dicocokkan lewat
+    /// `client_msg_id`, atau seq dari ack bila gateway tidak mengembalikan `client_msg_id`.
+    func isQuestionArriving(in messages: [ChatMessage]) -> Bool {
+        guard let clientMessageID, !isQuestionShown else { return false }
+        return messages.last { message in
+            message.author == .customer && (message.clientMessageID == clientMessageID || message.seq == questionSeq)
+        } != nil
+    }
+
+    mutating func showQuestion() {
+        isQuestionShown = true
+    }
+
+    /// Stop ditekan. Nil bila belum boleh (pertanyaan belum tampil) atau stop sudah diproses.
+    mutating func startCanceling() -> String? {
+        guard phase == .awaitingReply else { return nil }
+        isCanceling = true
+        return clientMessageID
+    }
+
+    /// Cancel gagal: stop bisa ditekan lagi. Respons untuk pertanyaan lama tidak mengubah pertanyaan baru.
+    mutating func stopCanceling(clientMessageID: String) {
+        guard self.clientMessageID == clientMessageID else { return }
+        isCanceling = false
+    }
 
     mutating func start(clientMessageID: String) {
         self = ChatTurn(clientMessageID: clientMessageID)

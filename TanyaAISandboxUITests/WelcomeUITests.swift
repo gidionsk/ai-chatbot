@@ -29,22 +29,27 @@ final class WelcomeUITests: XCTestCase {
         capture("welcome-id")
     }
 
-    /// Pertanyaan pertama dari stream menggantikan sambutan; kirim tetap terkunci selama menunggu jawaban.
-    func testShortcutTurnsSendIntoLoadingWhileAwaitingReply() {
+    /// Titik bergerak sampai pertanyaan datang dari stream (sambutan hilang), lalu stop. Selama stop nasabah
+    /// boleh mengetik pertanyaan berikutnya, tetapi harus menekan stop dulu untuk mengirimnya.
+    func testShortcutShowsLoadingUntilTheQuestionThenStopUnlocksSend() {
         launch(locale: "en", extra: ["--hold-reply"])
         let shortcut = application.buttons["welcome.shortcut.0"]
         XCTAssertTrue(shortcut.waitForExistence(timeout: 10))
         let send = application.buttons["composer.send"]
         XCTAssertEqual(send.label, "Send message")
         shortcut.tap()
-        XCTAssertEqual(send.label, "Waiting for reply")
-        XCTAssertFalse(send.isEnabled)
+        waitForLabel("Stop response", of: send)
         waitUntilGone(application.otherElements["chat.welcome"])
+        XCTAssertTrue(send.isEnabled)
         let input = application.textViews["composer.input"]
         input.tap()
         input.typeText("Next question")
-        XCTAssertFalse(send.isEnabled, "satu pertanyaan per waktu: kirim tetap nonaktif selama menunggu")
-        capture("welcome-awaiting-reply")
+        XCTAssertEqual(input.value as? String, "Next question")
+        capture("composer-stop")
+        send.tap()
+        waitForLabel("Send message", of: send)
+        XCTAssertTrue(send.isEnabled, "setelah stop, draft yang sudah diketik bisa dikirim")
+        XCTAssertEqual(input.value as? String, "Next question")
     }
 
     /// History tidak kosong: loading awal selesai tanpa sambutan (daftar pesan menyusul di PR tampilan pesan).
@@ -64,7 +69,7 @@ final class WelcomeUITests: XCTestCase {
         XCTAssertTrue(shortcut.label.contains("Beli Valas"))
         capture("welcome-broken-icons")
         shortcut.tap()
-        XCTAssertEqual(application.buttons["composer.send"].label, "Menunggu jawaban")
+        waitForLabel("Hentikan jawaban", of: application.buttons["composer.send"])
     }
 
     /// Ikon belum selesai diunduh: kotak ikon menampilkan spinner, kartu sudah bisa diketuk.
@@ -75,7 +80,7 @@ final class WelcomeUITests: XCTestCase {
         XCTAssertTrue(application.activityIndicators.firstMatch.waitForExistence(timeout: 5))
         capture("welcome-loading-icons")
         shortcut.tap()
-        XCTAssertEqual(application.buttons["composer.send"].label, "Menunggu jawaban")
+        waitForLabel("Hentikan jawaban", of: application.buttons["composer.send"])
     }
 
     /// Pertanyaan datang dari stream (sambutan hilang), lalu jawaban bot dan `turn_end` membuka kirim lagi.
@@ -85,10 +90,9 @@ final class WelcomeUITests: XCTestCase {
         XCTAssertTrue(shortcut.waitForExistence(timeout: 10))
         shortcut.tap()
         let send = application.buttons["composer.send"]
-        XCTAssertEqual(send.label, "Waiting for reply")
+        waitForLabel("Stop response", of: send)
         waitUntilGone(application.otherElements["chat.welcome"])
-        let unlocked = expectation(for: NSPredicate(format: "label == %@", "Send message"), evaluatedWith: send)
-        wait(for: [unlocked], timeout: 5)
+        waitForLabel("Send message", of: send)
     }
 
     private func launch(locale: String, extra: [String] = []) {
@@ -97,6 +101,11 @@ final class WelcomeUITests: XCTestCase {
         let open = application.buttons["sandbox.open"]
         XCTAssertTrue(open.waitForExistence(timeout: 10))
         open.tap()
+    }
+
+    private func waitForLabel(_ label: String, of element: XCUIElement) {
+        let matched = expectation(for: NSPredicate(format: "label == %@", label), evaluatedWith: element)
+        wait(for: [matched], timeout: 5)
     }
 
     private func waitUntilGone(_ element: XCUIElement) {

@@ -13,8 +13,17 @@ import UIKit
 @MainActor
 public final class BoundedTextView: UITextView {
     var lineSpacing: CGFloat = .zero
+    /// Draft sedang dikunci pemilik; dilaporkan ke VoiceOver sebagai nonaktif.
+    var isEditingLocked = false
     private var measuredHeight: CGFloat = .zero
     private var measuredWidth: CGFloat = .zero
+
+    /// Trait bawaan text view dihitung dinamis (mis. fokus keyboard). Menyetel `accessibilityTraits` membekukannya,
+    /// jadi status kunci ditambahkan di getter tanpa pernah menimpa nilai bawaan.
+    public override var accessibilityTraits: UIAccessibilityTraits {
+        get { isEditingLocked ? super.accessibilityTraits.union(.notEnabled) : super.accessibilityTraits }
+        set { super.accessibilityTraits = newValue }
+    }
 
     public override var intrinsicContentSize: CGSize {
         CGSize(width: UIView.noIntrinsicMetric, height: max(measuredHeight, lineHeight))

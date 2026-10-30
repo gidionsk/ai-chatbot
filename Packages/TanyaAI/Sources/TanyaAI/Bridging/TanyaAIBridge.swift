@@ -59,8 +59,11 @@ public final class TanyaAIBridge: ObservableObject {
         self.sleep = sleep
     }
 
-    /// Sejak kirim sampai `turn_end` pertanyaan itu; tombol kirim menjadi titik bergerak dan shortcut nonaktif.
+    /// Sejak kirim sampai `turn_end` pertanyaan itu; kirim dan shortcut nonaktif.
     var isAwaitingReply: Bool { turn.isAwaiting }
+
+    /// Titik bergerak sampai pertanyaan tampil, lalu stop sampai `turn_end`.
+    var turnPhase: ChatTurnPhase { turn.phase }
 
     /// Replay stream dimulai setelah pesan atau event terakhir yang sudah diterima.
     var lastEventID: String? {
@@ -91,18 +94,37 @@ public final class TanyaAIBridge: ObservableObject {
             )
             let ack = try? JSONDecoder.wire.decode(WireEnvelope<WireSendAck>.self, from: data).data
             turn.accept(questionSeq: ack.flatMap { Int($0.seq) }, for: clientMessageID)
+            // Pertanyaan bisa datang lebih dulu tanpa `client_msg_id`; seq dari ack baru bisa mencocokkannya.
+            revealQuestion()
             return true
         } catch {
             turn.cancel(clientMessageID: clientMessageID)
-            didFailToSend(error)
+            didFailRequest(error)
             return false
         }
     }
 
+    /// Stop: hanya setelah pertanyaan tampil. `canceled:true` menunggu `turn_end` di stream (tombstone pertanyaan
+    /// ikut datang); `canceled:false` = gateway tidak punya turn aktif, jadi kunci dibuka di sini karena
+    /// `turn_end` tidak akan datang. Gagal = stop bisa ditekan lagi (cancel idempoten).
+    func cancelTurn() async {
+        guard let conversationID, let clientMessageID = turn.startCanceling() else { return }
+        do {
+            let data = try await transport.cancelTurn(conversationID: conversationID)
+            let result = try JSONDecoder.wire.decode(WireEnvelope<WireCancel>.self, from: data).data
+            if !result.isCanceled {
+                turn.cancel(clientMessageID: clientMessageID)
+            }
+        } catch {
+            turn.stopCanceling(clientMessageID: clientMessageID)
+            didFailRequest(error)
+        }
+    }
+
     /// 401 = sesi habis; 404/410 = percakapan hilang, sama dengan gagal permanen saat menyambung.
-    /// TODO: Gagal kirim lain (tanpa koneksi, 409 `turn_locked`, 429, 400) ditampilkan sebagai snackbar
-    /// di atas composer pada PR tampilan; sementara draft tetap dan kirim terbuka lagi.
-    func didFailToSend(_ error: Error) {
+    /// TODO: Gagal kirim/stop lain (tanpa koneksi, 409 `turn_locked`, 429, 400) ditampilkan sebagai snackbar
+    /// di atas composer pada PR tampilan; sementara draft tetap dan tombol bisa ditekan lagi.
+    func didFailRequest(_ error: Error) {
         guard case let .response(statusCode, _)? = error as? TanyaAITransportError else { return }
         if ChatBackoff.isUnauthorized(statusCode: statusCode) {
             expireSession()
@@ -134,6 +156,7 @@ public final class TanyaAIBridge: ObservableObject {
         switch event {
         case .message(let message):
             messages = messages.merging([message])
+            revealQuestion()
         case .turnEnd(let seq):
             turn.end(seq: seq)
         case .ignored:
@@ -154,5 +177,14 @@ public final class TanyaAIBridge: ObservableObject {
         self.conversationID = conversationID
         messages = messages.merging(history)
         isHistoryLoaded = true
+        // Pertanyaan yang terlewat stream saat putus datang lewat history.
+        revealQuestion()
+    }
+
+    /// Pertanyaan yang ditunggu sudah ada di daftar: titik bergerak berganti stop. Turn hanya diubah bila
+    /// statusnya benar-benar berubah, supaya pesan lain tidak memicu render ulang composer.
+    func revealQuestion() {
+        guard turn.isQuestionArriving(in: messages) else { return }
+        turn.showQuestion()
     }
 }

@@ -11,8 +11,8 @@ import SwiftUI
 /// The feature owns its header; the draft lives in ComposerSection. Content is injected.
 /// `welcome` (dari BE) hanya tampil bila history kosong; sebelum history pertama selesai, loading di tengah.
 /// Shortcut yang diketuk dikirim lewat `bridge` seperti chat.
-/// Selama halaman tampil, `bridge` tersambung ke gateway; selama menunggu jawaban, tombol kirim menjadi
-/// titik bergerak dan shortcut nonaktif.
+/// Selama halaman tampil, `bridge` tersambung ke gateway. Setelah kirim, tombol menjadi titik bergerak sampai
+/// pertanyaan datang dari stream, lalu stop sampai jawaban selesai; shortcut nonaktif selama menunggu.
 @MainActor
 public struct ChatScreen<Content: View>: View {
     @Environment(\.locale)
@@ -74,7 +74,9 @@ public struct ChatScreen<Content: View>: View {
     }
 
     private var composer: some View {
-        ComposerSection(isEnabled: isEnabled && bridge.isReady, isAwaitingReply: bridge.isAwaitingReply, onSend: send)
+        ComposerSection(
+            isEnabled: isEnabled && bridge.isReady, phase: bridge.turnPhase, onSend: send, onStop: stop
+        )
     }
 
     /// Menempel di atas layar selebar layar; bagian bawah yang tidak tertutup gambar memakai warna surface.
@@ -99,6 +101,11 @@ private extension ChatScreen {
     /// True bila gateway menerima pesan; pertanyaan tampil setelah datang lewat stream.
     func send(_ text: String) async -> Bool {
         await bridge.send(text)
+    }
+
+    /// Menghentikan jawaban yang sedang berjalan; kunci dibuka oleh `turn_end` dari stream.
+    func stop() {
+        Task { [bridge] in await bridge.cancelTurn() }
     }
 
     /// Shortcut dikirim sebagai chat; pertanyaan tampil setelah datang lewat stream.

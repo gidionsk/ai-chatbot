@@ -9,5 +9,6 @@
 "chat.send" = "Kirim pesan";
 "chat.title" = "Tanya AI";
 "chat.back" = "Kembali";
-"chat.replying" = "Menunggu jawaban";
+"chat.sending" = "Mengirim pesan";
+"chat.stop" = "Hentikan jawaban";
 "welcome.shortcutsTitle" = "Mulai dari sini:";

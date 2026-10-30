@@ -55,6 +55,28 @@ struct TanyaAIUseCaseChatTests {
         #expect(failures.count == 1)
     }
 
+    /// Stop saat jawaban belum datang: respons `canceled:true` dulu, lalu tombstone pertanyaan dan `turn_end`
+    /// canceled di stream; jawaban bot yang dijadwalkan tidak pernah dikirim.
+    @Test
+    func stopCancelsThePendingReplyAndStreamsTheTombstone() async throws {
+        let useCase = makeUseCase()
+        var lines = useCase.events(conversationID: "c", lastEventID: nil).makeAsyncIterator()
+        #expect(try await lines.next() == ": connected")
+        _ = try await useCase.sendMessage(conversationID: "c", clientMessageID: "c-1", text: "Cek Portfolio saya")
+        var received: [String] = []
+        while received.filter({ $0.hasPrefix("event:") }).isEmpty, let line = try await lines.next() {
+            received.append(line)
+        }
+        #expect(try await useCase.cancelTurn(conversationID: "c") == SandboxGatewayFrames.canceled)
+        while received.filter({ $0.hasPrefix("event:") }).count < 3, let line = try await lines.next() {
+            received.append(line)
+        }
+        #expect(received.filter { $0.hasPrefix("event:") } == ["event: message", "event: message", "event: turn_end"])
+        #expect(received.contains { $0.contains(#""status":"canceled""#) && $0.contains(#""client_msg_id":"c-1""#) })
+        #expect(received.last { $0.hasPrefix("data:") }?.contains(#""status":"canceled""#) == true)
+        #expect(try await useCase.cancelTurn(conversationID: "c") == SandboxGatewayFrames.nothingToCancel)
+    }
+
     /// Stream ditutup (halaman ditutup → `onTermination` → `cancel()`): baris berikutnya tidak dikirim lagi.
     @Test
     func cancelledStreamNoLongerReceivesLines() async throws {

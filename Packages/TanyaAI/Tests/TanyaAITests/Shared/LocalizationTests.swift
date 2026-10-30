@@ -29,11 +29,16 @@ struct LocalizationTests {
         }
     }
 
-    @Test(arguments: [("en", "Start here:", "Waiting for reply"), ("id", "Mulai dari sini:", "Menunggu jawaban")])
-    func welcomeAndReplyingCopyFollowTheHostLocale(language: String, title: String, replying: String) {
+    /// Copy per bahasa: judul sambutan, lalu label titik bergerak dan stop composer.
+    @Test(arguments: [
+        ("en", ["Start here:", "Sending message", "Stop response"]),
+        ("id", ["Mulai dari sini:", "Mengirim pesan", "Hentikan jawaban"]),
+        ("zh-Hans", ["从这里开始：", "正在发送消息", "停止回答"])
+    ])
+    func welcomeAndComposerPhaseCopyFollowTheHostLocale(language: String, expected: [String]) {
         let locale = Locale(identifier: language)
-        #expect(String(ChatCopy.shortcutsTitle, locale: locale) == title)
-        #expect(String(ChatCopy.replying, locale: locale) == replying)
+        let copies = [ChatCopy.shortcutsTitle, .sending, .stop].map { String($0, locale: locale) }
+        #expect(copies == expected)
     }
 
     @Test

@@ -15,4 +15,6 @@ public enum DesignIcon: String, CaseIterable {
     case lightbulb
     case moreMenu
     case sendArrow
+    /// TODO: Ganti `stop.pdf` dengan aset Figma; sementara dummy kotak membulat.
+    case stop
 }

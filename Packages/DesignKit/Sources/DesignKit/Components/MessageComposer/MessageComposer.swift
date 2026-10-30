@@ -17,24 +17,28 @@ public struct MessageComposer: View {
     // Figma typography follows artwork scaling only, independent of the user's text size setting.
     private let fontSize = FigmaSize.typographySizeDisplaySmall14.scaledToArtwork
     private let placeholder: String
-    private let sendLabel: String
+    private let actionLabel: String
     private let isEnabled: Bool
-    private let isLoading: Bool
+    private let action: MessageComposerAction
     private let fontFace: FontFace
     private let onSend: () -> Void
+    private let onStop: () -> Void
 
+    /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol
+    /// kirim; draft tetap bisa diketik kecuali selama `.loading`.
     public init(
-        text: Binding<String>, placeholder: String, sendLabel: String,
-        isEnabled: Bool = true, isLoading: Bool = false, fontFace: FontFace = .openSansRegular,
-        onSend: @escaping () -> Void
+        text: Binding<String>, placeholder: String, actionLabel: String,
+        isEnabled: Bool = true, action: MessageComposerAction = .send, fontFace: FontFace = .openSansRegular,
+        onSend: @escaping () -> Void, onStop: @escaping () -> Void = {}
     ) {
         self._text = text
         self.placeholder = placeholder
-        self.sendLabel = sendLabel
+        self.actionLabel = actionLabel
         self.isEnabled = isEnabled
-        self.isLoading = isLoading
+        self.action = action
         self.fontFace = fontFace
         self.onSend = onSend
+        self.onStop = onStop
     }
 
     public var body: some View {
@@ -54,7 +58,7 @@ public struct MessageComposer: View {
         ZStack(alignment: .leading) {
             GrowingTextInput(
                 text: $text, font: inputFont, textColor: UIColor(colors.colorsTextPrimaryDark),
-                lineSpacing: lineSpacing, accessibilityLabel: placeholder
+                lineSpacing: lineSpacing, isEditable: action != .loading, accessibilityLabel: placeholder
             )
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity)
@@ -70,9 +74,9 @@ public struct MessageComposer: View {
         }
     }
 
-    /// Saat `isLoading`, panah diganti titik bergerak dan tombol tidak bisa ditekan; draft tetap bisa diketik.
+    /// Satu tombol untuk semua fase: kirim, titik bergerak (terkunci), atau stop.
     private var actionButton: some View {
-        Button(action: onSend) {
+        Button(action: tapAction) {
             actionIcon
                 .frame(
                     width: CustomSizes.Composer.sendButton.scaledToArtwork,
@@ -82,20 +86,27 @@ public struct MessageComposer: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!isSendEnabled)
-        .accessibilityLabel(sendLabel)
+        .disabled(!isActionEnabled)
+        .accessibilityLabel(actionLabel)
         .accessibilityIdentifier(ComponentIdentifier.Composer.send)
     }
 
     @ViewBuilder
     private var actionIcon: some View {
-        if isLoading {
+        switch action {
+        case .send:
+            icon(DesignIcon.sendArrow)
+        case .loading:
             LoadingDots(color: colors.colorsIconLight)
-        } else {
-            Image(DesignIcon.sendArrow).resizable().scaledToFit()
-                .padding(CustomSizes.Composer.sendIconInset.scaledToArtwork)
-                .foregroundColor(colors.colorsIconLight)
+        case .stop, .stopping:
+            icon(DesignIcon.stop)
         }
+    }
+
+    private func icon(_ name: DesignIcon) -> some View {
+        Image(name).resizable().scaledToFit()
+            .padding(CustomSizes.Composer.sendIconInset.scaledToArtwork)
+            .foregroundColor(colors.colorsIconLight)
     }
 }
 
@@ -114,12 +125,27 @@ private extension MessageComposer {
         return max(.zero, leading - inputFont.lineHeight)
     }
 
-    /// Merah saat bisa dikirim atau sedang menunggu; abu-abu saat draft kosong/nonaktif.
+    /// Merah saat bisa ditekan atau sedang memuat; abu-abu saat draft kosong, nonaktif, atau stop diproses.
     var buttonFill: Color {
-        isSendEnabled || isLoading ? colors.colorsButtonActive : colors.colorsIconDisabled
+        isActionEnabled || action == .loading ? colors.colorsButtonActive : colors.colorsIconDisabled
     }
 
-    var isSendEnabled: Bool {
-        isEnabled && !isLoading && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    var isActionEnabled: Bool {
+        switch action {
+        case .send:
+            return isEnabled && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .stop:
+            return isEnabled
+        case .loading, .stopping:
+            return false
+        }
+    }
+
+    func tapAction() {
+        if action == .stop {
+            onStop()
+        } else {
+            onSend()
+        }
     }
 }

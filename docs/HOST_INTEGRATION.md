@@ -163,8 +163,14 @@ Kontrak memakai key `description` (apib awal menulis `descripton`; BE diminta me
 
 Ketuk kartu mengirim `prompt` lewat bridge, sama seperti chat dari composer.
 Status menunggu jawaban **milik TanyaAI**: setelah host menerima chat, tombol kirim menjadi
-titik bergerak dan kartu nonaktif (draft tetap bisa diketik), dan chat berikutnya ditolak
-tanpa diteruskan ke host. Penantian berakhir saat event `turn_end` datang dari stream.
+titik bergerak (draft dikunci) sampai pertanyaan nasabah datang dari stream, lalu menjadi stop
+(draft boleh diketik untuk pertanyaan berikutnya). Kartu nonaktif dan chat berikutnya ditolak
+tanpa diteruskan ke host sampai event `turn_end` datang. Stop memanggil `cancelTurn` transport
+host (`POST /chat/conversations/{id}/cancel`); host hanya meneruskan body mentah seperti endpoint lain.
+
+Mulai 30 Oktober 2026 `TanyaAIChatTransport` mewajibkan `cancelTurn(conversationID:)`. Di Byon cukup
+tambah satu fungsi di `TanyaAIUseCase+Chat` dengan pola continuation yang sama (contoh:
+[TanyaAIUseCase+Chat](../TanyaAISandboxApp/TanyaAI/TanyaAIUseCase+Chat.swift)).
 
 ```swift
 TanyaAIHost(locale: locale, colors: colors, welcome: welcome, bridge: bridge)

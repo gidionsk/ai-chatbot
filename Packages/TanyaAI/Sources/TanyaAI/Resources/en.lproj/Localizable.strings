@@ -9,5 +9,6 @@
 "chat.send" = "Send message";
 "chat.title" = "Tanya AI";
 "chat.back" = "Back";
-"chat.replying" = "Waiting for reply";
+"chat.sending" = "Sending message";
+"chat.stop" = "Stop response";
 "welcome.shortcutsTitle" = "Start here:";

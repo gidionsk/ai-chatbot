@@ -16,6 +16,10 @@ final class TanyaAIChatService {
     private let onSubmissionFailed: (Error) -> Void
     private var frames: SandboxGatewayFrames
     private var onLine: ((String) -> Void)?
+    /// Pertanyaan yang jawabannya belum selesai; nil = tidak ada turn aktif (cancel = no-op).
+    private var pendingQuestion: SandboxWireMessage?
+    /// Kemunculan pertanyaan dan jawaban yang dijadwalkan; dibatalkan saat stop.
+    private var pendingWork: [DispatchWorkItem] = []
 
     init(options: SandboxOptions, onSubmissionFailed: @escaping (Error) -> Void) {
         self.options = options
@@ -68,6 +72,27 @@ final class TanyaAIChatService {
         }
     }
 
+    /// Stop: turn yang berjalan dihentikan (tombstone pertanyaan + `turn_end` canceled menyusul di stream setelah
+    /// respons), atau no-op bila tidak ada turn aktif.
+    func cancelTurn(
+        conversationID: String, onSuccess: @escaping (Data) -> Void, onFailed: @escaping (Error) -> Void
+    ) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            guard let question = self.pendingQuestion else {
+                onSuccess(SandboxGatewayFrames.nothingToCancel)
+                return
+            }
+            self.pendingWork.forEach { $0.cancel() }
+            onSuccess(SandboxGatewayFrames.canceled)
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.emit(self.frames.tombstone(of: question))
+                self.finishTurn(status: SandboxGatewayFrames.canceledStatus)
+            }
+        }
+    }
+
     /// Stream SSE tiruan: `onLine` per baris lengkap. Kembalian dipakai pemanggil untuk menutup stream,
     /// sama seperti `DataStreamRequest.cancel()` di Byon.
     func events(
@@ -87,19 +112,38 @@ final class TanyaAIChatService {
 // MARK: - Gateway tiruan
 
 private extension TanyaAIChatService {
-    /// Pertanyaan langsung tampil di stream lalu dijawab setelah jeda, seperti gateway asli.
+    /// Pertanyaan tampil di stream setelah jeda pendek, lalu dijawab setelah jeda berikutnya, seperti gateway asli.
+    /// `--hold-reply`: jawaban tidak pernah datang, sehingga stop bisa diuji.
     func accept(_ text: String, clientMessageID: String) -> Data {
         let ack = frames.ack()
-        emit(frames.message(direction: SandboxWireMessage.customer, text: text, clientMessageID: clientMessageID))
+        let question = frames.newMessage(
+            direction: SandboxWireMessage.customer, text: text, clientMessageID: clientMessageID
+        )
+        pendingQuestion = question
+        schedule(after: SandboxOptions.echoDelay) { $0.emit($0.frames.frame(question)) }
         if !options.isHoldingReply {
-            DispatchQueue.main.asyncAfter(deadline: .now() + SandboxOptions.replyDelay) { [weak self] in
-                guard let self else { return }
-                self.emit(
-                    self.frames.message(direction: SandboxWireMessage.bot, text: SandboxGatewayFrames.reply(to: text)))
-                self.emit(self.frames.turnEnd())
+            schedule(after: SandboxOptions.echoDelay + SandboxOptions.replyDelay) { service in
+                let reply = SandboxGatewayFrames.reply(to: text)
+                service.emit(service.frames.message(direction: SandboxWireMessage.bot, text: reply))
+                service.finishTurn()
             }
         }
         return ack
+    }
+
+    func finishTurn(status: String = SandboxGatewayFrames.completedStatus) {
+        pendingQuestion = nil
+        pendingWork = []
+        emit(frames.turnEnd(status: status))
+    }
+
+    func schedule(after delay: TimeInterval, _ work: @escaping (TanyaAIChatService) -> Void) {
+        let item = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            work(self)
+        }
+        pendingWork.append(item)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
     }
 
     func emit(_ lines: [String]) {
