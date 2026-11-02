@@ -53,12 +53,4 @@ public enum CustomSizes {
         public static let iconBox: CGFloat = 40
         public static let chevron: CGFloat = 20
     }
-
-    /// Titik loading `LoadingDots`; tidak dipakai composer lagi sejak bubble langsung tampil (2 November 2026).
-    /// TODO: Cocokkan dengan nilai Figma; sementara estimasi.
-    public enum LoadingDots {
-        public static let dot: CGFloat = 4
-        public static let gap: CGFloat = 2
-        public static let bounce: CGFloat = 3
-    }
 }

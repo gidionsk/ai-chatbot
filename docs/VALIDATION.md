@@ -541,6 +541,8 @@ jeda dari sisi FE. Gagal kirim (semua error; 401/404/410 tetap memanggil host) =
 hint merah miring di bawahnya, tanpa retry; bubble gagal tetap di posisi saat dikirim walau pesan
 berikutnya datang (`Array.rows(with:)`). Stop memanggil `POST .../cancel`; ditekan sebelum ack, cancel
 dikirim saat ack tiba, dan tidak dikirim bila kirim gagal. Draft tidak pernah dikunci.
+`LoadingDots` beserta `CustomSizes.LoadingDots` dan `CustomMotion` dihapus karena tidak dipakai lagi
+(keputusan user 3 November 2026).
 
 `MessageBubble` (DesignKit) dari PR #36 ditambah `failureNote`: fill `colorsIconDisabled` (#B2B7C6,
 token terdekat dari Figma #BEC3D0), teks putih, catatan `typographySizeDisplayTiny12` Fira Sans Italic

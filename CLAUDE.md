@@ -23,7 +23,7 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pes
   `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). Tanpa titik bergerak: tombol langsung stop
   (`cancelTurn` transport, ditahan sampai ack; ikon dummy `DesignIcon.stop`) dengan draft boleh diketik.
   Gambar URL lewat `RemoteImage` (cache memori bersama).
-- Ukuran welcome/kartu/titik masih estimasi screenshot (TODO di `CustomSizes`/`CustomMotion`);
+- Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.
 - Folder TanyaAI: `Bridging/` (API host), `Features/<Fitur>/` (screen di root, tiap bagian
   `Welcome/`, `Composer/` berisi view + modelnya), `Shared/Keys|Extensions`, `Resources/`.

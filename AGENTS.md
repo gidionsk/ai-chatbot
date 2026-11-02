@@ -33,13 +33,12 @@ tersedia pada history/main.
   | `CustomSizes` | Dimensi point yang belum ada di Figma: `Header` (padding), `Shadow`, `Composer.sendButton` | **Selalu** |
   | `CustomTextLines` | Batas baris per peran: `composerInput = 1...4`, `headerTitle` | Tidak pernah |
   | `CustomScreenInsets` | Padding atas header dari tepi layar, sama dengan navigation bar host (50/28) | Tidak pernah |
-  | `CustomMotion` | Waktu animasi (detik) dan jumlah titik `LoadingDots` | Tidak pernah |
   | `CustomColors` / `CustomBasePaletteColor` | Warna semantik tambahan / hex dasarnya | — |
   | `ArtworkScale` | Referensi 375×812 dan rasio layar untuk `.scaledToArtwork` | Tidak pernah |
   | `LayoutTolerance` | Toleransi pembulatan layout (bukan token desain) | Tidak pernah |
 
-  Nilai waktu/animasi custom masuk `CustomMotion` (tidak di-scale). Animasi menghormati
-  Reduce Motion (`LoadingDots` diam).
+  Nilai waktu/animasi custom masuk `CustomMotion` (tidak di-scale; dibuat lagi saat ada animasi).
+  Animasi menghormati Reduce Motion.
   Kelompok bersama dinamai per peran (`Header`, `Shadow`, `CustomTextLines.address`
   bila nanti dibutuhkan). Nilai yang hanya dipakai satu komponen memakai namespace
   nama komponen (`CustomSizes.Composer`) agar terhapus bersama komponennya. Tambah
