@@ -1,5 +1,5 @@
 //
-//  ScrollBoundaryTests.swift
+//  ScrollProgressTests.swift
 //  TanyaAISandboxTests
 //
 //  Created by Wendra on 16/10/26.
@@ -11,34 +11,36 @@ import Testing
 
 extension HostWindowTests {
     @MainActor
-    struct ScrollBoundaryTests {
+    struct ScrollProgressTests {
+        /// Progres naik sebanding offset sampai `distance`, lalu diam di 1 tanpa laporan baru; kembali ke atas = 0.
         @Test
-        func nestedObserversOnlyReportTheirOwnBoundaryTransitions() throws {
-            let outer = BoundaryProbe()
-            let inner = BoundaryProbe()
+        func nestedObserversOnlyReportTheirOwnProgress() throws {
+            let outer = ProgressProbe()
+            let inner = ProgressProbe()
             let fixture = try HostWindowFixture(NestedScrollFixture(outer: outer, inner: inner))
             defer { fixture.close() }
             let scrollViews = scrollViews(in: fixture.controller.view)
             #expect(scrollViews.count == 2)
             let outerScroll = try #require(scrollViews.max { $0.bounds.height < $1.bounds.height })
             let innerScroll = try #require(scrollViews.min { $0.bounds.height < $1.bounds.height })
-            #expect(outer.values == [false])
-            #expect(inner.values == [false])
+            #expect(outer.values == [0])
+            #expect(inner.values == [0])
             scroll(outerScroll, to: 0.2, fixture: fixture)
-            #expect(outer.values == [false])
-            for offset: CGFloat in [1, 40, 80, 120, 160, 200] {
+            #expect(outer.values == [0], "offset di bawah toleransi masih dianggap di atas")
+            scroll(outerScroll, to: NestedScrollFixture.outerDistance / 2, fixture: fixture)
+            #expect(outer.isClose(to: [0, 0.5]))
+            for offset: CGFloat in [100, 160, 200, 400] {
                 scroll(outerScroll, to: offset, fixture: fixture)
             }
-            #expect(outer.values == [false, true])
-            #expect(inner.values == [false])
+            #expect(outer.isClose(to: [0, 0.5, 1]), "setelah solid penuh tidak ada laporan baru")
+            #expect(inner.values == [0])
             scroll(innerScroll, to: 80, fixture: fixture)
-            #expect(inner.values == [false, true])
-            #expect(outer.values == [false, true])
+            #expect(inner.isClose(to: [0, 1]))
+            #expect(outer.isClose(to: [0, 0.5, 1]))
             scroll(innerScroll, to: 0, fixture: fixture)
-            #expect(inner.values == [false, true, false])
-            #expect(outer.values == [false, true])
+            #expect(inner.isClose(to: [0, 1, 0]))
             scroll(outerScroll, to: 0, fixture: fixture)
-            #expect(outer.values == [false, true, false])
+            #expect(outer.isClose(to: [0, 0.5, 1, 0]), "kembali ke posisi teratas = transparan penuh")
         }
 
         private func scroll(_ view: UIScrollView, to offset: CGFloat, fixture: HostWindowFixture) {
@@ -53,31 +55,37 @@ extension HostWindowTests {
     }
 }
 
-private final class BoundaryProbe {
-    var values: [Bool] = []
-    func record(_ isScrolled: Bool) { values.append(isScrolled) }
+private final class ProgressProbe {
+    var values: [CGFloat] = []
+    func record(_ progress: CGFloat) { values.append(progress) }
+
+    func isClose(to expected: [CGFloat]) -> Bool {
+        values.count == expected.count && zip(values, expected).allSatisfy { abs($0 - $1) < 0.01 }
+    }
 }
 
 private struct NestedScrollFixture: View {
+    static let outerDistance: CGFloat = 100
+    static let innerDistance: CGFloat = 40
     @State
     private var outerSpaceID = UUID()
     @State
     private var innerSpaceID = UUID()
-    let outer: BoundaryProbe
-    let inner: BoundaryProbe
+    let outer: ProgressProbe
+    let inner: ProgressProbe
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
                 ScrollView {
                     Color.clear.frame(height: 1_600)
-                        .onScrollBoundaryChange(in: innerSpaceID, perform: inner.record)
+                        .onScrollProgressChange(in: innerSpaceID, distance: Self.innerDistance, perform: inner.record)
                 }
                 .coordinateSpace(name: innerSpaceID)
                 .frame(height: 200)
                 Color.clear.frame(height: 1_600)
             }
-            .onScrollBoundaryChange(in: outerSpaceID, perform: outer.record)
+            .onScrollProgressChange(in: outerSpaceID, distance: Self.outerDistance, perform: outer.record)
         }
         .coordinateSpace(name: outerSpaceID)
     }

@@ -73,8 +73,8 @@ file (`git mv`), tanpa perubahan kode; SPM mengikuti folder, project sandbox tid
 
 Header mendapat bayangan Figma `Shadow/Default` (x 0, y 2, blur 10, `#BEC3D0` 40%) lewat
 `designShadow`, sama seperti kartu, dan gradient fade tetap ada. Fade dipasang sebagai background di
-belakang surface; sebagai overlay, gradient putih menutupi bayangan. Hanya saat `isScrolled`; saat
-diam header tetap transparan. Test piksel di window sandbox: fade di antara putih dan latar; di atas
+belakang surface; sebagai overlay, gradient putih menutupi bayangan. Muncul sebanding progres scroll;
+saat diam header tetap transparan. Test piksel di window sandbox: fade di antara putih dan latar; di atas
 latar putih, tepat di bawah header tetap ada bayangan saat digulir dan tidak ada saat diam.
 
 ## Divider composer dan penyesuaian dari Byon — 28 Oktober 2026
@@ -510,15 +510,23 @@ di dalam hierarchy-nya, sementara navigation stack host tetap utuh.
 ## Reuse dan pembatasan update scroll
 
 `ChatScreen` menggunakan `ScreenContainer` DesignKit. Container menyimpan satu
-Boolean, memakai ID UUID lokal melalui `@State`, dan memasang header/scroll/footer otomatis.
-Modifier `.onScrollBoundaryChange` juga diuji terpisah dari fitur chat pada dua
-ScrollView bertingkat: menggeser inner tidak mengubah status outer, dan sebaliknya.
-Offset 0,2 point di bawah toleransi tidak memicu transisi. Enam perpindahan offset
-di sisi boundary yang sama hanya menghasilkan satu transisi Boolean; kembali ke
-atas menghasilkan satu transisi lagi. Nilai awal dikirim sekali saat muncul.
+progres scroll 0...1, memakai ID UUID lokal melalui `@State`, dan memasang header/scroll/footer otomatis.
+Modifier `.onScrollProgressChange` juga diuji terpisah dari fitur chat pada dua
+ScrollView bertingkat: menggeser inner tidak mengubah progres outer, dan sebaliknya.
+Offset 0,2 point di bawah toleransi tetap 0. Setengah `distance` = 0,5; empat perpindahan
+offset setelah `distance` hanya menghasilkan satu laporan 1 (tidak ada render ulang lagi);
+kembali ke atas melaporkan 0. Nilai awal dikirim sekali saat muncul.
 
 Tes container dengan beberapa child ViewBuilder memastikan inset header dan
 margin diterapkan satu kali pada keseluruhan konten, bukan berulang per child.
 Callback count ini membatasi update state; GeometryReader tetap mengevaluasi
 geometri saat layout scroll berubah. Tidak ada klaim hasil FPS atau profiling
 Instruments berdasarkan tes callback tersebut.
+
+## Transisi header progresif — 30 Oktober 2026
+
+Keputusan user: header tidak lagi berganti mendadak dari transparan ke solid. `ScreenHeader` menerima
+`scrollProgress` 0...1; surface putih, bayangan, dan gradient memudar sebanding nilai itu. Jarak transisi
+= tinggi header (`ScreenHeader.height(isNotched:)`), jadi tidak ada token baru; posisi teratas (termasuk
+bounce) selalu 0 = transparan penuh. Identifier `header.scrolled` tetap berarti "tidak di posisi teratas".
+Test piksel: progres 0,25 lebih dekat ke latar daripada 0,5, dan 0,5 berada di antara latar dan putih.

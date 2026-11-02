@@ -15,12 +15,12 @@ extension HostWindowTests {
     @MainActor
     struct ScreenHeaderSurfaceTests {
         @Test
-        func headerIsTransparentAtRestAndOpaqueWithFadeWhenScrolled() throws {
+        func headerIsTransparentAtRestAndOpaqueWithFadeWhenFullyScrolled() throws {
             let height = ScreenHeader.height(isNotched: true)
             let fade = FigmaSize.spacingLarge.scaledToArtwork
             let reach = CustomSizes.Shadow.radius.scaledToArtwork + CustomSizes.Shadow.offsetY.scaledToArtwork
-            let atRest = try render(isScrolled: false)
-            let scrolled = try render(isScrolled: true)
+            let atRest = try render(scrollProgress: .zero)
+            let scrolled = try render(scrollProgress: 1)
             // Titik di padding kiri header, jauh dari tombol back dan judul; y dihitung dari tepi atas layar.
             let inHeader = height / 2
             let inFade = height + fade / 2
@@ -38,13 +38,24 @@ extension HostWindowTests {
         @Test
         func shadowStaysVisibleOverTheFadeWhenScrolled() throws {
             let inShadow = ScreenHeader.height(isNotched: true) + CustomSizes.Shadow.offsetY.scaledToArtwork
-            let atRest = try render(isScrolled: false, backdrop: .white)
-            let scrolled = try render(isScrolled: true, backdrop: .white)
+            let atRest = try render(scrollProgress: .zero, backdrop: .white)
+            let scrolled = try render(scrollProgress: 1, backdrop: .white)
             let middle = scrolled.width / 2
             let resting = try atRest.pixel(atHeaderOffset: inShadow, column: middle)
             let shadow = try scrolled.pixel(atHeaderOffset: inShadow, column: middle)
             #expect(isSurface(resting), "tanpa bayangan saat diam: \(resting)")
             #expect(shadow[1] < 250, "bayangan harus tergambar di atas gradient: \(shadow)")
+        }
+
+        /// Di tengah transisi surface setengah tembus: warnanya di antara latar dan putih, bukan salah satunya.
+        @Test
+        func headerBlendsWithTheBackdropMidwayThroughTheTransition() throws {
+            let inHeader = ScreenHeader.height(isNotched: true) / 2
+            let quarter = try render(scrollProgress: 0.25).pixel(atHeaderOffset: inHeader)
+            let half = try render(scrollProgress: 0.5).pixel(atHeaderOffset: inHeader)
+            #expect(!(isBackdrop(half) || isSurface(half)), "setengah jalan harus campuran: \(half)")
+            // Latar merah: makin jauh digulir, kanal hijau makin mendekati putih.
+            #expect(quarter[1] < half[1], "opacity harus naik sebanding progres: \(quarter) \(half)")
         }
     }
 }
@@ -75,10 +86,10 @@ private struct RenderedHeader {
 
 private extension HostWindowTests.ScreenHeaderSurfaceTests {
     /// Header di atas latar (default merah), seperti header di atas gambar latar chat.
-    func render(isScrolled: Bool, backdrop: Color = Color(red: 1, green: 0, blue: 0)) throws -> RenderedHeader {
+    func render(scrollProgress: CGFloat, backdrop: Color = Color(red: 1, green: 0, blue: 0)) throws -> RenderedHeader {
         let content = ZStack(alignment: .top) {
             backdrop.ignoresSafeArea()
-            ScreenHeader(title: "Judul", backLabel: "Back", isScrolled: isScrolled, isNotched: true, onBack: {})
+            ScreenHeader(title: "Judul", backLabel: "Back", scrollProgress: scrollProgress, isNotched: true, onBack: {})
         }
         .ignoresSafeArea(.container, edges: .top)
         let fixture = try HostWindowFixture(content)

@@ -26,7 +26,7 @@ Packages/
 │       │   ├── Image+DesignIcon.swift     # Image/UIImage dari DesignIcon
 │       │   ├── String+Resource.swift      # copy sesuai locale host
 │       │   ├── View+DesignColors.swift    # theme environment + area default
-│       │   └── View+ScrollBoundary.swift  # observer umum untuk tahap header
+│       │   └── View+ScrollProgress.swift  # observer umum untuk tahap header
 │       ├── Typography/FontFace.swift + FontLoader.swift
 │       ├── Resources/Fonts/ + Assets.xcassets/
 │       ├── Foundations/Iconography/DesignIcon.swift  # nama ikon = imageset

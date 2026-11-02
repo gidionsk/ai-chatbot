@@ -16,14 +16,16 @@ struct ScreenHeaderTests {
     func longTitlesStayWithinCompactWidthsWithAndWithoutTrailingAction() throws {
         try FontFace.registerFonts()
         for width: CGFloat in [320, 375, 430] {
-            for isScrolled in [false, true] {
+            for scrollProgress: CGFloat in [.zero, 0.5, 1] {
                 for isNotched in [false, true] {
                     let title = String(repeating: "Judul panjang 中文 English ", count: 12)
                     let bare = ScreenHeader(
-                        title: title, backLabel: "Back", isScrolled: isScrolled, isNotched: isNotched, onBack: {}
+                        title: title, backLabel: "Back", scrollProgress: scrollProgress, isNotched: isNotched,
+                        onBack: {}
                     )
                     let actions = ScreenHeader(
-                        title: title, backLabel: "Back", isScrolled: isScrolled, isNotched: isNotched, onBack: {},
+                        title: title, backLabel: "Back", scrollProgress: scrollProgress, isNotched: isNotched,
+                        onBack: {},
                         trailing: { Button("More") {} }
                     )
                     expectBounds(bare, width: width, isNotched: isNotched)

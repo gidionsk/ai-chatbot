@@ -10,30 +10,31 @@ import SwiftUI
 /// A centered title with equal action slots. The caller owns scroll state and navigation.
 /// Ukuran mengikuti navigation bar host: header mulai dari tepi atas layar (caller menaruhnya tanpa
 /// safe area atas), padding atas `CustomScreenInsets` tanpa scale, ikon 24, judul Fira Sans Bold 16.
-/// Saat diam transparan, sehingga latar screen tembus sampai status bar. Saat konten digulir,
-/// latar menjadi putih dengan bayangan Figma `Shadow/Default` sehingga header terangkat seperti kartu,
-/// dan gradient tipis di bawahnya memudarkan konten yang lewat di belakangnya.
+/// Saat diam transparan, sehingga latar screen tembus sampai status bar. Selama konten digulir, latar putih,
+/// bayangan Figma `Shadow/Default`, dan gradient tipis di bawahnya muncul bertahap sebanding `scrollProgress`
+/// sehingga header terangkat seperti kartu tanpa berganti mendadak.
 @MainActor
 public struct ScreenHeader<Trailing: View>: View {
     @Environment(\.designColors)
     private var colors
     private let title: String
     private let backLabel: String
-    private let isScrolled: Bool
+    private let scrollProgress: CGFloat
     private let isNotched: Bool
     private let fontFace: FontFace
     private let onBack: () -> Void
     private let trailing: Trailing
 
-    /// `isNotched` dari `ScreenHeader.isNotched(safeAreaTop:)`; menentukan padding atas dari tepi layar.
+    /// `scrollProgress` 0 (transparan, di posisi teratas) sampai 1 (solid penuh). `isNotched` dari
+    /// `ScreenHeader.isNotched(safeAreaTop:)`; menentukan padding atas dari tepi layar.
     public init(
-        title: String, backLabel: String, isScrolled: Bool, isNotched: Bool,
+        title: String, backLabel: String, scrollProgress: CGFloat, isNotched: Bool,
         fontFace: FontFace = .firaSansBold, onBack: @escaping () -> Void,
         @ViewBuilder trailing: () -> Trailing
     ) {
         self.title = title
         self.backLabel = backLabel
-        self.isScrolled = isScrolled
+        self.scrollProgress = scrollProgress
         self.isNotched = isNotched
         self.fontFace = fontFace
         self.onBack = onBack
@@ -87,10 +88,10 @@ public struct ScreenHeader<Trailing: View>: View {
         .accessibilityIdentifier(ComponentIdentifier.Header.back)
     }
 
-    /// Bayangan digambar di luar frame: tinggi header tetap dan sentuhan tidak tertangkap.
-    /// Bayangan dari `Color.clear` tidak terlihat, jadi saat diam header tetap transparan penuh.
+    /// Bayangan digambar di luar frame: tinggi header tetap dan sentuhan tidak tertangkap. Bayangan mengikuti
+    /// alpha surface, jadi ikut memudar dan tidak terlihat saat diam (transparan penuh).
     private var surface: some View {
-        (isScrolled ? colors.colorsSurfacePrimary : Color.clear).designShadow()
+        colors.colorsSurfacePrimary.opacity(scrollProgress).designShadow()
     }
 
     /// Di luar frame header: tidak mengubah tinggi header dan tidak menangkap sentuhan.
@@ -103,6 +104,7 @@ public struct ScreenHeader<Trailing: View>: View {
             )
             .frame(height: FigmaSize.spacingLarge.scaledToArtwork)
             .offset(y: FigmaSize.spacingLarge.scaledToArtwork)
+            .opacity(scrollProgress)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
         }
@@ -113,15 +115,18 @@ public struct ScreenHeader<Trailing: View>: View {
 
 private extension ScreenHeader {
     var actionSize: CGFloat { FigmaSize.weightIconSmall.scaledToArtwork }
+
+    /// Sudah tidak di posisi teratas; dipakai identifier UI test dan untuk tidak membuat gradient saat diam.
+    var isScrolled: Bool { scrollProgress > .zero }
 }
 
 extension ScreenHeader where Trailing == EmptyView {
     public init(
-        title: String, backLabel: String, isScrolled: Bool, isNotched: Bool,
+        title: String, backLabel: String, scrollProgress: CGFloat, isNotched: Bool,
         fontFace: FontFace = .firaSansBold, onBack: @escaping () -> Void
     ) {
         self.init(
-            title: title, backLabel: backLabel, isScrolled: isScrolled, isNotched: isNotched,
+            title: title, backLabel: backLabel, scrollProgress: scrollProgress, isNotched: isNotched,
             fontFace: fontFace, onBack: onBack, trailing: { EmptyView() }
         )
     }

@@ -18,8 +18,9 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
     // Keep the coordinate-space ID stable when the parent view updates.
     @State
     private var scrollSpaceID = UUID()
+    /// 0 di posisi teratas sampai 1 setelah digulir setinggi header; header memudar sebanding nilai ini.
     @State
-    private var isScrolled = false
+    private var scrollProgress: CGFloat = .zero
     private let title: String
     private let backLabel: String
     private let onBack: () -> Void
@@ -70,11 +71,13 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
                     .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
                     .padding(.top, ScreenHeader.height(isNotched: isNotched) + FigmaSize.spacingLarge.scaledToArtwork)
                     .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
-                    .onScrollBoundaryChange(in: scrollSpaceID) { isScrolled = $0 }
+                    .onScrollProgressChange(in: scrollSpaceID, distance: ScreenHeader.height(isNotched: isNotched)) {
+                        scrollProgress = $0
+                    }
             }
             .coordinateSpace(name: scrollSpaceID)
             ScreenHeader(
-                title: title, backLabel: backLabel, isScrolled: isScrolled, isNotched: isNotched,
+                title: title, backLabel: backLabel, scrollProgress: scrollProgress, isNotched: isNotched,
                 onBack: onBack, trailing: { trailing }
             )
         }

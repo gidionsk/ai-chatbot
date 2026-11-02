@@ -7,7 +7,7 @@ satu; tidak perlu menyalin seluruh flow chat lama.
 DesignKit/Sources/DesignKit/
 ├── Components/ScreenHeader/ScreenHeader.swift
 ├── Components/ScreenContainer/ScreenContainer.swift
-├── Extensions/View+ScrollBoundary.swift
+├── Extensions/View+ScrollProgress.swift
 ├── Tokens/CustomSizes.swift              # Header: tinggi dan jumlah baris
 └── Resources/Assets.xcassets/            # back/more/send dummy; nama di DesignIcon
 
@@ -33,9 +33,10 @@ TanyaAISandboxApp/HeaderDemoContent.swift # fixture scroll, bukan UI produksi
    dari caller; tidak ada copy TanyaAI di sini.
    Trailing slot untuk satu action; caller memberi label/tap target yang sesuai.
 3. Saat diam, surface transparan sehingga latar screen (warna atau gambar) tembus sampai
-   status bar. Saat `isScrolled`, surface menjadi `colorsSurfacePrimary` dengan bayangan
-   Figma `Shadow/Default` (`designShadow`), sehingga header terangkat seperti kartu, dan gradient
-   setinggi `spacingLarge` di bawahnya memudarkan konten yang lewat. Gradient berada di belakang
+   status bar. Selama digulir, surface `colorsSurfacePrimary`, bayangan Figma `Shadow/Default`
+   (`designShadow`), dan gradient setinggi `spacingLarge` di bawahnya muncul bertahap sebanding
+   `scrollProgress` (0 di posisi teratas, 1 setelah digulir setinggi header; keputusan user
+   30 Oktober 2026: progresif, bukan berganti mendadak). Bayangan mengikuti alpha surface. Gradient berada di belakang
    surface agar bayangan tetap terlihat. Bayangan dan gradient berada di luar frame header: tinggi
    header tetap dan sentuhan tidak tertangkap.
    Tidak memakai material blur, jadi tidak ada cabang khusus Reduce Transparency.
@@ -44,11 +45,11 @@ TanyaAISandboxApp/HeaderDemoContent.swift # fixture scroll, bukan UI produksi
    tertutup saat posisi teratas. Konten dapat bergerak di belakang header dan
    bayangan/gradient ketika digulir. Container membaca safe area atas sekali (GeometryReader di root),
    lalu header dan ScrollView mengabaikan safe area atas seperti navigation bar host.
-5. `.onScrollBoundaryChange` memakai GeometryReader di background root konten.
-   Callback memberi nilai awal, lalu `.onChange` mengamati Boolean ketika offset
-   melewati toleransi. Tidak diperlukan PreferenceKey bersama antar observer.
-   Container hanya menyimpan `isScrolled`, bukan offset setiap pixel. Kembali ke
-   atas mengembalikan surface awal. ID area scroll adalah UUID lokal yang disimpan
+5. `.onScrollProgressChange` memakai GeometryReader di background root konten.
+   Callback memberi nilai awal, lalu `.onChange` mengamati progres 0...1 (offset dibagi
+   `distance`, di bawah toleransi = 0). Tidak diperlukan PreferenceKey bersama antar observer.
+   Progres berhenti di 1, jadi update hanya terjadi selama `distance` pertama; scroll lebih
+   jauh tidak me-render ulang container. Kembali ke atas (termasuk bounce) = 0, surface awal. ID area scroll adalah UUID lokal yang disimpan
    dengan `@State`, sehingga nilainya tetap saat parent merender ulang.
 6. Pertahankan composer dan `.tanyaAIHost` existing. Header tidak mengubah font 14,
    batas empat baris, keyboard, callback kirim, atau navigation stack host.
@@ -90,12 +91,12 @@ Deteksi boundary juga bisa dipakai sendiri pada scroll view lain:
 
 ```swift
 @State private var scrollSpaceID = UUID()
-@State private var isScrolled = false
+@State private var scrollProgress: CGFloat = .zero
 
 // Di body:
 ScrollView {
     FormContent()
-        .onScrollBoundaryChange(in: scrollSpaceID) { isScrolled = $0 }
+        .onScrollProgressChange(in: scrollSpaceID, distance: fadeDistance) { scrollProgress = $0 }
 }
 .coordinateSpace(name: scrollSpaceID)
 ```
