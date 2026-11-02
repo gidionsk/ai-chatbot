@@ -1,6 +1,6 @@
 # Font resources
 
-DesignKit bundles seven static faces. Register all of them once during bootstrap
+DesignKit bundles eight static faces. Register all of them once during bootstrap
 with `try FontFace.registerFonts()`. `FontLoader` handles repeated registration.
 The exact PostScript names below were read from each bundled font's name table.
 
@@ -10,6 +10,7 @@ The exact PostScript names below were read from each bundled font's name table.
 | `firaSansMedium` | FiraSans-Medium.ttf | FiraSans-Medium |
 | `firaSansSemiBold` | FiraSans-SemiBold.ttf | FiraSans-SemiBold |
 | `firaSansBold` | FiraSans-Bold.ttf | FiraSans-Bold |
+| `firaSansItalic` | FiraSans-Italic.ttf | FiraSans-Italic |
 | `openSansRegular` | OpenSans-Regular.ttf | OpenSansRoman-Regular |
 | `openSansMedium` | OpenSans-Medium.ttf | OpenSansRoman-Medium |
 | `openSansBold` | OpenSans-Bold.ttf | OpenSans-Bold |
@@ -31,5 +32,5 @@ covers Open Sans. Preserve font copyright notices and licenses when distributing
 the package.
 
 Chinese glyphs use the iOS Core Text fallback cascade when absent from the
-selected font. Tests check that all seven faces render Chinese without missing
+selected font. Tests check that all eight faces render Chinese without missing
 glyph boxes. Verify the final approved Chinese font before brand sign-off.

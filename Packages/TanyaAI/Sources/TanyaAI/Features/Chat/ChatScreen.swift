@@ -11,8 +11,8 @@ import SwiftUI
 /// The feature owns its header; the draft lives in ComposerSection. Content is injected.
 /// `welcome` (dari BE) hanya tampil bila history kosong; sebelum history pertama selesai, loading di tengah.
 /// Shortcut yang diketuk dikirim lewat `bridge` seperti chat.
-/// Selama halaman tampil, `bridge` tersambung ke gateway. Setelah kirim, tombol menjadi titik bergerak sampai
-/// pertanyaan datang dari stream, lalu stop sampai jawaban selesai; shortcut nonaktif selama menunggu.
+/// Selama halaman tampil, `bridge` tersambung ke gateway. Setelah kirim, bubble pertanyaan langsung tampil dan
+/// tombol menjadi stop sampai jawaban selesai; shortcut nonaktif selama menunggu.
 @MainActor
 public struct ChatScreen<Content: View>: View {
     @Environment(\.locale)
@@ -57,7 +57,7 @@ public struct ChatScreen<Content: View>: View {
         if let welcome, bridge.isWelcomeVisible {
             WelcomeSection(content: welcome, isEnabled: isEnabled && isSendable, onSelect: select)
         }
-        // TODO: Daftar pesan (`bridge.messages`) dengan bubble dan chip tanggal menyusul di PR tampilan pesan.
+        MessagesSection(rows: bridge.rows)
         content
     }
 
@@ -98,9 +98,9 @@ private extension ChatScreen {
         if let onBack { onBack() } else { dismiss() }
     }
 
-    /// True bila gateway menerima pesan; pertanyaan tampil setelah datang lewat stream.
-    func send(_ text: String) async -> Bool {
-        await bridge.send(text)
+    /// True bila bubble pertanyaan tampil; false = ditolak dan draft tetap.
+    func send(_ text: String) -> Bool {
+        bridge.send(text) != nil
     }
 
     /// Menghentikan jawaban yang sedang berjalan; kunci dibuka oleh `turn_end` dari stream.
@@ -108,8 +108,8 @@ private extension ChatScreen {
         Task { [bridge] in await bridge.cancelTurn() }
     }
 
-    /// Shortcut dikirim sebagai chat; pertanyaan tampil setelah datang lewat stream.
+    /// Shortcut dikirim sebagai chat; bubble pertanyaan langsung tampil.
     func select(_ shortcut: WelcomeShortcut) {
-        Task { [bridge] in _ = await bridge.send(shortcut.prompt) }
+        bridge.send(shortcut.prompt)
     }
 }

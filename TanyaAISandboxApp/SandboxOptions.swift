@@ -21,7 +21,7 @@ struct SandboxOptions {
     static let demoStartIdentifier = "sandbox.demo.start"
     static let demoEndIdentifier = "sandbox.demo.end"
     static let demoParagraphCount = 12
-    /// Jeda pertanyaan nasabah muncul di stream setelah ack; titik bergerak di composer terlihat selama ini.
+    /// Jeda pertanyaan nasabah muncul di stream setelah ack; selama ini bubble lokal yang tampil.
     static let echoDelay: TimeInterval = 0.6
     /// Jeda jawaban bot tiruan setelah pertanyaan muncul di stream.
     static let replyDelay: TimeInterval = 1
@@ -44,8 +44,9 @@ struct SandboxOptions {
     }
 
     let locale: Locale?
+    /// `--reject-send`: gateway menolak kirim (400), jadi bubble pertanyaan menjadi bubble gagal.
     let isRejectingSend: Bool
-    /// `--hold-reply`: bot tidak pernah menjawab, jadi composer tetap menunggu (untuk UI test status loading).
+    /// `--hold-reply`: bot tidak pernah menjawab, jadi composer tetap di stop (untuk UI test stop).
     let isHoldingReply: Bool
     /// `--with-history`: gateway tiruan mengembalikan history fixture, jadi sambutan tidak tampil.
     let isShowingHistory: Bool

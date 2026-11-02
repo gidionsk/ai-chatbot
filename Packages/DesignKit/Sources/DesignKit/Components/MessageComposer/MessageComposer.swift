@@ -24,8 +24,8 @@ public struct MessageComposer: View {
     private let onSend: () -> Void
     private let onStop: () -> Void
 
-    /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol
-    /// kirim; draft tetap bisa diketik kecuali selama `.loading`.
+    /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol;
+    /// draft selalu bisa diketik.
     public init(
         text: Binding<String>, placeholder: String, actionLabel: String,
         isEnabled: Bool = true, action: MessageComposerAction = .send, fontFace: FontFace = .openSansRegular,
@@ -58,7 +58,7 @@ public struct MessageComposer: View {
         ZStack(alignment: .leading) {
             GrowingTextInput(
                 text: $text, font: inputFont, textColor: UIColor(colors.colorsTextPrimaryDark),
-                lineSpacing: lineSpacing, isEditable: action != .loading, accessibilityLabel: placeholder
+                lineSpacing: lineSpacing, accessibilityLabel: placeholder
             )
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity)
@@ -74,7 +74,7 @@ public struct MessageComposer: View {
         }
     }
 
-    /// Satu tombol untuk semua fase: kirim, titik bergerak (terkunci), atau stop.
+    /// Satu tombol untuk semua fase: kirim atau stop.
     private var actionButton: some View {
         Button(action: tapAction) {
             actionIcon
@@ -96,8 +96,6 @@ public struct MessageComposer: View {
         switch action {
         case .send:
             icon(DesignIcon.sendArrow)
-        case .loading:
-            LoadingDots(color: colors.colorsIconLight)
         case .stop, .stopping:
             icon(DesignIcon.stop)
         }
@@ -125,9 +123,9 @@ private extension MessageComposer {
         return max(.zero, leading - inputFont.lineHeight)
     }
 
-    /// Merah saat bisa ditekan atau sedang memuat; abu-abu saat draft kosong, nonaktif, atau stop diproses.
+    /// Merah saat bisa ditekan; abu-abu saat draft kosong, nonaktif, atau stop diproses.
     var buttonFill: Color {
-        isActionEnabled || action == .loading ? colors.colorsButtonActive : colors.colorsIconDisabled
+        isActionEnabled ? colors.colorsButtonActive : colors.colorsIconDisabled
     }
 
     var isActionEnabled: Bool {
@@ -136,7 +134,7 @@ private extension MessageComposer {
             return isEnabled && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .stop:
             return isEnabled
-        case .loading, .stopping:
+        case .stopping:
             return false
         }
     }

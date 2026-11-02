@@ -13,12 +13,15 @@ import Foundation
 /// TanyaAI yang menyambung (init → history → SSE), menyambung ulang, dan menggabungkan pesan.
 @MainActor
 public final class TanyaAIBridge: ObservableObject {
-    /// Urut `seq` naik; pesan nasabah juga baru muncul setelah datang lewat stream, bukan saat dikirim.
+    /// Pesan dari gateway, urut `seq` naik.
     @Published
     private(set) var messages: [ChatMessage] = []
+    /// Pertanyaan yang sudah tampil tetapi belum datang dari stream, termasuk yang gagal dikirim (urut waktu kirim).
+    @Published
+    var localQuestions: [LocalQuestion] = []
     /// Pertanyaan yang sedang ditunggu jawabannya (lihat `ChatTurn`).
     @Published
-    private(set) var turn = ChatTurn()
+    var turn = ChatTurn()
     /// True setelah history pertama selesai; sebelum itu halaman menampilkan loading, bukan sambutan.
     @Published
     private(set) var isHistoryLoaded = false
@@ -62,8 +65,11 @@ public final class TanyaAIBridge: ObservableObject {
     /// Sejak kirim sampai `turn_end` pertanyaan itu; kirim dan shortcut nonaktif.
     var isAwaitingReply: Bool { turn.isAwaiting }
 
-    /// Titik bergerak sampai pertanyaan tampil, lalu stop sampai `turn_end`.
+    /// Stop sejak kirim sampai `turn_end`.
     var turnPhase: ChatTurnPhase { turn.phase }
+
+    /// Daftar tampil: pesan gateway dengan pertanyaan lokal di posisi saat dikirim.
+    var rows: [ChatRow] { messages.rows(with: localQuestions) }
 
     /// Replay stream dimulai setelah pesan atau event terakhir yang sudah diterima.
     var lastEventID: String? {
@@ -73,57 +79,17 @@ public final class TanyaAIBridge: ObservableObject {
     /// Loading hanya selama pembukaan pertama masih berjalan; gagal permanen atau sesi habis menghentikannya.
     var isLoadingHistory: Bool { !isHistoryLoaded && connection == .connecting }
 
-    /// Sambutan hanya untuk percakapan kosong; pesan pertama (dari stream) langsung menggantikannya.
-    var isWelcomeVisible: Bool { isHistoryLoaded && messages.isEmpty }
+    /// Sambutan hanya untuk percakapan kosong; bubble pertanyaan pertama langsung menggantikannya.
+    var isWelcomeVisible: Bool { isHistoryLoaded && messages.isEmpty && localQuestions.isEmpty }
 
     /// Bisa mengirim setelah init berhasil, juga selama menyambung ulang; tidak setelah ditutup atau sesi habis.
     var isReady: Bool {
         conversationID != nil && connection != .closed && connection != .expired
     }
 
-    /// Satu pertanyaan per waktu: selama menunggu jawaban, chat baru ditolak tanpa diteruskan ke host.
-    /// True bila gateway menerima pesan (ack 202); false mempertahankan draft di composer.
-    func send(_ text: String) async -> Bool {
-        guard !isAwaitingReply, isReady, let conversationID else { return false }
-        // Penanda pertanyaan ini: respons yang datang setelah turn berganti tidak mengubah turn yang baru.
-        let clientMessageID = UUID().uuidString
-        turn.start(clientMessageID: clientMessageID)
-        do {
-            let data = try await transport.sendMessage(
-                conversationID: conversationID, clientMessageID: clientMessageID, text: text
-            )
-            let ack = try? JSONDecoder.wire.decode(WireEnvelope<WireSendAck>.self, from: data).data
-            turn.accept(questionSeq: ack.flatMap { Int($0.seq) }, for: clientMessageID)
-            // Pertanyaan bisa datang lebih dulu tanpa `client_msg_id`; seq dari ack baru bisa mencocokkannya.
-            revealQuestion()
-            return true
-        } catch {
-            turn.cancel(clientMessageID: clientMessageID)
-            didFailRequest(error)
-            return false
-        }
-    }
-
-    /// Stop: hanya setelah pertanyaan tampil. `canceled:true` menunggu `turn_end` di stream (tombstone pertanyaan
-    /// ikut datang); `canceled:false` = gateway tidak punya turn aktif, jadi kunci dibuka di sini karena
-    /// `turn_end` tidak akan datang. Gagal = stop bisa ditekan lagi (cancel idempoten).
-    func cancelTurn() async {
-        guard let conversationID, let clientMessageID = turn.startCanceling() else { return }
-        do {
-            let data = try await transport.cancelTurn(conversationID: conversationID)
-            let result = try JSONDecoder.wire.decode(WireEnvelope<WireCancel>.self, from: data).data
-            if !result.isCanceled {
-                turn.cancel(clientMessageID: clientMessageID)
-            }
-        } catch {
-            turn.stopCanceling(clientMessageID: clientMessageID)
-            didFailRequest(error)
-        }
-    }
-
     /// 401 = sesi habis; 404/410 = percakapan hilang, sama dengan gagal permanen saat menyambung.
-    /// TODO: Gagal kirim/stop lain (tanpa koneksi, 409 `turn_locked`, 429, 400) ditampilkan sebagai snackbar
-    /// di atas composer pada PR tampilan; sementara draft tetap dan tombol bisa ditekan lagi.
+    /// Gagal kirim lain cukup menjadi bubble gagal. TODO: Gagal stop lain (tanpa koneksi, 429) belum punya
+    /// tampilan; sementara stop bisa ditekan lagi.
     func didFailRequest(_ error: Error) {
         guard case let .response(statusCode, _)? = error as? TanyaAITransportError else { return }
         if ChatBackoff.isUnauthorized(statusCode: statusCode) {
@@ -156,7 +122,7 @@ public final class TanyaAIBridge: ObservableObject {
         switch event {
         case .message(let message):
             messages = messages.merging([message])
-            revealQuestion()
+            removeDeliveredQuestions()
         case .turnEnd(let seq):
             turn.end(seq: seq)
         case .ignored:
@@ -168,6 +134,7 @@ public final class TanyaAIBridge: ObservableObject {
     func replaceOrMerge(_ history: [ChatMessage], conversationID: String) {
         guard self.conversationID == nil || self.conversationID == conversationID else {
             messages = history.merging([])
+            localQuestions = []
             turn.cancel()
             eventCursor = nil
             self.conversationID = conversationID
@@ -178,13 +145,6 @@ public final class TanyaAIBridge: ObservableObject {
         messages = messages.merging(history)
         isHistoryLoaded = true
         // Pertanyaan yang terlewat stream saat putus datang lewat history.
-        revealQuestion()
-    }
-
-    /// Pertanyaan yang ditunggu sudah ada di daftar: titik bergerak berganti stop. Turn hanya diubah bila
-    /// statusnya benar-benar berubah, supaya pesan lain tidak memicu render ulang composer.
-    func revealQuestion() {
-        guard turn.isQuestionArriving(in: messages) else { return }
-        turn.showQuestion()
+        removeDeliveredQuestions()
     }
 }

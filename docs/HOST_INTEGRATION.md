@@ -163,8 +163,8 @@ Kontrak memakai key `description` (apib awal menulis `descripton`; BE diminta me
 
 Ketuk kartu mengirim `prompt` lewat bridge, sama seperti chat dari composer.
 Status menunggu jawaban **milik TanyaAI**: setelah host menerima chat, tombol kirim menjadi
-titik bergerak (draft dikunci) sampai pertanyaan nasabah datang dari stream, lalu menjadi stop
-(draft boleh diketik untuk pertanyaan berikutnya). Kartu nonaktif dan chat berikutnya ditolak
+stop dan bubble pertanyaan langsung tampil (draft boleh diketik untuk pertanyaan berikutnya); gagal
+kirim menjadi bubble gagal di TanyaAI, bukan callback host. Kartu nonaktif dan chat berikutnya ditolak
 tanpa diteruskan ke host sampai event `turn_end` datang. Stop memanggil `cancelTurn` transport
 host (`POST /chat/conversations/{id}/cancel`); host hanya meneruskan body mentah seperti endpoint lain.
 
@@ -216,6 +216,6 @@ atau composer sendiri, dan dilepas setelah halaman di-pop.
 Jalankan `Scripts/run_sandbox.sh --language id`. Buka Tanya AI dari beranda atau dari
 halaman detail, kembali dengan tombol back atau swipe dari tepi kiri. `--offline`
 membuat kiriman memunculkan blocker host di atas Tanya AI; tombol "Coba lagi"
-menutupnya dan draft tetap ada. Welcome sandbox dibaca dari
+menutupnya dan pertanyaannya tampil sebagai bubble gagal (`--reject-send` juga). Welcome sandbox dibaca dari
 `Resources/Fixtures/TanyaAIInitDummy.json`; setelah chat/shortcut diterima, sandbox
 menjawab lewat gateway tiruan setelah 1 detik (`--hold-reply` menahan jawaban).

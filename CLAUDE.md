@@ -17,11 +17,12 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pes
   untuk hasil stream nanti. Sapaan, judul/deskripsi/ikon kartu dari BE; emblem, latar, judul
   daftar dan chevron dari FE. Ketuk kartu = kirim `prompt` lewat bridge.
 - `TanyaAIBridge` dipegang host (dibuat sekali) dengan `TanyaAIChatTransport` per endpoint (body mentah).
-  Bridge yang menyambung, retry, decode, dan merge (`docs/CHAT_GATEWAY.md`); pesan tampil hanya dari SSE.
-  Loading hanya saat history pertama; sambutan hanya bila history kosong. Daftar pesan menyusul.
-  `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). `ChatTurnPhase`: `LoadingDots` + draft dikunci
-  sampai pertanyaan datang dari stream, lalu stop (`cancelTurn` transport, ikon dummy `DesignIcon.stop`) dengan
-  draft boleh diketik. Gambar URL lewat `RemoteImage` (cache memori bersama).
+  Bridge yang menyambung, retry, decode, dan merge (`docs/CHAT_GATEWAY.md`). Bubble pertanyaan tampil saat
+  kirim (`LocalQuestion`), diganti salinan SSE lewat `client_msg_id`/seq ack; gagal kirim = bubble abu-abu +
+  hint tanpa retry. Loading hanya saat history pertama; sambutan hanya bila history kosong. Bubble bot menyusul.
+  `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). Tanpa titik bergerak: tombol langsung stop
+  (`cancelTurn` transport, ditahan sampai ack; ikon dummy `DesignIcon.stop`) dengan draft boleh diketik.
+  Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Ukuran welcome/kartu/titik masih estimasi screenshot (TODO di `CustomSizes`/`CustomMotion`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.
 - Folder TanyaAI: `Bridging/` (API host), `Features/<Fitur>/` (screen di root, tiap bagian

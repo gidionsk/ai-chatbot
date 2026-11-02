@@ -29,15 +29,15 @@ struct LocalizationTests {
         }
     }
 
-    /// Copy per bahasa: judul sambutan, lalu label titik bergerak dan stop composer.
+    /// Copy per bahasa: judul sambutan, label stop composer, dan hint bubble gagal.
     @Test(arguments: [
-        ("en", ["Start here:", "Sending message", "Stop response"]),
-        ("id", ["Mulai dari sini:", "Mengirim pesan", "Hentikan jawaban"]),
-        ("zh-Hans", ["从这里开始：", "正在发送消息", "停止回答"])
+        ("en", ["Start here:", "Stop response", "This message failed to send"]),
+        ("id", ["Mulai dari sini:", "Hentikan jawaban", "Pesan ini gagal terkirim"]),
+        ("zh-Hans", ["从这里开始：", "停止回答", "此消息发送失败"])
     ])
-    func welcomeAndComposerPhaseCopyFollowTheHostLocale(language: String, expected: [String]) {
+    func welcomeComposerAndFailureCopyFollowTheHostLocale(language: String, expected: [String]) {
         let locale = Locale(identifier: language)
-        let copies = [ChatCopy.shortcutsTitle, .sending, .stop].map { String($0, locale: locale) }
+        let copies = [ChatCopy.shortcutsTitle, .stop, .sendFailed].map { String($0, locale: locale) }
         #expect(copies == expected)
     }
 

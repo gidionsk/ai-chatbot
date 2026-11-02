@@ -19,14 +19,13 @@ struct ComposerSection: View {
     private var draft = String()
     private let isEnabled: Bool
     private let phase: ChatTurnPhase
-    private let onSend: (String) async -> Bool
+    private let onSend: (String) -> Bool
     private let onStop: () -> Void
 
-    /// `onSend` true = pesan diterima; draft dikosongkan bila belum diubah selama menunggu jawaban gateway.
-    /// Selama `.sending` draft dikunci; setelah pertanyaan tampil, nasabah boleh mengetik pertanyaan berikutnya
-    /// tetapi harus menekan stop (atau menunggu jawaban selesai) untuk mengirimnya.
+    /// `onSend` true = bubble pertanyaan tampil, draft langsung dikosongkan. Selama menunggu jawaban nasabah boleh
+    /// mengetik pertanyaan berikutnya, tetapi harus menekan stop (atau menunggu jawaban selesai) untuk mengirimnya.
     init(
-        isEnabled: Bool, phase: ChatTurnPhase, onSend: @escaping (String) async -> Bool,
+        isEnabled: Bool, phase: ChatTurnPhase, onSend: @escaping (String) -> Bool,
         onStop: @escaping () -> Void
     ) {
         self.isEnabled = isEnabled
@@ -62,8 +61,6 @@ private extension ComposerSection {
         switch phase {
         case .idle:
             return .send
-        case .sending:
-            return .loading
         case .awaitingReply:
             return .stop
         case .canceling:
@@ -75,8 +72,6 @@ private extension ComposerSection {
         switch phase {
         case .idle:
             return .send
-        case .sending:
-            return .sending
         case .awaitingReply, .canceling:
             return .stop
         }
@@ -87,10 +82,7 @@ private extension ComposerSection {
 
 private extension ComposerSection {
     func submit() {
-        let text = draft
-        Task {
-            guard await onSend(text), draft == text else { return }
-            draft = String()
-        }
+        guard onSend(draft) else { return }
+        draft = String()
     }
 }

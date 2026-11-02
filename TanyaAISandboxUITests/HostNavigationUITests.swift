@@ -32,7 +32,8 @@ final class HostNavigationUITests: XCTestCase {
         XCTAssertFalse(application.textViews["composer.input"].exists)
     }
 
-    func testOfflineBlockerCoversTanyaAIAndRetryKeepsTheDraft() {
+    /// Kirim tanpa internet: blocker host menutupi Tanya AI; setelah retry, pertanyaannya tetap sebagai bubble gagal.
+    func testOfflineBlockerCoversTanyaAIAndRetryShowsTheFailedQuestion() {
         launch(extra: ["--offline"])
         application.buttons["sandbox.open"].tap()
         let input = application.textViews["composer.input"]
@@ -45,7 +46,8 @@ final class HostNavigationUITests: XCTestCase {
         XCTAssertFalse(input.isHittable)
         retry.tap()
         XCTAssertTrue(input.waitForExistence(timeout: 5))
-        XCTAssertEqual(input.value as? String, "Saldo saya")
+        XCTAssertEqual(input.value as? String, "")
+        XCTAssertTrue(application.descendants(matching: .any)["chat.question.failed"].exists)
     }
 
     func testLogoutAndLoginReturnToMain() {

@@ -10,21 +10,20 @@ import SwiftUI
 import Testing
 
 extension HostWindowTests {
-    /// Hanya titik bergerak (menunggu pertanyaan tampil) yang mengunci draft; saat stop nasabah boleh mengetik
-    /// pertanyaan berikutnya. Diuji di window karena editor UIKit baru dibuat saat tampil.
+    /// Tidak ada fase yang mengunci draft: saat stop nasabah boleh mengetik pertanyaan berikutnya. Diuji di
+    /// window karena editor UIKit baru dibuat saat tampil.
     @MainActor
     struct ComposerActionTests {
-        @Test(arguments: [
-            (MessageComposerAction.send, true), (.loading, false), (.stop, true), (.stopping, true)
-        ])
-        func onlyLoadingLocksTheDraft(action: MessageComposerAction, isEditable: Bool) throws {
+        @Test(arguments: [MessageComposerAction.send, .stop, .stopping])
+        func everyActionKeepsTheDraftEditable(action: MessageComposerAction) throws {
             let fixture = try HostWindowFixture(ActionFixture(action: action).frame(width: 343))
             defer { fixture.close() }
             let editor = try #require(findEditor(in: fixture.controller.view))
             let range = NSRange(location: 0, length: 0)
             let isAccepted = editor.delegate?.textView?(editor, shouldChangeTextIn: range, replacementText: "x")
-            #expect(isAccepted == isEditable, "\(action)")
-            #expect(editor.accessibilityTraits.contains(.notEnabled) == !isEditable, "\(action)")
+            #expect(isAccepted ?? true, "\(action)")
+            #expect(editor.isEditable, "\(action)")
+            #expect(!editor.accessibilityTraits.contains(.notEnabled), "\(action)")
         }
 
         private func findEditor(in view: UIView) -> BoundedTextView? {

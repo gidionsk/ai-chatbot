@@ -10,26 +10,32 @@ import Testing
 
 @testable import TanyaAI
 
-/// Kirim: ack gateway hanya mengunci; pertanyaan dan jawaban tampil dari stream, `turn_end` membuka kunci.
+/// Kirim: bubble pertanyaan tampil saat itu juga, salinan dari stream menggantikannya, `turn_end` membuka kunci.
 @MainActor
 @Suite(.serialized)
 struct TanyaAIBridgeTests {
     @Test
-    func questionAppearsOnlyFromTheStreamAndTurnEndUnlocksTheNextOne() async {
+    func questionShowsAtOnceAndTheStreamCopyReplacesIt() async {
         let transport = FakeChatTransport()
         let bridge = makeBridge(transport)
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.connection == .live }
 
-        #expect(await bridge.send("Cek Portfolio saya"))
+        let delivery = bridge.send("Cek Portfolio saya")
+        #expect(bridge.localQuestions.map(\.text) == ["Cek Portfolio saya"], "tampil sebelum ack")
         #expect(bridge.isAwaitingReply)
-        #expect(bridge.messages.isEmpty)
-        #expect(!(await bridge.send("Saya mau beli valas")))
+        #expect(!bridge.isWelcomeVisible)
+        #expect(bridge.send("Saya mau beli valas") == nil)
+        await delivery?.value
 
-        transport.emit(WireFixture.messageFrame(seq: 1) + WireFixture.messageFrame(seq: 2))
+        let question = WireFixture.messageFrame(
+            seq: 1, direction: "customer", clientMessageID: transport.lastClientMessageID
+        )
+        transport.emit(question + WireFixture.messageFrame(seq: 2, direction: "bot"))
         await waitUntil { bridge.messages.count == 2 }
-        #expect(bridge.messages.map(\.author) == [.customer, .bot])
+        #expect(bridge.localQuestions.isEmpty)
+        #expect(bridge.rows.map(\.id) == ["m-1", "m-2"])
         #expect(bridge.isAwaitingReply)
 
         transport.emit(WireFixture.turnEndFrame(seq: 3))
@@ -46,12 +52,12 @@ struct TanyaAIBridgeTests {
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.connection == .live }
-        #expect(await bridge.send("Pertanyaan kedua"))
+        #expect(await bridge.sendAndWait("Pertanyaan kedua"))
         transport.emit(WireFixture.turnEndFrame(seq: 6))
         transport.emit(WireFixture.messageFrame(seq: 10, direction: "customer"))
         await waitUntil { bridge.messages.count == 1 }
         #expect(bridge.isAwaitingReply)
-        #expect(!(await bridge.send("Pertanyaan ketiga")))
+        #expect(bridge.send("Pertanyaan ketiga") == nil)
         transport.emit(WireFixture.turnEndFrame(seq: 12))
         await waitUntil { !bridge.isAwaitingReply }
     }
@@ -66,12 +72,12 @@ struct TanyaAIBridgeTests {
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.connection == .live }
-        #expect(await bridge.send("Cek Portfolio saya"))
+        #expect(await bridge.sendAndWait("Cek Portfolio saya"))
         await waitUntil { !bridge.isAwaitingReply }
     }
 
     /// 401 saat kirim sama dengan 401 saat menyambung: host diberi tahu sekali, stream yang terbuka ditutup,
-    /// tidak menyambung ulang, dan kirim berikutnya ditolak.
+    /// tidak menyambung ulang, kirim berikutnya ditolak, dan pertanyaannya menjadi bubble gagal.
     @Test
     func unauthorizedSendClosesTheOpenStreamAndExpiresOnce() async {
         let transport = FakeChatTransport()
@@ -83,12 +89,13 @@ struct TanyaAIBridgeTests {
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.connection == .live }
-        #expect(!(await bridge.send("Cek Portfolio saya")))
+        #expect(await bridge.sendAndWait("Cek Portfolio saya"))
         await waitUntil { transport.closedStreams == 1 }
         await task.value
         #expect(bridge.connection == .expired)
+        #expect(bridge.localQuestions.map(\.isFailed) == [true])
         #expect(transport.calls.filter { $0 == "init" }.count == 1)
-        #expect(!(await bridge.send("Lagi")))
+        #expect(bridge.send("Lagi") == nil)
         #expect(expiredCount == 1)
     }
 
@@ -106,16 +113,19 @@ struct TanyaAIBridgeTests {
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.connection == .live }
-        let lateSend = Task { await bridge.send("Pertanyaan lama") }
+        let lateSend = bridge.send("Pertanyaan lama")
         await waitUntil { transport.isAckHeld }
         transport.drop()
         await waitUntil { bridge.conversationID == "lain" && bridge.connection == .live }
         #expect(!bridge.isAwaitingReply)
+        #expect(bridge.localQuestions.isEmpty, "bubble percakapan lama tidak ikut")
         transport.sendResult = .success(WireFixture.ack(seq: 2))
-        #expect(await bridge.send("Pertanyaan baru"))
+        let newSend = bridge.send("Pertanyaan baru")
         transport.releaseAck()
-        #expect(await lateSend.value)
+        await lateSend?.value
+        await newSend?.value
         #expect(bridge.isAwaitingReply)
+        #expect(bridge.localQuestions.map(\.text) == ["Pertanyaan baru"])
         transport.emit(WireFixture.turnEndFrame(seq: 3))
         await waitUntil { !bridge.isAwaitingReply }
     }
@@ -134,31 +144,42 @@ struct TanyaAIBridgeTests {
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.connection == .live }
-        #expect(!(await bridge.send("Cek Portfolio saya")))
+        #expect(await bridge.sendAndWait("Cek Portfolio saya"))
         await waitUntil { transport.closedStreams == 1 }
         await task.value
         #expect(bridge.connection == .closed)
+        #expect(bridge.localQuestions.map(\.isFailed) == [true])
         #expect(transport.calls.filter { $0 == "init" }.count == 1)
         #expect(failures == 1)
     }
 
-    @Test
-    func refusedSendKeepsTheDraftAndDoesNotWait() async {
+    /// Gagal kirim lain (400, tanpa koneksi, 5xx): bubble gagal tanpa retry, kunci dibuka, sambungan tetap hidup.
+    @Test(arguments: [
+        TanyaAITransportError.response(statusCode: 400, body: Data()) as Error,
+        URLError(.notConnectedToInternet)
+    ])
+    func failedSendLeavesAFailedBubbleAndUnlocks(error: Error) async {
         let transport = FakeChatTransport()
-        transport.sendResult = .failure(TanyaAITransportError.response(statusCode: 400, body: Data()))
+        transport.sendResult = .failure(error)
         let bridge = makeBridge(transport)
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.isReady }
-        #expect(!(await bridge.send("Cek Portfolio saya")))
+        #expect(await bridge.sendAndWait("Cek Portfolio saya"))
+        #expect(bridge.localQuestions.map(\.isFailed) == [true])
         #expect(!bridge.isAwaitingReply)
         #expect(bridge.isReady)
+        transport.sendResult = .success(WireFixture.ack(seq: 2))
+        #expect(await bridge.sendAndWait("Lagi"))
+        #expect(bridge.localQuestions.map(\.isFailed) == [true, false])
     }
 
     @Test
     func sendBeforeTheConversationExistsIsRefusedWithoutCallingTheGateway() async {
         let transport = FakeChatTransport()
-        #expect(!(await makeBridge(transport).send("Cek Portfolio saya")))
+        let bridge = makeBridge(transport)
+        #expect(bridge.send("Cek Portfolio saya") == nil)
+        #expect(bridge.localQuestions.isEmpty)
         #expect(transport.calls.isEmpty)
     }
 

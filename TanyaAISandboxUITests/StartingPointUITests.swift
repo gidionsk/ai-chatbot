@@ -59,7 +59,7 @@ final class StartingPointUITests: XCTestCase {
         capture("starter-four-lines-keyboard")
         send.tap()
         XCTAssertEqual(input.value as? String, "")
-        // Titik bergerak → stop → jawaban selesai; draft kosong membuat kirim tetap nonaktif.
+        // Stop → jawaban selesai; draft kosong membuat kirim tetap nonaktif.
         let answered = expectation(for: NSPredicate(format: "label == %@", "Send message"), evaluatedWith: send)
         wait(for: [answered], timeout: 5)
         XCTAssertFalse(send.isEnabled)
@@ -74,7 +74,7 @@ final class StartingPointUITests: XCTestCase {
         input.tap()
         let send = application.buttons["composer.send"]
         for (horizontal, vertical) in [(0.05, 0.5), (0.95, 0.5), (0.5, 0.05), (0.5, 0.95)] {
-            // Draft dikunci selama titik bergerak; tunggu jawaban sebelumnya selesai (`turn_end`) baru mengetik.
+            // Kirim hanya setelah jawaban sebelumnya selesai (`turn_end`).
             let idle = expectation(for: NSPredicate(format: "label == %@", "Send message"), evaluatedWith: send)
             wait(for: [idle], timeout: 5)
             input.typeText("Tap edge")
@@ -108,16 +108,6 @@ final class StartingPointUITests: XCTestCase {
         XCTAssertEqual(input.value as? String, "")
         XCTAssertEqual(input.frame.midY, application.buttons["composer.send"].frame.midY, accuracy: 1)
         capture("starter-empty-after-clearing")
-    }
-
-    func testRejectedSubmissionKeepsDraft() {
-        launch(locale: "en", extra: ["--reject-send"])
-        let input = application.textViews["composer.input"]
-        XCTAssertTrue(input.waitForExistence(timeout: 10))
-        input.tap()
-        input.typeText("Keep my draft")
-        application.buttons["composer.send"].tap()
-        XCTAssertEqual(input.value as? String, "Keep my draft")
     }
 
     func testTextSizeSettingKeepsComposerFontAndLayoutFixed() {

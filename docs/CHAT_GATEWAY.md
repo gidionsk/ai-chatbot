@@ -10,7 +10,7 @@ Pembagian kerja host ↔ TanyaAI untuk gateway ICT. Sumber kebenaran contract te
 | Base URL, header `X-OCBCNISP-OMNI-SESSION` dan `X-OCBCNISP-OMNI-CHANNEL`, SSL pinning, log | Urutan init → history → SSE dan menyambung ulang |
 | Mengirim request per endpoint, mengembalikan body mentah | Decode envelope, `Message`, error, frame SSE |
 | Melempar `TanyaAITransportError.response` untuk non-2xx | Retry/backoff, merge history tanpa duplikat |
-| Login ulang saat `onSessionExpired` | Pesan ditampilkan hanya dari stream; `turn_end` membuka kirim |
+| Login ulang saat `onSessionExpired` | Bubble pertanyaan langsung, disinkronkan dengan stream; `turn_end` membuka kirim |
 | Popup/halaman error saat `onConnectionFailed` | Loading dihentikan, composer nonaktif |
 
 Welcome/shortcut tetap dari BE host (inquiry proposition) dan di-decode host; contract ICT
@@ -41,19 +41,19 @@ Typing, limits, list conversations, dan close belum dipakai.
    401 (`onSessionExpired`, sekali), atau error lain dengan `retryable:false` (`onConnectionFailed`, sekali,
    dengan `TanyaAITransportError`). Loading awal ikut berhenti. 401 dari jalur mana pun (termasuk kirim)
    menutup stream yang sedang terbuka dan bersifat final: tidak menyambung ulang.
-4. Kirim: ack 202 hanya mengunci composer dan memberi `seq` pertanyaan. Pertanyaan tampil saat event
-   `message` miliknya datang, jawaban bot menyusul. Hanya `turn_end` dengan `id` lebih besar dari seq
-   pertanyaan yang membuka kunci (replay `turn_end` lama diabaikan; `turn_end` sebelum ack dicocokkan
-   saat ack tiba). Kirim gagal = draft tetap; 401 saat kirim = `onSessionExpired` dan 404/410 (percakapan
-   hilang) = `onConnectionFailed`, sama seperti saat sambung. Gagal kirim lain belum ditampilkan (TODO
-   snackbar TanyaAI di PR tampilan, bukan callback host).
+4. Kirim (keputusan user 2 November 2026): bubble pertanyaan tampil saat itu juga (`LocalQuestion`) dan
+   draft dikosongkan; ack 202 memberi `seq` pertanyaan. Salinan dari stream atau history (dicocokkan lewat
+   `client_msg_id`, atau seq ack bila kosong) menggantikan bubble lokal tanpa jeda. Hanya `turn_end` dengan
+   `id` lebih besar dari seq pertanyaan yang membuka kunci (replay `turn_end` lama diabaikan; `turn_end`
+   sebelum ack dicocokkan saat ack tiba). Kirim gagal = bubble abu-abu dengan hint (`chat.sendFailed`), tanpa
+   retry, dan kunci dibuka; bubble gagal tetap di posisinya selama halaman hidup. 401 saat kirim tetap
+   `onSessionExpired` dan 404/410 (percakapan hilang) tetap `onConnectionFailed`, sama seperti saat sambung.
    Respons kirim dicocokkan lewat `client_msg_id`: respons yang datang terlambat untuk pertanyaan lama
    (mis. setelah percakapan berganti) tidak mengubah pertanyaan yang sedang ditunggu.
-5. Fase composer (keputusan user 30 Oktober 2026): titik bergerak dari kirim sampai pertanyaan nasabah
-   datang dari stream atau history (dicocokkan lewat `client_msg_id`, atau seq ack bila kosong); selama itu
-   draft dikunci tanpa menurunkan keyboard. Setelah pertanyaan tampil tombol menjadi stop; nasabah boleh
-   mengetik pertanyaan berikutnya tetapi harus menekan stop (atau menunggu `turn_end`) untuk mengirimnya.
-6. Stop: `POST .../cancel`. `canceled:true` = kunci tetap sampai `turn_end {"status":"canceled"}` dari
+5. Fase composer: tidak ada titik bergerak. Sejak kirim tombol menjadi stop; nasabah boleh mengetik
+   pertanyaan berikutnya tetapi harus menekan stop (atau menunggu `turn_end`) untuk mengirimnya.
+6. Stop: `POST .../cancel`; ditekan sebelum ack = cancel dikirim saat ack tiba (tidak dikirim bila
+   kirim gagal). `canceled:true` = kunci tetap sampai `turn_end {"status":"canceled"}` dari
    stream; tombstone pertanyaan (`status:"canceled"`, `message_id` sama) menggantikan pesan aslinya.
    `canceled:false` = gateway tidak punya turn aktif, jadi kunci dibuka langsung karena `turn_end` tidak
    datang. Gagal (selain 401/404/410 yang ditangani seperti kirim) = stop bisa ditekan lagi; cancel idempoten.
@@ -65,8 +65,9 @@ Percakapan dari init berbeda dengan sebelumnya (yang lama diarsipkan) mengganti 
 
 Tampilan: sebelum history pertama selesai, loading di tengah halaman (reconnect tidak menampilkan
 loading; pesan yang sudah tampil tetap terbaca). History kosong = sambutan (greeting, shortcut, emblem);
-ada pesan = sambutan disembunyikan. Pesan pertama yang datang dari stream langsung menggantikan sambutan.
-Daftar pesan (bubble, chip tanggal per hari) menyusul di PR tampilan pesan.
+ada pesan = sambutan disembunyikan. Bubble pertanyaan pertama langsung menggantikan sambutan.
+Sementara hanya bubble pertanyaan nasabah yang tampil; bubble bot dan chip tanggal per hari menyusul di PR
+daftar pesan.
 
 ## Contoh transport di host
 

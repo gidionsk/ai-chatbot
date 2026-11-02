@@ -10,21 +10,21 @@ import Testing
 
 @testable import TanyaAI
 
-/// Fase composer: titik bergerak sampai pertanyaan datang dari stream, lalu stop sampai `turn_end`.
+/// Fase composer: stop sejak kirim sampai `turn_end`.
 @MainActor
 @Suite(.serialized)
 struct TanyaAIBridgeTurnTests {
     @Test
-    func sendingLastsUntilTheQuestionArrivesThenStopUntilTurnEnd() async {
+    func stopShowsFromTheMomentOfSendingUntilTurnEnd() async {
         let (transport, bridge) = await connectedBridge()
         defer { bridge.connectionTask?.cancel() }
-        #expect(await bridge.send("Cek Portfolio saya"))
-        #expect(bridge.turnPhase == .sending)
+        let delivery = bridge.send("Cek Portfolio saya")
+        #expect(bridge.turnPhase == .awaitingReply, "tanpa menunggu ack atau stream")
+        await delivery?.value
         transport.emit(
             WireFixture.messageFrame(
                 seq: 2, direction: "customer", clientMessageID: transport.lastClientMessageID
             ))
-        await waitUntil { bridge.turnPhase == .awaitingReply }
         transport.emit(WireFixture.messageFrame(seq: 3, direction: "bot"))
         await waitUntil { bridge.messages.count == 2 }
         #expect(bridge.turnPhase == .awaitingReply)
@@ -82,21 +82,44 @@ struct TanyaAIBridgeTurnTests {
         #expect(bridge.connection == .expired)
     }
 
-    /// Stop belum ada selama titik bergerak: tidak ada panggilan cancel ke gateway.
+    /// Stop sebelum ack: cancel ditahan lalu dikirim sekali saat ack tiba.
     @Test
-    func stopBeforeTheQuestionIsShownDoesNothing() async {
+    func stopBeforeTheAckIsSentOnceTheAckArrives() async {
         let (transport, bridge) = await connectedBridge()
         defer { bridge.connectionTask?.cancel() }
-        #expect(await bridge.send("Cek Portfolio saya"))
+        transport.isHoldingAck = true
+        let delivery = bridge.send("Cek Portfolio saya")
+        await waitUntil { transport.isAckHeld }
         await bridge.cancelTurn()
         #expect(!transport.calls.contains("cancel"))
-        #expect(bridge.turnPhase == .sending)
+        #expect(bridge.turnPhase == .canceling)
+        transport.releaseAck()
+        await delivery?.value
+        #expect(transport.calls.filter { $0 == "cancel" }.count == 1)
+        #expect(bridge.turnPhase == .canceling)
     }
 
-    /// Stream putus sebelum pertanyaan datang: pertanyaan dari history setelah reconnect juga mengakhiri titik
-    /// bergerak (dicocokkan lewat seq ack karena history tidak membawa `client_msg_id` di fixture ini).
+    /// Stop sebelum ack lalu kirim gagal: tidak ada cancel, bubble gagal, kunci dibuka.
     @Test
-    func questionRecoveredFromHistoryAfterReconnectShowsStop() async {
+    func stopBeforeAFailedSendDoesNotCallCancel() async {
+        let (transport, bridge) = await connectedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.isHoldingAck = true
+        transport.sendResult = .failure(TanyaAITransportError.response(statusCode: 500, body: Data()))
+        let delivery = bridge.send("Cek Portfolio saya")
+        await waitUntil { transport.isAckHeld }
+        await bridge.cancelTurn()
+        transport.releaseAck()
+        await delivery?.value
+        #expect(!transport.calls.contains("cancel"))
+        #expect(bridge.turnPhase == .idle)
+        #expect(bridge.localQuestions.map(\.isFailed) == [true])
+    }
+
+    /// Stream putus sebelum pertanyaan datang: pertanyaan dari history setelah reconnect menggantikan bubble lokal
+    /// (dicocokkan lewat seq ack karena history tidak membawa `client_msg_id` di fixture ini).
+    @Test
+    func questionRecoveredFromHistoryAfterReconnectReplacesTheLocalBubble() async {
         let transport = FakeChatTransport()
         transport.sendResult = .success(WireFixture.ack(seq: 3))
         transport.historyPages = [WireFixture.history([]), WireFixture.history([3])]
@@ -104,10 +127,12 @@ struct TanyaAIBridgeTurnTests {
         Task { await bridge.run() }
         defer { bridge.connectionTask?.cancel() }
         await waitUntil { bridge.connection == .live }
-        #expect(await bridge.send("Cek Portfolio saya"))
+        #expect(await bridge.sendAndWait("Cek Portfolio saya"))
+        #expect(bridge.localQuestions.count == 1)
         transport.drop()
-        await waitUntil { bridge.turnPhase == .awaitingReply }
-        #expect(bridge.messages.map(\.seq) == [3])
+        await waitUntil { bridge.messages.map(\.seq) == [3] }
+        #expect(bridge.localQuestions.isEmpty)
+        #expect(bridge.rows.map(\.id) == ["m-3"])
     }
 }
 
@@ -123,14 +148,14 @@ private extension TanyaAIBridgeTurnTests {
         return (transport, bridge)
     }
 
-    /// Pertanyaan seq 2 sudah tampil dan jawaban belum selesai.
+    /// Pertanyaan seq 2 sudah datang dari stream dan jawaban belum selesai.
     func awaitingReplyBridge() async -> (FakeChatTransport, TanyaAIBridge) {
         let (transport, bridge) = await connectedBridge()
-        _ = await bridge.send("Cek Portfolio saya")
+        _ = await bridge.sendAndWait("Cek Portfolio saya")
         transport.emit(
             WireFixture.messageFrame(seq: 2, direction: "customer", clientMessageID: transport.lastClientMessageID)
         )
-        await waitUntil { bridge.turnPhase == .awaitingReply }
+        await waitUntil { bridge.localQuestions.isEmpty }
         return (transport, bridge)
     }
 }

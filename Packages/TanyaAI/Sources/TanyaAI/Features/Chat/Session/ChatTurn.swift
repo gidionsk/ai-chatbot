@@ -17,33 +17,26 @@ struct ChatTurn: Equatable {
     private var questionSeq: Int?
     /// Seq `turn_end` terbesar sejak pertanyaan dikirim.
     private var latestEndSeq: Int?
-    /// Pertanyaan yang ditunggu sudah datang dari stream atau history (bubble tampil).
-    private var isQuestionShown = false
     /// Stop sudah ditekan dan belum selesai.
     private var isCanceling = false
 
     var isAwaiting: Bool { clientMessageID != nil }
 
+    /// Ack kirim sudah diterima; cancel ke gateway baru bermakna setelah ini.
+    var isAccepted: Bool { questionSeq != nil }
+
     var phase: ChatTurnPhase {
         guard isAwaiting else { return .idle }
-        if isCanceling { return .canceling }
-        return isQuestionShown ? .awaitingReply : .sending
+        return isCanceling ? .canceling : .awaitingReply
     }
 
-    /// True bila pertanyaan yang ditunggu ada di `messages` tetapi belum ditandai tampil. Dicocokkan lewat
-    /// `client_msg_id`, atau seq dari ack bila gateway tidak mengembalikan `client_msg_id`.
-    func isQuestionArriving(in messages: [ChatMessage]) -> Bool {
-        guard let clientMessageID, !isQuestionShown else { return false }
-        return messages.last { message in
-            message.author == .customer && (message.clientMessageID == clientMessageID || message.seq == questionSeq)
-        } != nil
+    /// True bila stop untuk pertanyaan ini sedang diproses.
+    func isCanceling(clientMessageID: String) -> Bool {
+        isCanceling && self.clientMessageID == clientMessageID
     }
 
-    mutating func showQuestion() {
-        isQuestionShown = true
-    }
-
-    /// Stop ditekan. Nil bila belum boleh (pertanyaan belum tampil) atau stop sudah diproses.
+    /// Stop ditekan; boleh sebelum ack (cancel dikirim saat ack tiba). Nil bila tidak menunggu atau stop
+    /// sudah diproses.
     mutating func startCanceling() -> String? {
         guard phase == .awaitingReply else { return nil }
         isCanceling = true

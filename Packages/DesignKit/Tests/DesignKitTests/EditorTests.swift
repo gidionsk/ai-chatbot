@@ -100,16 +100,4 @@ struct EditorTests {
         }
         await waitUntil(timeout: 2) { releasedEditor == nil }
     }
-
-    /// Input dikunci (titik bergerak di composer): ketikan dan tempel ditolak; tampilan diuji di sandbox.
-    @Test(arguments: [true, false])
-    func lockedInputRejectsEveryChange(isEditable: Bool) {
-        let input = GrowingTextInput(
-            text: .constant("draft"), font: .systemFont(ofSize: 14), textColor: .black,
-            isEditable: isEditable, accessibilityLabel: "Tanya"
-        )
-        let range = NSRange(location: 5, length: 0)
-        let isAccepted = input.makeCoordinator().textView(UITextView(), shouldChangeTextIn: range, replacementText: "x")
-        #expect(isAccepted == isEditable)
-    }
 }

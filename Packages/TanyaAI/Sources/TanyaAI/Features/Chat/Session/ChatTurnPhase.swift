@@ -9,9 +9,7 @@
 enum ChatTurnPhase: Equatable {
     /// Tidak menunggu apa pun; bisa kirim.
     case idle
-    /// Sejak kirim sampai pertanyaan nasabah datang dari stream (bubble tampil); input dikunci.
-    case sending
-    /// Pertanyaan sudah tampil, jawaban bot belum selesai; tombol menjadi stop.
+    /// Sejak kirim sampai jawaban bot selesai; tombol menjadi stop, draft tetap bisa diketik.
     case awaitingReply
     /// Stop sudah ditekan; menunggu respons cancel atau `turn_end`.
     case canceling

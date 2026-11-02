@@ -9,6 +9,7 @@
 "chat.send" = "Kirim pesan";
 "chat.title" = "Tanya AI";
 "chat.back" = "Kembali";
-"chat.sending" = "Mengirim pesan";
 "chat.stop" = "Hentikan jawaban";
+/* TODO: Copy final hint bubble gagal dari UI/UX. */
+"chat.sendFailed" = "Pesan ini gagal terkirim";
 "welcome.shortcutsTitle" = "Mulai dari sini:";

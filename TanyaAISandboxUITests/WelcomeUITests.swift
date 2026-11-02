@@ -29,17 +29,18 @@ final class WelcomeUITests: XCTestCase {
         capture("welcome-id")
     }
 
-    /// Titik bergerak sampai pertanyaan datang dari stream (sambutan hilang), lalu stop. Selama stop nasabah
-    /// boleh mengetik pertanyaan berikutnya, tetapi harus menekan stop dulu untuk mengirimnya.
-    func testShortcutShowsLoadingUntilTheQuestionThenStopUnlocksSend() {
+    /// Bubble pertanyaan langsung menggantikan sambutan dan tombol langsung stop. Selama stop nasabah boleh
+    /// mengetik pertanyaan berikutnya, tetapi harus menekan stop dulu untuk mengirimnya.
+    func testShortcutShowsTheQuestionAndStopAtOnceThenStopUnlocksSend() {
         launch(locale: "en", extra: ["--hold-reply"])
         let shortcut = application.buttons["welcome.shortcut.0"]
         XCTAssertTrue(shortcut.waitForExistence(timeout: 10))
         let send = application.buttons["composer.send"]
         XCTAssertEqual(send.label, "Send message")
         shortcut.tap()
-        waitForLabel("Stop response", of: send)
-        waitUntilGone(application.otherElements["chat.welcome"])
+        XCTAssertTrue(application.descendants(matching: .any)["chat.question"].waitForExistence(timeout: 2))
+        XCTAssertFalse(application.otherElements["chat.welcome"].exists)
+        XCTAssertEqual(send.label, "Stop response")
         XCTAssertTrue(send.isEnabled)
         let input = application.textViews["composer.input"]
         input.tap()
@@ -50,6 +51,24 @@ final class WelcomeUITests: XCTestCase {
         waitForLabel("Send message", of: send)
         XCTAssertTrue(send.isEnabled, "setelah stop, draft yang sudah diketik bisa dikirim")
         XCTAssertEqual(input.value as? String, "Next question")
+    }
+
+    /// Gateway menolak kirim: bubble tetap tampil abu-abu dengan hint, tanpa retry, dan kirim terbuka lagi.
+    func testRejectedSendLeavesAFailedBubble() {
+        launch(locale: "en", extra: ["--reject-send"])
+        let input = application.textViews["composer.input"]
+        XCTAssertTrue(input.waitForExistence(timeout: 10))
+        input.tap()
+        input.typeText("Buy USD")
+        let send = application.buttons["composer.send"]
+        send.tap()
+        let failed = application.descendants(matching: .any)["chat.question.failed"]
+        XCTAssertTrue(failed.waitForExistence(timeout: 5))
+        XCTAssertTrue(failed.label.contains("Buy USD"))
+        XCTAssertTrue(failed.label.contains("This message failed to send"))
+        XCTAssertEqual(input.value as? String, "")
+        waitForLabel("Send message", of: send)
+        capture("chat-failed-question")
     }
 
     /// History tidak kosong: loading awal selesai tanpa sambutan (daftar pesan menyusul di PR tampilan pesan).
@@ -83,7 +102,7 @@ final class WelcomeUITests: XCTestCase {
         waitForLabel("Hentikan jawaban", of: application.buttons["composer.send"])
     }
 
-    /// Pertanyaan datang dari stream (sambutan hilang), lalu jawaban bot dan `turn_end` membuka kirim lagi.
+    /// Salinan pertanyaan dari stream menggantikan bubble lokal tanpa berkedip, lalu `turn_end` membuka kirim lagi.
     func testTurnEndFromTheStreamUnlocksSend() {
         launch(locale: "en")
         let shortcut = application.buttons["welcome.shortcut.0"]
@@ -93,6 +112,7 @@ final class WelcomeUITests: XCTestCase {
         waitForLabel("Stop response", of: send)
         waitUntilGone(application.otherElements["chat.welcome"])
         waitForLabel("Send message", of: send)
+        XCTAssertEqual(application.descendants(matching: .any).matching(identifier: "chat.question").count, 1)
     }
 
     private func launch(locale: String, extra: [String] = []) {
