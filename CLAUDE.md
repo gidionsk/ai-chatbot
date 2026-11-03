@@ -21,7 +21,8 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pes
   kirim (`LocalQuestion`), diganti salinan SSE lewat `client_msg_id`/seq ack; gagal kirim = bubble abu-abu +
   hint tanpa retry. Loading hanya saat history pertama; sambutan hanya bila history kosong. Bubble bot menyusul.
   `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). Tanpa titik bergerak: tombol langsung stop
-  (`cancelTurn` transport, ditahan sampai ack; ikon dummy `DesignIcon.stop`) dengan draft boleh diketik.
+  (`cancelTurn` transport, ditahan sampai ack) dengan draft boleh diketik. Tombol memakai ikon berwarna
+  `DesignColorIcon` `send-on`/`send-off`/`send-pause` (dummy, nama aset Byon); stopping = redup `.plain` bawaan.
   Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.

@@ -544,6 +544,14 @@ dikirim saat ack tiba, dan tidak dikirim bila kirim gagal. Draft tidak pernah di
 `LoadingDots` beserta `CustomSizes.LoadingDots` dan `CustomMotion` dihapus karena tidak dipakai lagi
 (keputusan user 3 November 2026).
 
+Tombol composer memakai tiga ikon berwarna utuh seperti aset Byon (keputusan user 3 November 2026):
+`send-on` (kirim aktif), `send-off` (draft kosong/belum siap), `send-pause` (stop). Stopping tidak punya
+aset: `send-pause` dengan `.plain` sehingga sistem meredupkannya. Fase lain memakai `ArtworkButtonStyle`
+karena `.plain` juga meredupkan `send-off` yang sudah abu-abu (dicek lewat render simulator). PDF dummy
+berupa lingkaran warna token (`colorsButtonActive`/`colorsIconDisabled`) + glyph putih, TODO aset Figma.
+`sendArrow`, `stop`, dan `CustomSizes.Composer.sendIconInset` dihapus. Test: `AssetTests` (ikon berwarna
+render original, setiap imageset punya case) dan `MessageComposerActionTests` (ikon per fase).
+
 `MessageBubble` (DesignKit) dari PR #36 ditambah `failureNote`: fill `colorsIconDisabled` (#B2B7C6,
 token terdekat dari Figma #BEC3D0), teks putih, catatan `typographySizeDisplayTiny12` Fira Sans Italic
 `colorsTextNegative`, jarak `spacingSmall`. `FiraSans-Italic.ttf` diambil utuh dari google/fonts revisi

@@ -74,37 +74,29 @@ public struct MessageComposer: View {
         }
     }
 
-    /// Satu tombol untuk semua fase: kirim atau stop.
+    /// Satu tombol untuk semua fase: kirim atau stop. Ikon berwarna utuh per fase; hanya stopping yang diredupkan
+    /// `disabled` bawaan sistem (`.plain`).
+    @ViewBuilder
     private var actionButton: some View {
+        if action.isSystemDimmed {
+            actionButtonBase.buttonStyle(.plain)
+        } else {
+            actionButtonBase.buttonStyle(ArtworkButtonStyle())
+        }
+    }
+
+    private var actionButtonBase: some View {
         Button(action: tapAction) {
-            actionIcon
+            Image(action.icon(isEnabled: isActionEnabled)).resizable().scaledToFit()
                 .frame(
                     width: CustomSizes.Composer.sendButton.scaledToArtwork,
                     height: CustomSizes.Composer.sendButton.scaledToArtwork
                 )
-                .background(Circle().fill(buttonFill))
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .disabled(!isActionEnabled)
         .accessibilityLabel(actionLabel)
         .accessibilityIdentifier(ComponentIdentifier.Composer.send)
-    }
-
-    @ViewBuilder
-    private var actionIcon: some View {
-        switch action {
-        case .send:
-            icon(DesignIcon.sendArrow)
-        case .stop, .stopping:
-            icon(DesignIcon.stop)
-        }
-    }
-
-    private func icon(_ name: DesignIcon) -> some View {
-        Image(name).resizable().scaledToFit()
-            .padding(CustomSizes.Composer.sendIconInset.scaledToArtwork)
-            .foregroundColor(colors.colorsIconLight)
     }
 }
 
@@ -121,11 +113,6 @@ private extension MessageComposer {
     var lineSpacing: CGFloat {
         let leading = FigmaSize.typographyLineHeightDisplaySmall14.scaledToArtwork
         return max(.zero, leading - inputFont.lineHeight)
-    }
-
-    /// Merah saat bisa ditekan; abu-abu saat draft kosong, nonaktif, atau stop diproses.
-    var buttonFill: Color {
-        isActionEnabled ? colors.colorsButtonActive : colors.colorsIconDisabled
     }
 
     var isActionEnabled: Bool {

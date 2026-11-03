@@ -97,8 +97,8 @@ tersedia pada history/main.
   environment dan menyuplai label ke DesignKit. Tidak ada copy bisnis di DesignKit.
 - Tanpa R.swift dan tanpa build tool plugin (CI host tidak bisa trust plugin). Key copy
   ditulis di satu enum per pemilik resource: `ChatCopy` (TanyaAI), `SandboxCopy` (sandbox);
-  ikon DesignKit di `DesignIcon`.
-  Pakai `String(ChatCopy.send, locale: locale)` dan `Image(DesignIcon.sendArrow)`.
+  ikon DesignKit di `DesignIcon` (template) dan `DesignColorIcon` (berwarna utuh, nama aset Byon).
+  Pakai `String(ChatCopy.send, locale: locale)` dan `Image(DesignIcon.backArrow)`.
   Menambah string/ikon = tambah entri di resource + case di enum; tes memastikan
   key enum sama persis dengan isi `Localizable.strings` ketiga bahasa dan imageset.
 - Technical identifiers, filename/PostScript font dan diagnostic prefix tetap

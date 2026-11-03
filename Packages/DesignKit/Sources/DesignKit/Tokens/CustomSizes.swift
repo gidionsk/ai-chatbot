@@ -44,7 +44,6 @@ public enum CustomSizes {
 
     public enum Composer {
         public static let sendButton: CGFloat = 24
-        public static let sendIconInset: CGFloat = 6
     }
 
     /// Kotak ikon dan chevron bulat pada kartu aksi.
