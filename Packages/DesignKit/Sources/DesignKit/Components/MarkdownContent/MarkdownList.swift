@@ -9,4 +9,9 @@
 struct MarkdownList: Equatable {
     let isOrdered: Bool
     let items: [MarkdownListItem]
+
+    /// Nomor terbesar: penandanya paling lebar dan menentukan lebar kolom penanda.
+    var largestOrdinal: Int {
+        items.map(\.ordinal).max() ?? MarkdownSyntax.firstOrdinal
+    }
 }

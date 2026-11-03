@@ -593,7 +593,10 @@ Ukuran estimasi (TODO Figma): heading `#` 20 / `##` 16 / lainnya 14 tebal, jarak
 garis quote 3, radius code/tabel 8, kolom penanda list 16, header tabel `colorsSurfaceTableHeader`.
 Open Sans belum punya face italic, jadi miring masih sintetis (TODO).
 
+Hanging indent: baris lanjutan item rata dengan teksnya, bukan dengan penanda. Kolom penanda selebar penanda
+terlebar di list itu, jadi teks item 9 dan 10 tetap satu kolom.
+
 Test: `MarkdownParserTests` (urutan blok, list bertingkat dan nomor awal, quote, code block, tabel dan sel
 kosong, nomor kartu dengan bintang tetap teks), `MarkdownStyleTests` (link, coret, kode, intent dilepas,
-bullet per level), `ChatMessageDocumentTests` (hanya bot yang Markdown, baris tanpa tampilan disembunyikan),
+bullet per level), `MarkdownListViewTests` (hanging indent, kolom penanda), `ChatMessageDocumentTests` (hanya bot yang Markdown, baris tanpa tampilan disembunyikan),
 dan `WelcomeUITests` (dua jawaban history, link diteruskan ke host).

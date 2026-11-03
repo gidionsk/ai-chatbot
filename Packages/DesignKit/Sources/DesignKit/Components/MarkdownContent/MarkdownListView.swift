@@ -30,11 +30,19 @@ struct MarkdownListView: View {
 // MARK: - Visual sections
 
 private extension MarkdownListView {
+    /// Penanda terlebar disembunyikan di belakang sebagai penahan lebar kolom, jadi teks item 9 dan 10 tetap rata.
     func marker(for item: MarkdownListItem) -> some View {
-        Text(MarkdownSyntax.listMarker(ordinal: item.ordinal, isOrdered: list.isOrdered, depth: style.listDepth))
+        ZStack(alignment: .leading) {
+            markerText(ordinal: list.largestOrdinal).hidden()
+            markerText(ordinal: item.ordinal)
+        }
+        .frame(minWidth: CustomSizes.Markdown.listMarkerWidth.scaledToArtwork, alignment: .leading)
+        .accessibilityHidden(!list.isOrdered)
+    }
+
+    func markerText(ordinal: Int) -> some View {
+        Text(MarkdownSyntax.listMarker(ordinal: ordinal, isOrdered: list.isOrdered, depth: style.listDepth))
             .font(style.fontFace.swiftUIFont(size: style.bodySize))
             .foregroundColor(colors.colorsTextPrimaryDark)
-            .frame(minWidth: CustomSizes.Markdown.listMarkerWidth.scaledToArtwork, alignment: .leading)
-            .accessibilityHidden(!list.isOrdered)
     }
 }
