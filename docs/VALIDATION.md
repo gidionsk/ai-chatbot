@@ -578,3 +578,22 @@ saja tidak memunculkan chip kosong; saat bubble bot tampil, pengelompokan memaka
 Test: `ChatDayTests` (pemisahan hari, zona perangkat, tanpa tanggal, hari mundur, waktu kirim lokal, 5.000 baris),
 `ChatDateFormatTests` (pola id/en), `DateChipTests` (lebar penuh, padding vertikal), dan `WelcomeUITests`
 (history dua tanggal `14 Okt 2026`/`15 Okt 2026`, satu chip setelah salinan stream menggantikan bubble lokal).
+
+## Jawaban bot Markdown — 3 November 2026
+
+Keputusan user: renderer sendiri di atas parser Apple `AttributedString(markdown:)` (iOS 15, tanpa
+dependency). Pembanding: swift-markdown-ui 2.4.1 maintenance mode dengan tiga dependency (cmark C,
+NetworkImage, snapshot-testing) dan tabel hanya iOS 16; penerusnya Textual butuh iOS 18. Cakupan: heading,
+paragraf, list bullet/nomor bertingkat dengan hanging indent, quote, divider, code block, tabel GFM, serta
+tebal/miring/coret/kode/link. HTML tampil sebagai teks, gambar sebagai teks alt. Jawaban di-parse sekali
+saat pesan dibuat (`ChatMessage.document`), bukan setiap render. Link diteruskan ke host lewat
+`makeView(onOpenLink:)`; sandbox menampilkan URL di alert sebagai pengganti webview host.
+
+Ukuran estimasi (TODO Figma): heading `#` 20 / `##` 16 / lainnya 14 tebal, jarak blok `spacingMedium`,
+garis quote 3, radius code/tabel 8, kolom penanda list 16, header tabel `colorsSurfaceTableHeader`.
+Open Sans belum punya face italic, jadi miring masih sintetis (TODO).
+
+Test: `MarkdownParserTests` (urutan blok, list bertingkat dan nomor awal, quote, code block, tabel dan sel
+kosong, nomor kartu dengan bintang tetap teks), `MarkdownStyleTests` (link, coret, kode, intent dilepas,
+bullet per level), `ChatMessageDocumentTests` (hanya bot yang Markdown, baris tanpa tampilan disembunyikan),
+dan `WelcomeUITests` (dua jawaban history, link diteruskan ke host).

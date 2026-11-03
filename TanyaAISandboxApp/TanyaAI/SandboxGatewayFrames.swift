@@ -26,7 +26,21 @@ struct SandboxGatewayFrames {
     static let canceledStatus = "canceled"
     static let completedStatus = "completed"
     /// Data dummy: jawaban bot mengulang pertanyaan.
-    static func reply(to question: String) -> String { "Jawaban contoh untuk: \(question)" }
+    /// Jawaban Markdown contoh: tebal, list, tabel, dan link (diteruskan ke host saat diketuk).
+    static func reply(to question: String) -> String {
+        """
+        **Jawaban contoh** untuk: \(question)
+
+        1. Kurs jual USD *Rp16.250*
+        2. Kurs beli USD ~~Rp16.300~~ Rp16.100
+
+        | Mata uang | Jual | Beli |
+        |:---|---:|---:|
+        | USD | 16.250 | 16.100 |
+
+        Lihat [halaman kurs](https://www.ocbc.id/id/kurs).
+        """
+    }
 
     /// `seq` terbesar di `TanyaAIHistoryDummy.json`; pesan baru melanjutkan setelahnya.
     static let historyLatestSeq = 4

@@ -31,11 +31,11 @@ enum ChatRow: Identifiable, Equatable {
         }
     }
 
-    /// Pertanyaan nasabah: pesan gateway dari nasabah atau pertanyaan lokal.
-    var isQuestion: Bool {
+    /// Punya tampilan di daftar: teks dari nasabah, bot, atau agen, serta setiap pertanyaan lokal.
+    var isVisible: Bool {
         switch self {
         case .message(let message):
-            return message.author == .customer
+            return message.text != nil && message.author != .unknown
         case .local:
             return true
         }

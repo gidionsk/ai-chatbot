@@ -219,3 +219,16 @@ membuat kiriman memunculkan blocker host di atas Tanya AI; tombol "Coba lagi"
 menutupnya dan pertanyaannya tampil sebagai bubble gagal (`--reject-send` juga). Welcome sandbox dibaca dari
 `Resources/Fixtures/TanyaAIInitDummy.json`; setelah chat/shortcut diterima, sandbox
 menjawab lewat gateway tiruan setelah 1 detik (`--hold-reply` menahan jawaban).
+
+## Link di jawaban bot
+
+Jawaban bot berformat Markdown dirender `MarkdownContent` (DesignKit). Link yang diketuk tidak dibuka
+TanyaAI (tanpa Safari fallback), tetapi diteruskan ke host:
+
+```swift
+host.makeView(onBack: pop, onOpenLink: { url in
+    // web → webview host, deeplink → handler host
+})
+```
+
+Tanpa `onOpenLink`, tap link diabaikan.

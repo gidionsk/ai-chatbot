@@ -46,6 +46,14 @@ public enum CustomSizes {
         public static let sendButton: CGFloat = 24
     }
 
+    /// Garis quote, radius code block/tabel, dan lebar kolom penanda list (hanging indent) pada `MarkdownContent`.
+    /// TODO: Cocokkan dengan nilai Figma; sementara estimasi.
+    public enum Markdown {
+        public static let quoteBarWidth: CGFloat = 3
+        public static let cornerRadius: CGFloat = 8
+        public static let listMarkerWidth: CGFloat = 16
+    }
+
     /// Kotak ikon dan chevron bulat pada kartu aksi.
     /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari screenshot.
     public enum ActionCard {

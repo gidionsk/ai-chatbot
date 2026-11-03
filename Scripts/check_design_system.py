@@ -21,7 +21,7 @@ METADATA = {
     'Features/Chat/Session/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
     'Features/Chat/Session/ConversationState.swift', 'Features/Chat/Session/WireError.swift',
     'Features/Chat/Session/WireCancel.swift',
-    'Features/Chat/Messages/ChatDateFormat.swift',
+    'Features/Chat/Messages/ChatDateFormat.swift', 'Components/MarkdownContent/MarkdownSyntax.swift',
     'TanyaAISandboxApp/SandboxOptions.swift', 'TanyaAISandboxApp/SandboxCopy.swift',
     'TanyaAISandboxApp/SandboxFixtureFile.swift', 'TanyaAISandboxApp/TanyaAI/SandboxGatewayFrames.swift',
     'TanyaAISandboxApp/TanyaAI/SandboxWireMessage.swift'

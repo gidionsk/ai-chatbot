@@ -19,3 +19,5 @@
 "sandbox.logout" = "Keluar";
 "sandbox.login" = "Masuk";
 "sandbox.prelogin.title" = "Belum masuk";
+"sandbox.link.title" = "Link diteruskan ke host";
+"sandbox.link.close" = "Tutup";
