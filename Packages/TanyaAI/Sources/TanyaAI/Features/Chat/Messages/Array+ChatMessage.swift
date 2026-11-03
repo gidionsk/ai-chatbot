@@ -27,4 +27,19 @@ extension Array where Element == ChatMessage {
         return byID.values.sorted { $0.seq < $1.seq }
     }
 
+    /// Daftar tampil: pertanyaan lokal disisipkan tepat setelah pesan terakhir saat ia dikirim, jadi bubble gagal
+    /// tetap di tempatnya walau pertanyaan dan jawaban berikutnya datang. `locals` urut waktu kirim.
+    func rows(with locals: [LocalQuestion]) -> [ChatRow] {
+        var pending = locals[...]
+        var rows: [ChatRow] = []
+        rows.reserveCapacity(count + locals.count)
+        for message in self {
+            while let local = pending.first, (local.afterSeq ?? .min) < message.seq {
+                rows.append(.local(local))
+                pending = pending.dropFirst()
+            }
+            rows.append(.message(message))
+        }
+        return rows + pending.map(ChatRow.local)
+    }
 }

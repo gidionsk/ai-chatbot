@@ -24,6 +24,10 @@ public protocol TanyaAIChatTransport: AnyObject {
     /// Ack 202 hanya tanda tersimpan; pesan tampil setelah datang lewat stream.
     func sendMessage(conversationID: String, clientMessageID: String, text: String) async throws -> Data
 
+    /// `POST /chat/conversations/{id}/cancel` tanpa body: menghentikan jawaban yang sedang berjalan.
+    /// Respons 200 `{canceled}`; kunci kirim tetap dibuka oleh `turn_end` di stream.
+    func cancelTurn(conversationID: String) async throws -> Data
+
     /// `GET /chat/conversations/{id}/events` (`Accept: text/event-stream`), dengan header `Last-Event-ID`
     /// bila tidak nil. Kirim setiap baris teks apa adanya tanpa newline (baris kosong boleh dibuang,
     /// misalnya oleh `URLSession.AsyncBytes.lines`). Stream selesai saat koneksi ditutup server; error

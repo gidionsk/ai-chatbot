@@ -9,7 +9,7 @@ DesignKit/Sources/DesignKit/
 ├── Components/ScreenContainer/ScreenContainer.swift
 ├── Extensions/View+ScrollProgress.swift
 ├── Tokens/CustomSizes.swift              # Header: tinggi dan jumlah baris
-└── Resources/Assets.xcassets/            # back/more/send dummy; nama di DesignIcon
+└── Resources/Assets.xcassets/            # ikon dummy; nama di DesignIcon/DesignColorIcon
 
 TanyaAI/Sources/TanyaAI/
 ├── Bridging/TanyaAIHost.swift                    # konfigurasi + pembuat halaman untuk host

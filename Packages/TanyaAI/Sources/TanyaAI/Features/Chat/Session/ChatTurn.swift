@@ -17,8 +17,37 @@ struct ChatTurn: Equatable {
     private var questionSeq: Int?
     /// Seq `turn_end` terbesar sejak pertanyaan dikirim.
     private var latestEndSeq: Int?
+    /// Stop sudah ditekan dan belum selesai.
+    private var isCanceling = false
 
     var isAwaiting: Bool { clientMessageID != nil }
+
+    /// Ack kirim sudah diterima; cancel ke gateway baru bermakna setelah ini.
+    var isAccepted: Bool { questionSeq != nil }
+
+    var phase: ChatTurnPhase {
+        guard isAwaiting else { return .idle }
+        return isCanceling ? .canceling : .awaitingReply
+    }
+
+    /// True bila stop untuk pertanyaan ini sedang diproses.
+    func isCanceling(clientMessageID: String) -> Bool {
+        isCanceling && self.clientMessageID == clientMessageID
+    }
+
+    /// Stop ditekan; boleh sebelum ack (cancel dikirim saat ack tiba). Nil bila tidak menunggu atau stop
+    /// sudah diproses.
+    mutating func startCanceling() -> String? {
+        guard phase == .awaitingReply else { return nil }
+        isCanceling = true
+        return clientMessageID
+    }
+
+    /// Cancel gagal: stop bisa ditekan lagi. Respons untuk pertanyaan lama tidak mengubah pertanyaan baru.
+    mutating func stopCanceling(clientMessageID: String) {
+        guard self.clientMessageID == clientMessageID else { return }
+        isCanceling = false
+    }
 
     mutating func start(clientMessageID: String) {
         self = ChatTurn(clientMessageID: clientMessageID)

@@ -69,6 +69,31 @@ struct ChatTurnTests {
         #expect(!turn.isAwaiting)
     }
 
+    /// Stop langsung sejak kirim; gagal = stop bisa ditekan lagi, `turn_end` = selesai.
+    @Test
+    func stopIsAvailableFromTheMomentOfSending() {
+        var turn = ChatTurn()
+        #expect(turn.phase == .idle)
+        #expect(turn.startCanceling() == nil)
+        turn.start(clientMessageID: "q")
+        #expect(turn.phase == .awaitingReply)
+        #expect(!turn.isAccepted)
+        #expect(turn.startCanceling() == "q")
+        #expect(turn.phase == .canceling)
+        #expect(turn.isCanceling(clientMessageID: "q"))
+        #expect(!turn.isCanceling(clientMessageID: "lama"))
+        #expect(turn.startCanceling() == nil, "stop yang sedang diproses tidak dikirim dua kali")
+        turn.accept(questionSeq: 2, for: "q")
+        #expect(turn.isAccepted)
+        turn.stopCanceling(clientMessageID: "lama")
+        #expect(turn.phase == .canceling)
+        turn.stopCanceling(clientMessageID: "q")
+        #expect(turn.phase == .awaitingReply)
+        _ = turn.startCanceling()
+        turn.end(seq: 4)
+        #expect(turn.phase == .idle)
+    }
+
     @Test
     func turnEndWhileIdleChangesNothing() {
         var turn = ChatTurn()

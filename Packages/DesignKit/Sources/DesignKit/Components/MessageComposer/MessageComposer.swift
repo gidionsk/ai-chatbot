@@ -17,24 +17,28 @@ public struct MessageComposer: View {
     // Figma typography follows artwork scaling only, independent of the user's text size setting.
     private let fontSize = FigmaSize.typographySizeDisplaySmall14.scaledToArtwork
     private let placeholder: String
-    private let sendLabel: String
+    private let actionLabel: String
     private let isEnabled: Bool
-    private let isLoading: Bool
+    private let action: MessageComposerAction
     private let fontFace: FontFace
     private let onSend: () -> Void
+    private let onStop: () -> Void
 
+    /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol;
+    /// draft selalu bisa diketik.
     public init(
-        text: Binding<String>, placeholder: String, sendLabel: String,
-        isEnabled: Bool = true, isLoading: Bool = false, fontFace: FontFace = .openSansRegular,
-        onSend: @escaping () -> Void
+        text: Binding<String>, placeholder: String, actionLabel: String,
+        isEnabled: Bool = true, action: MessageComposerAction = .send, fontFace: FontFace = .openSansRegular,
+        onSend: @escaping () -> Void, onStop: @escaping () -> Void = {}
     ) {
         self._text = text
         self.placeholder = placeholder
-        self.sendLabel = sendLabel
+        self.actionLabel = actionLabel
         self.isEnabled = isEnabled
-        self.isLoading = isLoading
+        self.action = action
         self.fontFace = fontFace
         self.onSend = onSend
+        self.onStop = onStop
     }
 
     public var body: some View {
@@ -70,32 +74,29 @@ public struct MessageComposer: View {
         }
     }
 
-    /// Saat `isLoading`, panah diganti titik bergerak dan tombol tidak bisa ditekan; draft tetap bisa diketik.
+    /// Satu tombol untuk semua fase: kirim atau stop. Ikon berwarna utuh per fase; hanya stopping yang diredupkan
+    /// `disabled` bawaan sistem (`.plain`).
+    @ViewBuilder
     private var actionButton: some View {
-        Button(action: onSend) {
-            actionIcon
+        if action.isSystemDimmed {
+            actionButtonBase.buttonStyle(.plain)
+        } else {
+            actionButtonBase.buttonStyle(ArtworkButtonStyle())
+        }
+    }
+
+    private var actionButtonBase: some View {
+        Button(action: tapAction) {
+            Image(action.icon(isEnabled: isActionEnabled)).resizable().scaledToFit()
                 .frame(
                     width: CustomSizes.Composer.sendButton.scaledToArtwork,
                     height: CustomSizes.Composer.sendButton.scaledToArtwork
                 )
-                .background(Circle().fill(buttonFill))
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .disabled(!isSendEnabled)
-        .accessibilityLabel(sendLabel)
+        .disabled(!isActionEnabled)
+        .accessibilityLabel(actionLabel)
         .accessibilityIdentifier(ComponentIdentifier.Composer.send)
-    }
-
-    @ViewBuilder
-    private var actionIcon: some View {
-        if isLoading {
-            LoadingDots(color: colors.colorsIconLight)
-        } else {
-            Image(DesignIcon.sendArrow).resizable().scaledToFit()
-                .padding(CustomSizes.Composer.sendIconInset.scaledToArtwork)
-                .foregroundColor(colors.colorsIconLight)
-        }
     }
 }
 
@@ -114,12 +115,22 @@ private extension MessageComposer {
         return max(.zero, leading - inputFont.lineHeight)
     }
 
-    /// Merah saat bisa dikirim atau sedang menunggu; abu-abu saat draft kosong/nonaktif.
-    var buttonFill: Color {
-        isSendEnabled || isLoading ? colors.colorsButtonActive : colors.colorsIconDisabled
+    var isActionEnabled: Bool {
+        switch action {
+        case .send:
+            return isEnabled && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .stop:
+            return isEnabled
+        case .stopping:
+            return false
+        }
     }
 
-    var isSendEnabled: Bool {
-        isEnabled && !isLoading && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    func tapAction() {
+        if action == .stop {
+            onStop()
+        } else {
+            onSend()
+        }
     }
 }

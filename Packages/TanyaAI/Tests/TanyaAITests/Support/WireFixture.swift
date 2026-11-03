@@ -29,6 +29,10 @@ enum WireFixture {
         return Data(#"{"success":true,"data":{"messages":[\#(messages)],"next_before":\#(next)}}"#.utf8)
     }
 
+    static func cancel(isCanceled: Bool) -> Data {
+        Data(#"{"success":true,"data":{"canceled":\#(isCanceled)}}"#.utf8)
+    }
+
     static func ack(seq: Int = 2) -> Data {
         Data(#"{"success":true,"data":{"message_id":"b1b2c3d4-0002","seq":"\#(seq)"}}"#.utf8)
     }
@@ -44,24 +48,29 @@ enum WireFixture {
 
     /// Objek `Message` lengkap; `direction` bot untuk seq genap, customer untuk ganjil kecuali ditentukan.
     static func message(
-        seq: Int, direction: String? = nil, payload: String? = nil, status: String = "active"
+        seq: Int, direction: String? = nil, payload: String? = nil, status: String = "active",
+        clientMessageID: String? = nil
     ) -> String {
         let author = direction ?? (seq.isMultiple(of: 2) ? "bot" : "customer")
+        let clientID = clientMessageID.map { "\"\($0)\"" } ?? "null"
         return #"""
             {"message_id":"m-\#(seq)","seq":"\#(seq)","direction":"\#(author)","type":"text",\#
             "payload":"\#(payload ?? "pesan \(seq)")","intent":"","action":"","source":"","params":{},\#
-            "follow_up_questions":null,"interaction":null,"client_msg_id":null,"status":"\#(status)",\#
+            "follow_up_questions":null,"interaction":null,"client_msg_id":\#(clientID),"status":"\#(status)",\#
             "created_at":"2026-10-23T15:00:00+07:00"}
             """#
     }
 
     /// Frame SSE `message` lengkap dengan baris kosong penutup.
-    static func messageFrame(seq: Int, direction: String? = nil, status: String = "active") -> [String] {
-        ["id: \(seq)", "event: message", "data: \(message(seq: seq, direction: direction, status: status))", ""]
+    static func messageFrame(
+        seq: Int, direction: String? = nil, status: String = "active", clientMessageID: String? = nil
+    ) -> [String] {
+        let data = message(seq: seq, direction: direction, status: status, clientMessageID: clientMessageID)
+        return ["id: \(seq)", "event: message", "data: \(data)", ""]
     }
 
-    static func turnEndFrame(seq: Int) -> [String] {
-        ["id: \(seq)", "event: turn_end", #"data: {"status":"completed","active_turn_id":"100001"}"#, ""]
+    static func turnEndFrame(seq: Int, status: String = "completed") -> [String] {
+        ["id: \(seq)", "event: turn_end", #"data: {"status":"\#(status)","active_turn_id":"100001"}"#, ""]
     }
 
     static func typingFrame(seq: Int) -> [String] {

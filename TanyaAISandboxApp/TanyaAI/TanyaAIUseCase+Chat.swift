@@ -40,6 +40,16 @@ extension TanyaAIUseCase: TanyaAIChatTransport {
         }
     }
 
+    func cancelTurn(conversationID: String) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            chatService.cancelTurn(
+                conversationID: conversationID,
+                onSuccess: { continuation.resume(returning: $0) },
+                onFailed: { continuation.resume(throwing: $0) }
+            )
+        }
+    }
+
     func events(conversationID: String, lastEventID: String?) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             let request = chatService.events(

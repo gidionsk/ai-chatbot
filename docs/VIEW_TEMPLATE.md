@@ -216,12 +216,13 @@ Masukkan imageset ke `DesignKit/Resources/Assets.xcassets`, lalu tambah case den
 nama yang sama di `DesignIcon` (`Foundations/Iconography`):
 
 ```swift
-Image(DesignIcon.sendArrow)          // SwiftUI, dari DesignKit atau fitur
-UIImage(DesignIcon.sendArrow)        // UIKit, nil bila imageset tidak ada
+Image(DesignIcon.backArrow)          // SwiftUI, dari DesignKit atau fitur
+UIImage(DesignIcon.backArrow)        // UIKit, nil bila imageset tidak ada
 ```
 
 `AssetTests` memastikan setiap case termuat dari bundle package dan setiap imageset
-punya case. `DesignIcon` khusus ikon template; ilustrasi atau gambar latar nanti
+punya case. `DesignIcon` khusus ikon template. Ikon berwarna utuh (tombol kirim/stop composer,
+render original) memakai `DesignColorIcon` dengan nama imageset aset Byon (`send-on`); ilustrasi atau gambar latar nanti
 memakai enum sendiri karena tidak di-tint dan ukurannya berbeda.
 
 Tidak memakai R.swift: build tool plugin wajib di-trust per mesin ("Trust & Enable"),

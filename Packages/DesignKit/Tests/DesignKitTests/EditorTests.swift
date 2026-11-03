@@ -64,7 +64,7 @@ struct EditorTests {
             for category: ContentSizeCategory in [.large, .accessibilityExtraExtraExtraLarge] {
                 let content = MessageComposer(
                     text: .constant(String(repeating: "中文 English ", count: 20)),
-                    placeholder: "咨询财务及服务…", sendLabel: "发送消息", onSend: {}
+                    placeholder: "咨询财务及服务…", actionLabel: "发送消息", onSend: {}
                 )
                 .environment(\.sizeCategory, category)
                 let controller = UIHostingController(rootView: content)

@@ -18,12 +18,22 @@ struct AssetTests {
         #expect(loaded.renderingMode == .alwaysTemplate)
     }
 
+    /// Ikon berwarna tidak boleh di-tint, jadi render original.
+    @Test(arguments: DesignColorIcon.allCases)
+    func everyColorIconLoadsUntinted(icon: DesignColorIcon) throws {
+        let loaded = try #require(UIImage(icon), "\(icon)")
+        #expect(loaded.size == CGSize(width: 24, height: 24))
+        #expect(loaded.renderingMode == .alwaysOriginal)
+    }
+
     @Test
     func everyImagesetHasAnIconCase() throws {
         let names = try FileManager.default.contentsOfDirectory(atPath: Self.catalogSourcePath)
             .filter { $0.hasSuffix(".imageset") }
             .map { String($0.dropLast(".imageset".count)) }
-        #expect(Set(names) == Set(DesignIcon.allCases.map(\.rawValue)))
+        let cases = DesignIcon.allCases.map(\.rawValue) + DesignColorIcon.allCases.map(\.rawValue)
+        #expect(names.count == cases.count)
+        #expect(Set(names) == Set(cases))
     }
 }
 

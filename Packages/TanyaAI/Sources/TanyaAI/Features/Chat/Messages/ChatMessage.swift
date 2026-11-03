@@ -17,18 +17,21 @@ struct ChatMessage: Identifiable, Equatable {
     let status: ChatMessageStatus
     /// Nil bila `created_at` kosong atau bukan ISO 8601; pesan ikut hari pesan sebelumnya.
     let createdAt: Date?
+    /// Penanda pertanyaan dari aplikasi ini; dicocokkan dengan pertanyaan yang sedang ditunggu.
+    let clientMessageID: String?
 
     /// Nil bila `seq` bukan angka desimal: pesan tanpa urutan tidak bisa digabung dengan aman.
     init?(wire: WireMessage) {
         guard let seq = Int(wire.seq) else { return nil }
         self.init(
             id: wire.messageId, seq: seq, author: wire.direction, text: wire.payload, status: wire.status,
-            createdAt: wire.createdAt.flatMap(Date.init(wire:))
+            createdAt: wire.createdAt.flatMap(Date.init(wire:)), clientMessageID: wire.clientMsgId
         )
     }
 
     init(
-        id: String, seq: Int, author: ChatAuthor, text: String?, status: ChatMessageStatus, createdAt: Date? = nil
+        id: String, seq: Int, author: ChatAuthor, text: String?, status: ChatMessageStatus, createdAt: Date? = nil,
+        clientMessageID: String? = nil
     ) {
         self.id = id
         self.seq = seq
@@ -36,5 +39,6 @@ struct ChatMessage: Identifiable, Equatable {
         self.text = text
         self.status = status
         self.createdAt = createdAt
+        self.clientMessageID = clientMessageID
     }
 }

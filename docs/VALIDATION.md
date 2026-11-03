@@ -530,3 +530,36 @@ Keputusan user: header tidak lagi berganti mendadak dari transparan ke solid. `S
 = tinggi header (`ScreenHeader.height(isNotched:)`), jadi tidak ada token baru; posisi teratas (termasuk
 bounce) selalu 0 = transparan penuh. Identifier `header.scrolled` tetap berarti "tidak di posisi teratas".
 Test piksel: progres 0,25 lebih dekat ke latar daripada 0,5, dan 0,5 berada di antara latar dan putih.
+
+## Bubble langsung, bubble gagal, dan stop — 2 November 2026
+
+Menggantikan PR #40 (titik bergerak sampai pertanyaan datang dari stream). Keputusan user: tidak ada
+fase loading. Saat kirim, bubble pertanyaan langsung tampil (`LocalQuestion`, draft dikosongkan) dan
+tombol langsung menjadi stop (ikon dummy `DesignIcon.stop`, TODO aset dari user). Salinan dari stream
+atau history menggantikan bubble lokal, dicocokkan lewat `client_msg_id` atau seq ack, jadi tidak ada
+jeda dari sisi FE. Gagal kirim (semua error; 401/404/410 tetap memanggil host) = bubble abu-abu dengan
+hint merah miring di bawahnya, tanpa retry; bubble gagal tetap di posisi saat dikirim walau pesan
+berikutnya datang (`Array.rows(with:)`). Stop memanggil `POST .../cancel`; ditekan sebelum ack, cancel
+dikirim saat ack tiba, dan tidak dikirim bila kirim gagal. Draft tidak pernah dikunci.
+`LoadingDots` beserta `CustomSizes.LoadingDots` dan `CustomMotion` dihapus karena tidak dipakai lagi
+(keputusan user 3 November 2026).
+
+Tombol composer memakai tiga ikon berwarna utuh seperti aset Byon (keputusan user 3 November 2026):
+`send-on` (kirim aktif), `send-off` (draft kosong/belum siap), `send-pause` (stop). Stopping tidak punya
+aset: `send-pause` dengan `.plain` sehingga sistem meredupkannya. Fase lain memakai `ArtworkButtonStyle`
+karena `.plain` juga meredupkan `send-off` yang sudah abu-abu (dicek lewat render simulator). PDF dummy
+berupa lingkaran warna token (`colorsButtonActive`/`colorsIconDisabled`) + glyph putih, TODO aset Figma.
+`sendArrow`, `stop`, dan `CustomSizes.Composer.sendIconInset` dihapus. Test: `AssetTests` (ikon berwarna
+render original, setiap imageset punya case) dan `MessageComposerActionTests` (ikon per fase).
+
+`MessageBubble` (DesignKit) dari PR #36 ditambah `failureNote`: fill `colorsIconDisabled` (#B2B7C6,
+token terdekat dari Figma #BEC3D0), teks putih, catatan `typographySizeDisplayTiny12` Fira Sans Italic
+`colorsTextNegative`, jarak `spacingSmall`. `FiraSans-Italic.ttf` diambil utuh dari google/fonts revisi
+yang sama dengan face Fira Sans lain (OFL). Hint `chat.sendFailed` masih copy sementara (TODO UI/UX).
+Sementara hanya bubble pertanyaan nasabah yang tampil; bubble bot menyusul di PR daftar pesan.
+
+Test: `ChatTurnTests` (stop sejak kirim), `ChatRowTests` (posisi bubble lokal, pencocokan salinan),
+`TanyaAIBridgeTests` (bubble sebelum ack, salinan stream menggantikan, gagal 400/offline/401/404/410),
+`TanyaAIBridgeTurnTests` (stop sebelum ack, stop lalu kirim gagal, salinan dari history setelah
+reconnect), `MessageBubbleTests` (catatan hanya untuk pesan keluar), `ComposerActionTests` (tidak ada
+fase yang mengunci draft), dan `WelcomeUITests` (bubble + stop seketika, bubble gagal `--reject-send`).

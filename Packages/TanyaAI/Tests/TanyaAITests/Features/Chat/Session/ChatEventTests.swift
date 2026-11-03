@@ -29,9 +29,20 @@ struct ChatEventTests {
         #expect(Date(wire: "23-10-2026") == nil)
     }
 
+    @Test(arguments: ["completed", "failed", "canceled"])
+    func turnEndUnlocksRegardlessOfItsStatus(status: String) {
+        #expect(ChatEvent(frame(WireFixture.turnEndFrame(seq: 3, status: status))) == .turnEnd(seq: 3))
+    }
+
+    /// `client_msg_id` pertanyaan nasabah dibawa untuk mencocokkan pertanyaan yang sedang ditunggu.
     @Test
-    func turnEndUnlocksRegardlessOfItsStatus() {
-        #expect(ChatEvent(frame(WireFixture.turnEndFrame(seq: 3))) == .turnEnd(seq: 3))
+    func customerQuestionKeepsItsClientMessageID() {
+        let event = ChatEvent(frame(WireFixture.messageFrame(seq: 1, clientMessageID: "c-1")))
+        guard case let .message(message) = event else {
+            Issue.record("frame pertanyaan harus menjadi pesan: \(event)")
+            return
+        }
+        #expect(message.clientMessageID == "c-1")
     }
 
     @Test

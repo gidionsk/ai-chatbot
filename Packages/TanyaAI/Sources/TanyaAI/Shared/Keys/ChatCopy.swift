@@ -12,6 +12,7 @@ enum ChatCopy: String, CaseIterable {
     case send = "chat.send"
     case title = "chat.title"
     case back = "chat.back"
-    case replying = "chat.replying"
+    case stop = "chat.stop"
+    case sendFailed = "chat.sendFailed"
     case shortcutsTitle = "welcome.shortcutsTitle"
 }
