@@ -71,12 +71,15 @@ final class WelcomeUITests: XCTestCase {
         capture("chat-failed-question")
     }
 
-    /// History tidak kosong: loading awal selesai tanpa sambutan (daftar pesan menyusul di PR tampilan pesan).
-    func testHistoryHidesTheWelcome() {
+    /// History tidak kosong: loading awal selesai tanpa sambutan; chip tanggal di atas pesan pertama tiap hari.
+    func testHistoryHidesTheWelcomeAndShowsADateChipPerDay() {
         launch(locale: "id", extra: ["--with-history"])
         XCTAssertTrue(application.textViews["composer.input"].waitForExistence(timeout: 10))
         waitUntilGone(application.descendants(matching: .any)["chat.loading"])
         XCTAssertFalse(application.buttons["welcome.shortcut.0"].exists)
+        let chips = application.staticTexts.matching(identifier: "chat.date")
+        XCTAssertTrue(chips.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertEqual(chips.allElementsBoundByIndex.map(\.label), ["14 Okt 2026", "15 Okt 2026"])
         capture("chat-history-without-welcome")
     }
 
@@ -103,6 +106,7 @@ final class WelcomeUITests: XCTestCase {
     }
 
     /// Salinan pertanyaan dari stream menggantikan bubble lokal tanpa berkedip, lalu `turn_end` membuka kirim lagi.
+    /// Chip tanggal hari ini tampil sekali, dari waktu kirim lalu dari `created_at` salinan stream.
     func testTurnEndFromTheStreamUnlocksSend() {
         launch(locale: "en")
         let shortcut = application.buttons["welcome.shortcut.0"]
@@ -113,6 +117,7 @@ final class WelcomeUITests: XCTestCase {
         waitUntilGone(application.otherElements["chat.welcome"])
         waitForLabel("Send message", of: send)
         XCTAssertEqual(application.descendants(matching: .any).matching(identifier: "chat.question").count, 1)
+        XCTAssertEqual(application.staticTexts.matching(identifier: "chat.date").count, 1)
     }
 
     private func launch(locale: String, extra: [String] = []) {
