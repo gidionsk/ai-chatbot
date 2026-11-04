@@ -20,7 +20,7 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pes
   Bridge yang menyambung, retry, decode, dan merge (`docs/CHAT_GATEWAY.md`). Bubble pertanyaan tampil saat
   kirim (`LocalQuestion`), diganti salinan SSE lewat `client_msg_id`/seq ack; gagal kirim = bubble abu-abu +
   hint tanpa retry. Loading hanya saat history pertama; sambutan hanya bila history kosong. Chip tanggal
-  (`DateChip`, `d MMM yyyy`, zona perangkat) di atas pertanyaan pertama tiap hari; bubble lokal memakai waktu kirim.
+  (`TextChip`, `d MMM yyyy`, zona perangkat) di atas pertanyaan pertama tiap hari; bubble lokal memakai waktu kirim.
   Jawaban bot = `MarkdownContent` (parser Apple, tanpa dependency/HTML/gambar), link ke host lewat
   `makeView(onOpenLink:)`.
   `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). Tanpa titik bergerak: tombol langsung stop
@@ -29,9 +29,12 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pes
   Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.
-- Folder TanyaAI: `Bridging/` (API host), `Features/<Fitur>/` (screen di root, tiap bagian
-  `Welcome/`, `Composer/` berisi view + modelnya), `Shared/Keys|Extensions`, `Resources/`.
-  Tests mencerminkan Sources. Detail di AGENTS.md.
+- Folder TanyaAI: `Bridging/` (API host), `Features/<Fitur>/` (screen di root, tiap bagian `Welcome/`,
+  `Composer/`, `Messages/`, `Session/`), `Shared/Keys|Extensions`, `Resources/`. Di dalam bagian atau komponen,
+  section/view utama di root dan sisanya per jenis (`Models/`, `Extensions/`, `Formatters/`, `Views/`, `Parsing/`,
+  `Wire/`, `Stream/`, `State/`). Tests mencerminkan Sources. Detail di AGENTS.md.
+- Komponen DesignKit dinamai menurut bentuknya (`TextChip`), bukan isi di layar pertama yang memakainya;
+  nama khusus hanya bila ada logika khusus (`MessageBubble`, `MarkdownContent`).
 - Unit test memakai Swift Testing (`@Test`, `#expect`, `#require`); UI test tetap
   XCTest. Suite yang memakai window di sandbox masuk `HostWindowTests` (berurutan).
 - Sandbox meniru host Byon: coordinator menulis Input UseCase, UseCase mengolah ke Repository, view model

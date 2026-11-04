@@ -46,7 +46,9 @@ private extension MessagesSection {
     @ViewBuilder
     func dateChip(for day: ChatDay) -> some View {
         if let date = day.date {
-            DateChip(text: ChatDateFormat.dayLabel(for: date, locale: locale))
+            TextChip(text: ChatDateFormat.dayLabel(for: date, locale: locale))
+                .frame(maxWidth: .infinity)
+                .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier(ChatElementIdentifier.dateChip)
         }
     }

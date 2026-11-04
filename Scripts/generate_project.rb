@@ -44,7 +44,7 @@ ui_test_target = project.new_target(
 )
 unit_test_target = project.new_target(:unit_test_bundle, 'TanyaAISandboxTests', :ios, '17.0')
 
-# Subfolder sandbox (Host, Main, Detail, TanyaAI) menjadi group dengan nama yang sama.
+# Subfolder sandbox (Host, Main, Detail, TanyaAI/*) menjadi group dengan nama yang sama.
 source_groups = {}
 source_paths = Dir.glob(File.join(APP_PATH, '**', '*.swift')).sort
 source_references = source_paths.map do |source_path|

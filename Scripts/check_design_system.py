@@ -18,14 +18,14 @@ METADATA = {
     'Typography/FontFace.swift', 'Extensions/Color+Hex.swift', 'Extensions/String+Resource.swift',
     'Foundations/Accessibility/ComponentIdentifier.swift', 'Foundations/Iconography/DesignColorIcon.swift',
     'Shared/Keys/ChatElementIdentifier.swift', 'Shared/Keys/ChatCopy.swift',
-    'Features/Chat/Session/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
-    'Features/Chat/Session/ConversationState.swift', 'Features/Chat/Session/WireError.swift',
-    'Features/Chat/Session/WireCancel.swift',
-    'Features/Chat/Messages/ChatDateFormat.swift', 'Features/Chat/Messages/ChatDayID.swift',
-    'Components/MarkdownContent/MarkdownSyntax.swift',
+    'Features/Chat/Session/Wire/ChatWire.swift', 'Features/Chat/Session/Stream/ChatBackoff.swift',
+    'Features/Chat/Session/State/ConversationState.swift', 'Features/Chat/Session/Wire/WireError.swift',
+    'Features/Chat/Session/Wire/WireCancel.swift',
+    'Features/Chat/Messages/Formatters/ChatDateFormat.swift', 'Features/Chat/Messages/Models/ChatDayID.swift',
+    'Components/MarkdownContent/Parsing/MarkdownSyntax.swift',
     'TanyaAISandboxApp/SandboxOptions.swift', 'TanyaAISandboxApp/SandboxCopy.swift',
-    'TanyaAISandboxApp/SandboxFixtureFile.swift', 'TanyaAISandboxApp/TanyaAI/SandboxGatewayFrames.swift',
-    'TanyaAISandboxApp/TanyaAI/SandboxWireMessage.swift'
+    'TanyaAISandboxApp/SandboxFixtureFile.swift', 'TanyaAISandboxApp/TanyaAI/Gateway/SandboxGatewayFrames.swift',
+    'TanyaAISandboxApp/TanyaAI/Gateway/SandboxWireMessage.swift'
 }
 paths = list((ROOT / 'Packages').glob('*/Sources/**/*.swift'))
 paths += list((ROOT / 'TanyaAISandboxApp').glob('**/*.swift'))

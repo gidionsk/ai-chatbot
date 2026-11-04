@@ -568,7 +568,7 @@ fase yang mengunci draft), dan `WelcomeUITests` (bubble + stop seketika, bubble 
 
 Keputusan user: teks tanggal tampil di atas pesan pertama setiap hari kalender (ikut ter-scroll, bukan sticky),
 pola Figma `d MMM yyyy` untuk semua bahasa (nama bulan ikut bahasa fitur), zona waktu perangkat. Tampilan
-memakai estimasi PR #36 (`DateChip`: kapsul `colorsSurfaceSelected`, teks 14 `colorsTextPrimaryDark`, padding
+memakai estimasi PR #36 (`DateChip`, kini `TextChip`: kapsul `colorsSurfaceSelected`, teks 14 `colorsTextPrimaryDark`, padding
 `spacingLarge`/`spacingSmall`), TODO cocokkan Figma. Bubble lokal memakai waktu kirim (`LocalQuestion.sentAt`);
 pesan gateway tanpa `created_at` ikut hari sebelumnya. Hari berganti ke dua arah: baris yang harinya mundur (jam perangkat
 berbeda dengan server) membuka kelompok sendiri, jadi setiap baris tampil di bawah tanggalnya dan urutan percakapan
@@ -577,7 +577,7 @@ tidak dibuat ulang saat bubble lokal diganti salinan stream. Sementara hanya per
 saja tidak memunculkan chip kosong; saat bubble bot tampil, pengelompokan memakai semua baris.
 
 Test: `ChatDayTests` (pemisahan hari, zona perangkat, tanpa tanggal, hari mundur, id hari berulang, waktu kirim lokal, 5.000 baris),
-`ChatDateFormatTests` (pola id/en), `DateChipTests` (lebar penuh, padding vertikal), dan `WelcomeUITests`
+`ChatDateFormatTests` (pola id/en), `TextChipTests` (padding kapsul), dan `WelcomeUITests`
 (history dua tanggal `14 Okt 2026`/`15 Okt 2026`, satu chip setelah salinan stream menggantikan bubble lokal).
 
 ## Jawaban bot Markdown — 3 November 2026
@@ -601,3 +601,13 @@ Test: `MarkdownParserTests` (urutan blok, list bertingkat dan nomor awal, quote,
 kosong, nomor kartu dengan bintang tetap teks), `MarkdownStyleTests` (link, coret, kode, intent dilepas,
 bullet per level), `MarkdownListViewTests` (hanging indent, kolom penanda), `ChatMessageDocumentTests` (hanya bot yang Markdown, baris tanpa tampilan disembunyikan),
 dan `WelcomeUITests` (dua jawaban history, link diteruskan ke host).
+
+## Folder per jenis dan nama komponen umum — 4 November 2026
+
+Folder `Session/` (19 file), `Messages/` (11) dan `MarkdownContent/` (17) mulai sulit dibaca, jadi isinya
+dibagi per jenis di dalam bagian/komponennya. Lokasi section tetap, `Features/Chat/Models` umum tidak kembali.
+`Sources` hanya pindah (`git mv`), kecuali `DateChip` diganti `TextChip` supaya bisa dipakai label selain
+tanggal: lebar penuh dan trait header pindah ke `MessagesSection`, dan `ChatElementIdentifier.dateChip` tetap
+karena memang peran di fitur Chat. `ArtworkButtonStyle` pindah ke `ViewModifiers/` karena tidak khusus composer.
+`Bridging/`, `Composer/` dan `Host/` sandbox tetap datar, test sandbox juga karena generator hanya membaca satu
+level.

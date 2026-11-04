@@ -69,10 +69,11 @@ tersedia pada history/main.
 
 - `Bridging/`: API publik untuk host (`TanyaAIHost`). Satu-satunya pintu masuk host.
 - `Features/<Fitur>/`: satu fitur = satu screen/alur yang bisa dinavigasi (kini `Chat`). Screen di
-  root fitur (`ChatScreen.swift`); tiap bagian screen punya folder sendiri berisi view dan model
-  yang hanya dipakai bagian itu: `Welcome/` (section + `WelcomeContent/Greeting/Shortcut`),
-  `Composer/`, nanti `Messages/`. Bagian bukan fitur sendiri. Model diletakkan dekat pemakainya,
-  tanpa folder `Models/` atau `Views/` umum. Model yang dipakai beberapa bagian naik ke root fitur.
+  root fitur (`ChatScreen.swift`); tiap bagian screen punya folder sendiri: `Welcome/`, `Composer/`,
+  `Messages/`, `Session/`. Bagian bukan fitur sendiri. Section di root bagian, sisanya per jenis di
+  dalam bagian itu: `Models/`, `Extensions/`, `Formatters/`; `Session/` memakai `Wire/` (DTO gateway),
+  `Stream/` (SSE dan jeda sambung ulang), `State/`, `Extensions/`. Tidak ada folder `Models/` atau
+  `Views/` di root fitur; model yang dipakai beberapa bagian tetap di bagian pemiliknya.
 - `Shared/Keys`: enum key resource lintas fitur (`ChatCopy`, `ChatImage`,
   `ChatElementIdentifier`); `Shared/Extensions`: `Tipe+Key.swift` (satu extension per file).
 - `Resources/`: aset dan lokalisasi saja, tanpa file Swift. Tests mencerminkan folder Sources;
@@ -115,8 +116,10 @@ tersedia pada history/main.
 ## Komponen dan ownership
 
 - Struktur `Components/<NamaKomponen>`, `Extensions/<Type>+<Responsibility>.swift`,
-  `ViewModifier` bersama di `ViewModifiers/<Nama>.swift`.
-  Nama DesignKit umum, tanpa prefix fitur. Jangan membuat ViewModel per komponen.
+  `ViewModifier` dan `ButtonStyle` bersama di `ViewModifiers/<Nama>.swift`. Di dalam komponen, view utama
+  di root dan sisanya per jenis (`Models/`, `Views/`, `Parsing/`, `Extensions/`).
+  Nama DesignKit umum, tanpa prefix fitur, menurut bentuknya (`TextChip`), bukan isi di layar pertama yang
+  memakainya; nama khusus hanya bila ada logika khusus. Jangan membuat ViewModel per komponen.
 - Identifier UI test dikelompokkan per komponen (`ComponentIdentifier.Header.title`,
   `ComponentIdentifier.Composer.send`). String identifier adalah kontrak UI test.
 - Tidak ada alias untuk nilai sistem: `.clear`, bukan `CustomColors.transparent`.

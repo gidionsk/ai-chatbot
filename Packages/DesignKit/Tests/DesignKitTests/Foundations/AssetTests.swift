@@ -44,6 +44,7 @@ private extension AssetTests {
     static var catalogSourcePath: String {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
             .appendingPathComponent("Sources/DesignKit/Resources/Assets.xcassets").path
     }
 }
