@@ -8,23 +8,27 @@
 import DesignKit
 import SwiftUI
 
-/// Bubble pertanyaan nasabah di area scroll `ScreenContainer`, kronologis. Pertanyaan yang gagal dikirim tampil
-/// abu-abu dengan hint di bawahnya.
-/// TODO: Bubble bot, chip tanggal per hari, dan list ber-recycle menyusul di PR daftar pesan.
+/// Bubble pertanyaan nasabah di area scroll `ScreenContainer`, kronologis, dengan chip tanggal di atas pesan
+/// pertama setiap hari. Pertanyaan yang gagal dikirim tampil abu-abu dengan hint di bawahnya.
+/// TODO: Bubble bot dan list ber-recycle menyusul di PR daftar pesan; saat itu pengelompokan memakai semua baris.
 @MainActor
 struct MessagesSection: View {
     @Environment(\.locale)
     private var locale
-    private let questions: [ChatRow]
+    private let days: [ChatDay]
 
+    /// Hanya baris yang tampil yang dikelompokkan, supaya hari berisi pesan bot saja tidak memunculkan chip kosong.
     init(rows: [ChatRow]) {
-        questions = rows.filter(\.isQuestion)
+        days = rows.filter(\.isQuestion).groupedByDay()
     }
 
     var body: some View {
         LazyVStack(spacing: FigmaSize.spacingLarge.scaledToArtwork) {
-            ForEach(questions) { row in
-                bubble(for: row)
+            ForEach(days) { day in
+                dateChip(for: day)
+                ForEach(day.rows) { row in
+                    bubble(for: row)
+                }
             }
         }
         .accessibilityElement(children: .contain)
@@ -35,6 +39,14 @@ struct MessagesSection: View {
 // MARK: - Helpers
 
 private extension MessagesSection {
+    @ViewBuilder
+    func dateChip(for day: ChatDay) -> some View {
+        if let date = day.date {
+            DateChip(text: ChatDateFormat.dayLabel(for: date, locale: locale))
+                .accessibilityIdentifier(ChatElementIdentifier.dateChip)
+        }
+    }
+
     @ViewBuilder
     func bubble(for row: ChatRow) -> some View {
         switch row {

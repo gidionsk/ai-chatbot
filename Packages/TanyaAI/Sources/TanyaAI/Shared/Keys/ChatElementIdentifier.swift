@@ -12,6 +12,7 @@ enum ChatElementIdentifier {
     static let messages = "chat.messages"
     static let question = "chat.question"
     static let failedQuestion = "chat.question.failed"
+    static let dateChip = "chat.date"
 
     /// Kartu shortcut ke-`index` (mulai 0) sesuai urutan dari BE.
     static func shortcut(_ index: Int) -> String { "welcome.shortcut.\(index)" }

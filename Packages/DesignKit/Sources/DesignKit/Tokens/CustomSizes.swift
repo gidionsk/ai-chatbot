@@ -24,6 +24,10 @@ public enum CustomSizes {
         public static let cornerRadius: CGFloat = 8
     }
 
+    public enum Chip {
+        public static let cornerRadius: CGFloat = 16
+    }
+
     /// Gambar bulat di atas sapaan halaman sambutan; 60 disesuaikan user di Byon (28 Oktober 2026).
     /// TODO: Konfirmasi dengan nilai Figma final.
     public enum Emblem {
