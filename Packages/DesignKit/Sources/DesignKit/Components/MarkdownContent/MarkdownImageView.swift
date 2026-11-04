@@ -26,8 +26,10 @@ struct MarkdownImageView: View {
                 .foregroundColor(colors.colorsTextSecondary)
         }
         .clipShape(RoundedRectangle(cornerRadius: CustomSizes.Markdown.cornerRadius.scaledToArtwork))
-        .frame(height: CustomSizes.Markdown.imageHeight.scaledToArtwork)
+        .frame(height: CustomSizes.Markdown.imageHeight.scaledToArtwork, alignment: .top)
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Penanda list sejajar baris atas gambar, bukan tepi bawahnya.
+        .alignmentGuide(.firstTextBaseline) { $0[.top] + style.bodySize }
         .accessibilityElement()
         .accessibilityLabel(alt)
         .accessibilityAddTraits(.isImage)

@@ -65,7 +65,7 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
 
     private func surface(isNotched: Bool) -> some View {
         ZStack(alignment: .top) {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: .zero) { content }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)

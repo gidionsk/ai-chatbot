@@ -228,6 +228,9 @@ tersedia pada history/main.
   `@ViewBuilder`, `@MainActor`, dan `@main` pada app mempunyai peran jelas.
   Jangan menambahkan macro kustom, `@Observable`/`@Model`, wrapper baru atau
   inheritance hanya untuk menyeragamkan layout.
+- Tanpa `if ... else`: pakai `if A { return A }` lalu `return B`, `continue` di dalam loop, atau `switch`.
+  Pengecualian: di dalam `@ViewBuilder` yang tidak bisa `return` lebih awal, dan `guard ... else`.
+- Atribut variabel satu baris dengan variabelnya: `@Environment(\.designColors) private var colors`.
 - Maksimal 250 baris/file, 50 baris fisik/method, 120 karakter/baris; Bool berawalan
   `is`, kecuali nama wajib protocol seperti `PreferenceKey.defaultValue` dengan
   pengecualian lint lokal beralasan. Jangan padatkan implementasi agar lolos batas.
