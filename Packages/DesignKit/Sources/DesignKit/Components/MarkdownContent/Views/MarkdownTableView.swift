@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-/// Tabel dengan lebar kolom sama, header berlatar dan tebal, garis antarbaris, dan perataan per kolom.
+/// Tabel tanpa bingkai, rata dengan teks di sekitarnya: lebar kolom sama, header tebal, garis di bawah setiap
+/// baris, dan perataan per kolom. Baris ringkasan memberi label seluruh lebar di samping nilai terakhir.
 /// TODO: Tabel lebih dari tiga kolom belum punya pola Figma; sementara tetap dibagi rata.
 @MainActor
 struct MarkdownTableView: View {
@@ -20,27 +21,23 @@ struct MarkdownTableView: View {
         VStack(spacing: .zero) {
             if !table.header.isEmpty {
                 row(table.header, isHeader: true)
-                    .background(colors.colorsSurfaceTableHeader)
+                separator
             }
-            ForEach(Array(table.rows.enumerated()), id: \.offset) { index, cells in
-                if index > .zero || !table.header.isEmpty {
-                    separator
+            ForEach(Array(table.rows.enumerated()), id: \.offset) { _, cells in
+                if table.isSummaryRow(cells) {
+                    summaryRow(cells)
+                } else {
+                    row(cells, isHeader: false)
                 }
-                row(cells, isHeader: false)
+                separator
             }
         }
-        .clipShape(shape)
-        .overlay(shape.strokeBorder(colors.colorsOutlineNetral, lineWidth: FigmaSize.weightOutline.scaledToArtwork))
     }
 }
 
 // MARK: - Visual sections
 
 private extension MarkdownTableView {
-    var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: CustomSizes.Markdown.cornerRadius.scaledToArtwork)
-    }
-
     var separator: some View {
         Rectangle()
             .fill(colors.colorsOutlineNetral)
@@ -48,15 +45,32 @@ private extension MarkdownTableView {
     }
 
     func row(_ cells: [AttributedString], isHeader: Bool) -> some View {
-        HStack(alignment: .top, spacing: .zero) {
+        HStack(alignment: .top, spacing: FigmaSize.spacingMedium.scaledToArtwork) {
             ForEach(Array(cells.enumerated()), id: \.offset) { column, cell in
                 let alignment = table.alignments[column]
-                Text(cell.markdownStyled(size: style.bodySize, isBold: isHeader, style: style, colors: colors))
+                text(cell, isHeader: isHeader)
                     .multilineTextAlignment(alignment.textAlignment)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: alignment.frameAlignment)
-                    .padding(FigmaSize.spacingMedium.scaledToArtwork)
             }
         }
+        .padding(.vertical, FigmaSize.spacingMedium.scaledToArtwork)
+    }
+
+    func summaryRow(_ cells: [AttributedString]) -> some View {
+        HStack(alignment: .top, spacing: FigmaSize.spacingMedium.scaledToArtwork) {
+            if let label = cells.first, let value = cells.last {
+                text(label, isHeader: false)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                text(value, isHeader: false)
+                    .fixedSize()
+            }
+        }
+        .padding(.vertical, FigmaSize.spacingMedium.scaledToArtwork)
+    }
+
+    func text(_ cell: AttributedString, isHeader: Bool) -> Text {
+        Text(cell.markdownStyled(size: style.bodySize, isBold: isHeader, style: style, colors: colors))
     }
 }

@@ -9,7 +9,7 @@ import DesignKit
 import Foundation
 
 /// Pesan siap tampil. `id` = `message_id` (stabil di history dan SSE), `seq` = urutan percakapan.
-struct ChatMessage: Identifiable, Equatable {
+struct ChatMessage: Identifiable, Equatable, Sendable {
     let id: String
     let seq: Int
     let author: ChatAuthor

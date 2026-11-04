@@ -6,7 +6,7 @@
 //
 
 /// Satu item list. `ordinal` dari parser (list bernomor bisa mulai dari angka selain 1).
-struct MarkdownListItem: Equatable {
+struct MarkdownListItem: Equatable, Sendable {
     let ordinal: Int
     let blocks: [MarkdownBlock]
 }

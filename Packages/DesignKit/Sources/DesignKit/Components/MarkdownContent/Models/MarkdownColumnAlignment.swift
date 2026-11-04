@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 
 /// Perataan kolom tabel dari baris pemisah GFM (`:---`, `:---:`, `---:`); tanpa titik dua = kiri.
-enum MarkdownColumnAlignment: Equatable {
+enum MarkdownColumnAlignment: Equatable, Sendable {
     case leading
     case center
     case trailing

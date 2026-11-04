@@ -21,7 +21,8 @@ struct MarkdownListViewTests {
     func wrappedItemTextStaysInItsOwnColumn() throws {
         try FontFace.registerFonts()
         let width: CGFloat = 343
-        let column = (CustomSizes.Markdown.listMarkerWidth + FigmaSize.spacingSmall).scaledToArtwork
+        let column = (FigmaSize.spacingMedium + CustomSizes.Markdown.listMarkerWidth + FigmaSize.spacingSmall)
+            .scaledToArtwork
         let item = height(of: "- \(longText)", width: width)
         #expect(abs(item - height(of: longText, width: width - column)) <= LayoutTolerance.measurement)
     }
@@ -33,6 +34,16 @@ struct MarkdownListViewTests {
             return #expect(Bool(false))
         }
         #expect(list.largestOrdinal == 10)
+    }
+
+    /// Bullet tidak butuh kolom selebar nomor, dan list panjang tidak menghitung ulang per baris.
+    @Test
+    func bulletListKeepsTheFirstOrdinal() throws {
+        let markdown = (1...10).map { "- butir \($0)" }.joined(separator: "\n")
+        guard case .list(let list) = try #require(MarkdownDocument(markdown).blocks.first) else {
+            return #expect(Bool(false))
+        }
+        #expect(list.largestOrdinal == MarkdownSyntax.firstOrdinal)
     }
 }
 

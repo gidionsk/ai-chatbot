@@ -93,8 +93,8 @@ private extension TanyaAIBridge {
             let data = try await transport.history(
                 conversationID: conversationID, before: before, limit: ChatWire.historyPageSize
             )
-            let page = try JSONDecoder.wire.decode(WireEnvelope<WireHistoryPage>.self, from: data).data
-            collected += page.messages.compactMap(ChatMessage.init(wire:))
+            let page = try await ChatHistoryPage.decoded(from: data)
+            collected += page.messages
             before = page.nextBefore
         } while before != nil && latestSeq.map { known in (collected.map(\.seq).min() ?? .min) > known } == true
         return collected

@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-/// List dengan hanging indent: penanda di kolom tetap, baris lanjutan rata dengan teks item, bukan penanda.
+/// List sedikit masuk dari teks di sekitarnya, dengan hanging indent: penanda di kolom tetap, baris lanjutan
+/// rata dengan teks item, bukan penanda.
 @MainActor
 struct MarkdownListView: View {
     @Environment(\.designColors)
@@ -24,16 +25,20 @@ struct MarkdownListView: View {
                 }
             }
         }
+        .padding(.leading, FigmaSize.spacingMedium.scaledToArtwork)
     }
 }
 
 // MARK: - Visual sections
 
 private extension MarkdownListView {
-    /// Penanda terlebar disembunyikan di belakang sebagai penahan lebar kolom, jadi teks item 9 dan 10 tetap rata.
+    /// Pada list bernomor, penanda terlebar disembunyikan di belakang sebagai penahan lebar kolom, jadi teks
+    /// item 9 dan 10 tetap rata. Bullet selalu sama lebar.
     func marker(for item: MarkdownListItem) -> some View {
         ZStack(alignment: .leading) {
-            markerText(ordinal: list.largestOrdinal).hidden()
+            if list.isOrdered {
+                markerText(ordinal: list.largestOrdinal).hidden()
+            }
             markerText(ordinal: item.ordinal)
         }
         .frame(minWidth: CustomSizes.Markdown.listMarkerWidth.scaledToArtwork, alignment: .leading)

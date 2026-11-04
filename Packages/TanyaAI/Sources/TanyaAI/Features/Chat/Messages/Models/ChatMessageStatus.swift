@@ -6,7 +6,7 @@
 //
 
 /// `canceled` = tombstone pesan nasabah yang turn-nya dibatalkan; dikirim ulang dengan `message_id` yang sama.
-enum ChatMessageStatus: String, Decodable {
+enum ChatMessageStatus: String, Decodable, Sendable {
     case active, canceled, unknown
 
     init(from decoder: Decoder) throws {
