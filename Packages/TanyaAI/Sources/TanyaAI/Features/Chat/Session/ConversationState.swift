@@ -5,9 +5,9 @@
 //  Created by Wendra on 28/10/26.
 //
 
-/// `data.state` dari `/chat/init`. Nilai baru dari server dibaca sebagai `unknown`, bukan gagal decode.
+/// `data.state` dari `/v1/chat/init`. Nilai baru dari server dibaca sebagai `unknown`, bukan gagal decode.
 enum ConversationState: String, Decodable {
-    case botActive = "BOT_ACTIVE"
+    case assistantActive = "ASSISTANT_ACTIVE"
     case agentQueued = "AGENT_QUEUED"
     case agentActive = "AGENT_ACTIVE"
     case closed = "CLOSED"

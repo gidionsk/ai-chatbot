@@ -8,7 +8,7 @@
 import Foundation
 
 /// Event SSE yang dipakai UI. `system`, `typing`, dan `state` belum punya tampilan sehingga diabaikan;
-/// status percakapan ditutup dibaca dari `/chat/init` saat menyambung ulang.
+/// status percakapan ditutup dibaca dari `/v1/chat/init` saat menyambung ulang.
 enum ChatEvent: Equatable {
     /// Pesan lengkap (bukan delta), termasuk pesan nasabah sendiri dan tombstone `canceled`.
     case message(ChatMessage)

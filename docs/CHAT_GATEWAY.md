@@ -1,4 +1,4 @@
-# Chat-gateway Tanya AI (contract 1.0.1)
+# Chat-gateway Tanya AI (contract 1.5.0)
 
 Pembagian kerja host ↔ TanyaAI untuk gateway ICT. Sumber kebenaran contract tetap
 `chat-gateway/docs/contract.md` milik BE; dokumen ini hanya menjelaskan bagian yang dipakai iOS.
@@ -20,13 +20,29 @@ di-decode TanyaAI karena khusus Tanya AI dan sama di semua host.
 
 | Fungsi transport | Endpoint |
 | --- | --- |
-| `initialize()` | `POST /chat/init`, body `{}` |
-| `history(conversationID:before:limit:)` | `GET /chat/conversations/{id}/messages?limit=&before=` |
-| `sendMessage(conversationID:clientMessageID:text:)` | `POST /chat/messages`, body `{conversation_id, client_msg_id, type:"text", payload}` → 202 |
-| `cancelTurn(conversationID:)` | `POST /chat/conversations/{id}/cancel`, tanpa body → 200 `{canceled}` |
-| `events(conversationID:lastEventID:)` | `GET /chat/conversations/{id}/events`, `Accept: text/event-stream`, `Last-Event-ID` bila ada |
+| `initialize()` | `POST /v1/chat/init`, body `{}` |
+| `history(conversationID:before:limit:)` | `GET /v1/chat/conversations/{id}/messages?limit=&before=` |
+| `sendMessage(conversationID:clientMessageID:text:)` | `POST /v1/chat/messages`, body `{conversation_id, client_msg_id, type:"text", payload}` → 202 |
+| `cancelTurn(conversationID:)` | `POST /v1/chat/conversations/{id}/cancel`, tanpa body → 200 `{canceled}` |
+| `events(conversationID:lastEventID:)` | `GET /v1/chat/conversations/{id}/events`, `Accept: text/event-stream`, `Last-Event-ID` bila ada |
 
-Typing, limits, list conversations, dan close belum dipakai.
+Typing, limits, list conversations, close, leave-agent, dan `success-id` belum dipakai.
+
+## Nilai contract yang dipakai iOS
+
+- `direction`: `user`, `assistant`, `agent`. Nilai lain = `unknown` dan tidak ditampilkan.
+- `state`: `ASSISTANT_ACTIVE`, `AGENT_QUEUED`, `AGENT_ACTIVE`, `CLOSED`.
+- `type` tidak dibaca. Jawaban `assistant` selalu diproses sebagai Markdown (keputusan user 4 November 2026):
+  teks biasa adalah Markdown yang valid. `html` tampil sebagai teks, karena tidak ada HTML renderer.
+  Payload objek (`interaction`, `json`) belum punya tampilan dan disembunyikan.
+
+## Selisih dengan contract 1.5.0 yang belum dikerjakan
+
+- `AGENT_*` tanpa turn lock dan `turn_end`: setelah kirim, tombol tertahan di stop sampai ditekan.
+- Reconnect selalu lewat init, jadi percakapan yang ditutup admin atau perangkat lain terbuka lagi.
+- Pesan `agent` tampil sebagai bubble polos, bukan Markdown.
+- 401 langsung ke `onSessionExpired`, sedangkan contract menyarankan init ulang.
+- `follow_up_questions`, CTA `action` dan `success-id`, serta event `typing`, `system`, `state` belum tampil.
 
 ## Alur
 
@@ -37,7 +53,8 @@ Typing, limits, list conversations, dan close belum dipakai.
 2. Stream putus atau error `retryable:true`: jeda 1, 2, 4, … maks 30 detik (atau `retry_after_ms`
    dari 429/503), lalu ulang dari init. History baru diambil per halaman sampai bertemu pesan terakhir
    yang sudah ada, baru sisanya ditambahkan. Jeda kembali ke 1 detik setelah stream tersambung.
-3. Berhenti: halaman ditutup (task dibatalkan), init mengembalikan `CLOSED` (history tetap tampil),
+3. Berhenti: halaman ditutup (task dibatalkan), init mengembalikan `CLOSED` (history tetap tampil; sejak
+   contract 1.4 init resume membuka lagi percakapan `CLOSED`, jadi ini hanya pengaman),
    401 (`onSessionExpired`, sekali), atau error lain dengan `retryable:false` (`onConnectionFailed`, sekali,
    dengan `TanyaAITransportError`). Loading awal ikut berhenti. 401 dari jalur mana pun (termasuk kirim)
    menutup stream yang sedang terbuka dan bersifat final: tidak menyambung ulang.
@@ -91,7 +108,7 @@ final class TanyaAIChatService: TanyaAIChatTransport {
     private var headers: HTTPHeaders    // X-OCBCNISP-OMNI-SESSION, X-OCBCNISP-OMNI-CHANNEL, dst.
 
     func initialize() async throws -> Data {
-        try await data(session.request(baseURL + "/chat/init", method: .post,
+        try await data(session.request(baseURL + "/v1/chat/init", method: .post,
                                        parameters: [String: String](), encoder: JSONParameterEncoder.default,
                                        headers: headers))
     }
@@ -127,7 +144,7 @@ func events(conversationID: String, lastEventID: String?) -> AsyncThrowingStream
         var headers = self.headers
         headers.add(name: "Accept", value: "text/event-stream")
         if let lastEventID { headers.add(name: "Last-Event-ID", value: lastEventID) }
-        let request = session.streamRequest(baseURL + "/chat/conversations/\(conversationID)/events",
+        let request = session.streamRequest(baseURL + "/v1/chat/conversations/\(conversationID)/events",
                                             headers: headers)
         var pending = ""
         var errorBody = Data()

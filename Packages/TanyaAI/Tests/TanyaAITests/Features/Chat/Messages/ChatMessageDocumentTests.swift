@@ -14,17 +14,17 @@ import Testing
 struct ChatMessageDocumentTests {
     @Test
     func onlyBotTextIsParsedAsMarkdown() {
-        #expect(message(.bot, "**Kurs** USD").document == MarkdownDocument("**Kurs** USD"))
-        #expect(message(.customer, "**Kurs** USD").document == nil)
+        #expect(message(.assistant, "**Kurs** USD").document == MarkdownDocument("**Kurs** USD"))
+        #expect(message(.user, "**Kurs** USD").document == nil)
         #expect(message(.agent, "**Kurs** USD").document == nil)
-        #expect(message(.bot, nil).document == nil)
+        #expect(message(.assistant, nil).document == nil)
     }
 
     @Test
     func rowsWithoutAViewAreHidden() {
-        #expect(ChatRow.message(message(.bot, "jawaban")).isVisible)
+        #expect(ChatRow.message(message(.assistant, "jawaban")).isVisible)
         #expect(ChatRow.message(message(.agent, "agen")).isVisible)
-        #expect(!ChatRow.message(message(.bot, nil)).isVisible)
+        #expect(!ChatRow.message(message(.assistant, nil)).isVisible)
         #expect(!ChatRow.message(message(.unknown, "baru")).isVisible)
         #expect(ChatRow.local(LocalQuestion(id: "q", text: "tanya", afterSeq: nil)).isVisible)
     }

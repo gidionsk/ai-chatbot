@@ -7,14 +7,14 @@
 
 import Foundation
 
-/// Body dan baris SSE berbentuk contoh di swagger chat-gateway 1.0.1.
+/// Body dan baris SSE berbentuk contoh di contract chat-gateway 1.5.0.
 enum WireFixture {
     static let conversationID = "30000000-0000-4000-8000-000000000001"
     static let createdAtText = "2026-10-23T15:00:00+07:00"
     /// 23 Oktober 2026 08:00 UTC.
     static let createdAt = Date(timeIntervalSince1970: 1_792_742_400)
 
-    static func initialize(conversationID: String = conversationID, state: String = "BOT_ACTIVE") -> Data {
+    static func initialize(conversationID: String = conversationID, state: String = "ASSISTANT_ACTIVE") -> Data {
         Data(
             """
             {"success":true,"data":{"conversation_id":"\(conversationID)","state":"\(state)",\
@@ -46,17 +46,18 @@ enum WireFixture {
             """#.utf8)
     }
 
-    /// Objek `Message` lengkap; `direction` bot untuk seq genap, customer untuk ganjil kecuali ditentukan.
+    /// Objek `Message` lengkap; `direction` assistant untuk seq genap, user untuk ganjil kecuali ditentukan.
     static func message(
         seq: Int, direction: String? = nil, payload: String? = nil, status: String = "active",
         clientMessageID: String? = nil
     ) -> String {
-        let author = direction ?? (seq.isMultiple(of: 2) ? "bot" : "customer")
+        let author = direction ?? (seq.isMultiple(of: 2) ? "assistant" : "user")
         let clientID = clientMessageID.map { "\"\($0)\"" } ?? "null"
         return #"""
             {"message_id":"m-\#(seq)","seq":"\#(seq)","direction":"\#(author)","type":"text",\#
             "payload":"\#(payload ?? "pesan \(seq)")","intent":"","action":"","source":"","params":{},\#
-            "follow_up_questions":null,"interaction":null,"client_msg_id":\#(clientID),"status":"\#(status)",\#
+            "success_id":null,"success_at":null,"follow_up_questions":null,"interaction":null,\#
+            "client_msg_id":\#(clientID),"status":"\#(status)",\#
             "created_at":"2026-10-23T15:00:00+07:00"}
             """#
     }

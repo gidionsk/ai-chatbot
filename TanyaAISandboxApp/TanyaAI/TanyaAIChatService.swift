@@ -117,14 +117,14 @@ private extension TanyaAIChatService {
     func accept(_ text: String, clientMessageID: String) -> Data {
         let ack = frames.ack()
         let question = frames.newMessage(
-            direction: SandboxWireMessage.customer, text: text, clientMessageID: clientMessageID
+            direction: SandboxWireMessage.user, text: text, clientMessageID: clientMessageID
         )
         pendingQuestion = question
         schedule(after: SandboxOptions.echoDelay) { $0.emit($0.frames.frame(question)) }
         if !options.isHoldingReply {
             schedule(after: SandboxOptions.echoDelay + SandboxOptions.replyDelay) { service in
                 let reply = SandboxGatewayFrames.reply(to: text)
-                service.emit(service.frames.message(direction: SandboxWireMessage.bot, text: reply))
+                service.emit(service.frames.message(direction: SandboxWireMessage.assistant, text: reply))
                 service.finishTurn()
             }
         }

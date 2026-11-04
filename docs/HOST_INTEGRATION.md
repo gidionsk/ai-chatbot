@@ -166,7 +166,7 @@ Status menunggu jawaban **milik TanyaAI**: setelah host menerima chat, tombol ki
 stop dan bubble pertanyaan langsung tampil (draft boleh diketik untuk pertanyaan berikutnya); gagal
 kirim menjadi bubble gagal di TanyaAI, bukan callback host. Kartu nonaktif dan chat berikutnya ditolak
 tanpa diteruskan ke host sampai event `turn_end` datang. Stop memanggil `cancelTurn` transport
-host (`POST /chat/conversations/{id}/cancel`); host hanya meneruskan body mentah seperti endpoint lain.
+host (`POST /v1/chat/conversations/{id}/cancel`); host hanya meneruskan body mentah seperti endpoint lain.
 
 Mulai 30 Oktober 2026 `TanyaAIChatTransport` mewajibkan `cancelTurn(conversationID:)`. Di Byon cukup
 tambah satu fungsi di `TanyaAIUseCase+Chat` dengan pola continuation yang sama (contoh:

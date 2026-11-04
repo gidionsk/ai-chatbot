@@ -74,9 +74,9 @@ private extension MessagesSection {
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier(ChatElementIdentifier.answer)
         } else if let text = message.text {
-            MessageBubble(text: text, isOutgoing: message.author == .customer)
+            MessageBubble(text: text, isOutgoing: message.author == .user)
                 .accessibilityIdentifier(
-                    message.author == .customer ? ChatElementIdentifier.question : ChatElementIdentifier.answer
+                    message.author == .user ? ChatElementIdentifier.question : ChatElementIdentifier.answer
                 )
         }
     }

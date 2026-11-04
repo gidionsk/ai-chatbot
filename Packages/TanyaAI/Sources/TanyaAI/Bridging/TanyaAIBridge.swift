@@ -27,7 +27,7 @@ public final class TanyaAIBridge: ObservableObject {
     private(set) var isHistoryLoaded = false
     @Published
     var connection = ChatConnection.connecting
-    /// Percakapan dari `/chat/init` terakhir; nil sebelum init pertama berhasil.
+    /// Percakapan dari `/v1/chat/init` terakhir; nil sebelum init pertama berhasil.
     var conversationID: String?
     /// `id` event SSE terbesar yang sudah diterima (termasuk `turn_end`), bagian dari `Last-Event-ID`.
     var eventCursor: Int?

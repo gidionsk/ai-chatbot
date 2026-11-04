@@ -7,13 +7,13 @@
 
 import Foundation
 
-/// Body dan baris SSE berbentuk contract chat-gateway 1.0.1 untuk gateway tiruan sandbox.
+/// Body dan baris SSE berbentuk contract chat-gateway 1.5.0 untuk gateway tiruan sandbox.
 /// Menyimpan `seq` percakapan; setiap frame memakai nomor berikutnya.
 struct SandboxGatewayFrames {
     static let conversationID = "sandbox-conversation"
     static let connected = ": connected"
     static let initialize = Data(
-        #"{"success":true,"data":{"conversation_id":"sandbox-conversation","state":"BOT_ACTIVE"}}"#.utf8
+        #"{"success":true,"data":{"conversation_id":"sandbox-conversation","state":"ASSISTANT_ACTIVE"}}"#.utf8
     )
     static let emptyHistory = Data(#"{"success":true,"data":{"messages":[],"next_before":null}}"#.utf8)
     static let badRequest = Data(

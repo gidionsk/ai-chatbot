@@ -30,9 +30,9 @@ struct TanyaAIBridgeTests {
         await delivery?.value
 
         let question = WireFixture.messageFrame(
-            seq: 1, direction: "customer", clientMessageID: transport.lastClientMessageID
+            seq: 1, direction: "user", clientMessageID: transport.lastClientMessageID
         )
-        transport.emit(question + WireFixture.messageFrame(seq: 2, direction: "bot"))
+        transport.emit(question + WireFixture.messageFrame(seq: 2, direction: "assistant"))
         await waitUntil { bridge.messages.count == 2 }
         #expect(bridge.localQuestions.isEmpty)
         #expect(bridge.rows.map(\.id) == ["m-1", "m-2"])
@@ -54,7 +54,7 @@ struct TanyaAIBridgeTests {
         await waitUntil { bridge.connection == .live }
         #expect(await bridge.sendAndWait("Pertanyaan kedua"))
         transport.emit(WireFixture.turnEndFrame(seq: 6))
-        transport.emit(WireFixture.messageFrame(seq: 10, direction: "customer"))
+        transport.emit(WireFixture.messageFrame(seq: 10, direction: "user"))
         await waitUntil { bridge.messages.count == 1 }
         #expect(bridge.isAwaitingReply)
         #expect(bridge.send("Pertanyaan ketiga") == nil)

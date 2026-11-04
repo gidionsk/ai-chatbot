@@ -124,7 +124,7 @@ private extension ChatDayTests {
     func message(_ seq: Int, _ createdAt: String?) -> ChatRow {
         .message(
             ChatMessage(
-                id: "m-\(seq)", seq: seq, author: .customer, text: "pesan", status: .active,
+                id: "m-\(seq)", seq: seq, author: .user, text: "pesan", status: .active,
                 createdAt: createdAt.flatMap(Date.init(wire:))
             )
         )
