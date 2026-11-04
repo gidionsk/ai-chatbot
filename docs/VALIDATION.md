@@ -570,12 +570,13 @@ Keputusan user: teks tanggal tampil di atas pesan pertama setiap hari kalender (
 pola Figma `d MMM yyyy` untuk semua bahasa (nama bulan ikut bahasa fitur), zona waktu perangkat. Tampilan
 memakai estimasi PR #36 (`DateChip`: kapsul `colorsSurfaceSelected`, teks 14 `colorsTextPrimaryDark`, padding
 `spacingLarge`/`spacingSmall`), TODO cocokkan Figma. Bubble lokal memakai waktu kirim (`LocalQuestion.sentAt`);
-pesan gateway tanpa `created_at` ikut hari sebelumnya. Hari hanya maju: baris yang harinya mundur (jam perangkat
-berbeda dengan server) ikut hari berjalan, jadi id hari (awal hari) unik dan chip tidak dibuat ulang saat bubble
-lokal diganti salinan stream. Sementara hanya pertanyaan nasabah yang dikelompokkan agar hari berisi pesan bot
+pesan gateway tanpa `created_at` ikut hari sebelumnya. Hari berganti ke dua arah: baris yang harinya mundur (jam perangkat
+berbeda dengan server) membuka kelompok sendiri, jadi setiap baris tampil di bawah tanggalnya dan urutan percakapan
+tetap. Id kelompok (`ChatDayID`) = awal hari + kemunculan ke berapa, jadi tetap unik saat hari muncul lagi dan chip
+tidak dibuat ulang saat bubble lokal diganti salinan stream. Sementara hanya pertanyaan nasabah yang dikelompokkan agar hari berisi pesan bot
 saja tidak memunculkan chip kosong; saat bubble bot tampil, pengelompokan memakai semua baris.
 
-Test: `ChatDayTests` (pemisahan hari, zona perangkat, tanpa tanggal, hari mundur, waktu kirim lokal, 5.000 baris),
+Test: `ChatDayTests` (pemisahan hari, zona perangkat, tanpa tanggal, hari mundur, id hari berulang, waktu kirim lokal, 5.000 baris),
 `ChatDateFormatTests` (pola id/en), `DateChipTests` (lebar penuh, padding vertikal), dan `WelcomeUITests`
 (history dua tanggal `14 Okt 2026`/`15 Okt 2026`, satu chip setelah salinan stream menggantikan bubble lokal).
 
