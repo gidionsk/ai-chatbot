@@ -586,14 +586,19 @@ Keputusan user: renderer sendiri di atas parser Apple `AttributedString(markdown
 dependency). Pembanding: swift-markdown-ui 2.4.1 maintenance mode dengan tiga dependency (cmark C,
 NetworkImage, snapshot-testing) dan tabel hanya iOS 16; penerusnya Textual butuh iOS 18. Cakupan: heading,
 paragraf, list bullet/nomor bertingkat dengan hanging indent, quote, divider, code block, tabel GFM, serta
-tebal/miring/coret/kode/link. HTML tampil sebagai teks, gambar sebagai teks alt. Jawaban di-parse sekali
+tebal/miring/coret/kode/link, task list, dan gambar. HTML tampil sebagai teks. Jawaban di-parse sekali
 saat pesan dibuat (`ChatMessage.document`), bukan setiap render. Link diteruskan ke host lewat
 `makeView(onOpenLink:)`; sandbox menampilkan URL di alert sebagai pengganti webview host.
 
 Ukuran estimasi (TODO Figma): heading `#` 20 / `##` 16 / lainnya 14 tebal, jarak blok `spacingMedium`,
 garis quote 3, radius code 8, kolom penanda list 8.
-Miring memakai face Fira Sans Italic. `.italic()` tidak memiringkan font tanpa face miring (terbukti pada Open Sans
-dan Fira Sans Bold), jadi tebal miring tampil tebal tegak sampai file Bold Italic ditambahkan (TODO).
+Miring dan tebal miring memakai face Fira Sans masing-masing, karena `.italic()` tidak memiringkan font tanpa face
+miring (terbukti pada Open Sans dan Fira Sans Bold).
+
+Cakupan: CommonMark dan spesifikasi GFM (tabel, coret, autolink, task list). Task list hanya tampilan. Gambar setinggi
+200 tetap (TODO Figma) agar selesai mengunduh tidak menggeser daftar; gambar di heading/sel tabel dan gambar ber-link
+tampil sebagai teks. HTML tampil sebagai teks, sesuai aturan tanpa HTML renderer. Footnote, highlight, subscript dan
+superscript di luar CommonMark/GFM dan tidak didukung parser Apple.
 
 Hanging indent: baris lanjutan item rata dengan teksnya, bukan dengan penanda. Kolom penanda selebar penanda
 terlebar di list itu, jadi teks item 9 dan 10 tetap satu kolom.

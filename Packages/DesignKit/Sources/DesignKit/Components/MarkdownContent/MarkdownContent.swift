@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-/// Teks Markdown (jawaban bot): heading, paragraf, list bertingkat dengan hanging indent, quote, divider,
-/// code block, tabel, serta tebal/miring/coret/kode/link. Tanpa background; margin milik daftar pemakai.
+/// Teks Markdown (jawaban bot): heading, paragraf, list bertingkat dengan hanging indent, task list, quote, divider,
+/// code block, tabel, gambar, serta tebal/miring/coret/kode/link. Tanpa background; margin milik daftar pemakai.
 /// Link tidak pernah dibuka sendiri (tanpa Safari fallback): tap diteruskan ke `onOpenLink`.
 @MainActor
 public struct MarkdownContent: View {
@@ -18,10 +18,14 @@ public struct MarkdownContent: View {
 
     public init(
         document: MarkdownDocument, fontFace: FontFace = .firaSansRegular, boldFontFace: FontFace = .firaSansBold,
-        italicFontFace: FontFace = .firaSansItalic, onOpenLink: @escaping (URL) -> Void
+        italicFontFace: FontFace = .firaSansItalic, boldItalicFontFace: FontFace = .firaSansBoldItalic,
+        onOpenLink: @escaping (URL) -> Void
     ) {
         self.document = document
-        self.style = MarkdownTextStyle(fontFace: fontFace, boldFontFace: boldFontFace, italicFontFace: italicFontFace)
+        self.style = MarkdownTextStyle(
+            fontFace: fontFace, boldFontFace: boldFontFace, italicFontFace: italicFontFace,
+            boldItalicFontFace: boldItalicFontFace
+        )
         self.onOpenLink = onOpenLink
     }
 

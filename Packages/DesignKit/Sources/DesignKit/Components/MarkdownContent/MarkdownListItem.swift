@@ -9,4 +9,6 @@
 struct MarkdownListItem: Equatable, Sendable {
     let ordinal: Int
     let blocks: [MarkdownBlock]
+    /// Nil untuk item list biasa.
+    var task: MarkdownTaskState?
 }

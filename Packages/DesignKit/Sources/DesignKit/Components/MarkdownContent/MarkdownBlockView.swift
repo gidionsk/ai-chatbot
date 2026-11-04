@@ -36,6 +36,8 @@ struct MarkdownBlockView: View {
                 .frame(height: FigmaSize.weightOutline.scaledToArtwork)
         case .table(let table):
             MarkdownTableView(table: table, style: style)
+        case .image(let url, let alt):
+            MarkdownImageView(url: url, alt: alt, style: style)
         }
     }
 }

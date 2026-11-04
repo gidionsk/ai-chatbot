@@ -37,16 +37,16 @@ private extension MarkdownListView {
     func marker(for item: MarkdownListItem) -> some View {
         ZStack(alignment: .leading) {
             if list.isOrdered {
-                markerText(ordinal: list.largestOrdinal).hidden()
+                markerText(ordinal: list.largestOrdinal, task: item.task).hidden()
             }
-            markerText(ordinal: item.ordinal)
+            markerText(ordinal: item.ordinal, task: item.task)
         }
         .frame(minWidth: CustomSizes.Markdown.listMarkerWidth.scaledToArtwork, alignment: .leading)
-        .accessibilityHidden(!list.isOrdered)
+        .accessibilityHidden(!list.isOrdered && item.task == nil)
     }
 
-    func markerText(ordinal: Int) -> some View {
-        Text(MarkdownSyntax.listMarker(ordinal: ordinal, isOrdered: list.isOrdered, depth: style.listDepth))
+    func markerText(ordinal: Int, task: MarkdownTaskState?) -> some View {
+        Text(MarkdownSyntax.listMarker(ordinal: ordinal, isOrdered: list.isOrdered, depth: style.listDepth, task: task))
             .font(style.fontFace.swiftUIFont(size: style.bodySize))
             .foregroundColor(colors.colorsTextPrimaryDark)
     }

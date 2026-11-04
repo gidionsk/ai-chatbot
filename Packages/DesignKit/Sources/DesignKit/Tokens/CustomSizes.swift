@@ -56,6 +56,8 @@ public enum CustomSizes {
         public static let quoteBarWidth: CGFloat = 3
         public static let cornerRadius: CGFloat = 8
         public static let listMarkerWidth: CGFloat = 8
+        public static let imageHeight: CGFloat = 200
+        public static let imageMaxSide: CGFloat = 335
     }
 
     /// Kotak ikon dan chevron bulat pada kartu aksi.

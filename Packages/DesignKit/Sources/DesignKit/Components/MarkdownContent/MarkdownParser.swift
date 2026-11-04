@@ -19,7 +19,7 @@ enum MarkdownParser {
         guard let parsed = try? AttributedString(markdown: markdown, options: options) else {
             return [.paragraph(AttributedString(markdown))]
         }
-        return tree(from: parsed).compactMap(block(from:))
+        return tree(from: parsed).flatMap(blocks(from:))
     }
 
     static func tree(from text: AttributedString) -> [MarkdownNode] {

@@ -70,6 +70,44 @@ struct MarkdownParserTests {
             table.rows.map { $0.map { String($0.characters) } } == [["USD", "16.250", ""], ["SGD", "12.000", "11.900"]])
     }
 
+    /// `[ ]`/`[x]` menjadi status dan tidak tampil sebagai teks; yang bukan task tetap item biasa.
+    @Test
+    func taskItemsBecomeStatesAndLoseTheirPrefix() throws {
+        let markdown = "- [ ] belum\n- [x] **sudah**\n- [X] besar\n- biasa\n- [y] bukan task"
+        guard case .list(let list) = try #require(MarkdownDocument(markdown).blocks.first) else {
+            return #expect(Bool(false))
+        }
+        #expect(list.items.map(\.task) == [.open, .done, .done, nil, nil])
+        #expect(
+            list.items.compactMap { $0.blocks.first.flatMap(plain) } == [
+                "belum", "sudah", "besar", "biasa", "[y] bukan task"
+            ])
+    }
+
+    /// Gambar dikeluarkan dari paragraf berurutan, tanpa paragraf kosong dan tanpa spasi tersisa.
+    @Test
+    func imagesSplitParagraphsInOrder() throws {
+        let url = try #require(URL(string: "https://ocbc.id/a.png"))
+        let solo = MarkdownDocument("![kurs](https://ocbc.id/a.png)").blocks
+        let mixed = MarkdownDocument("Sebelum ![kurs](https://ocbc.id/a.png) sesudah").blocks
+        #expect(solo == [.image(url: url, alt: "kurs")])
+        #expect(mixed.count == 3)
+        #expect(plain(mixed[0]) == "Sebelum")
+        #expect(mixed[1] == .image(url: url, alt: "kurs"))
+        #expect(plain(mixed[2]) == "sesudah")
+    }
+
+    /// Item list dan quote memakai pemetaan blok yang sama.
+    @Test
+    func imagesAndTasksWorkInsideContainers() throws {
+        let url = try #require(URL(string: "https://ocbc.id/a.png"))
+        guard case .list(let list) = try #require(MarkdownDocument("- ![a](https://ocbc.id/a.png)").blocks.first),
+            case .quote(let quoted) = try #require(MarkdownDocument("> ![a](https://ocbc.id/a.png)").blocks.first)
+        else { return #expect(Bool(false)) }
+        #expect(list.items.first?.blocks == [.image(url: url, alt: "a")])
+        #expect(quoted == [.image(url: url, alt: "a")])
+    }
+
     /// Teks biasa (termasuk tanda bintang tunggal pada nomor kartu) tetap satu paragraf.
     @Test
     func plainTextStaysOneParagraph() {

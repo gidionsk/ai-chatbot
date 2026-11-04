@@ -8,25 +8,25 @@
 import Foundation
 
 extension MarkdownParser {
-    /// Simpul anak (item list, baris dan sel tabel) dibaca oleh induknya, jadi di level ini menjadi nil.
-    static func block(from node: MarkdownNode) -> MarkdownBlock? {
+    /// Simpul anak (item list, baris dan sel tabel) dibaca oleh induknya, jadi di level ini kosong.
+    static func blocks(from node: MarkdownNode) -> [MarkdownBlock] {
         switch node.kind {
         case .paragraph:
-            return .paragraph(node.text)
+            return paragraphBlocks(from: node.text)
         case .header(let level):
-            return .heading(level: level, text: node.text)
+            return [.heading(level: level, text: node.text)]
         case .codeBlock:
-            return .code(String(node.text.characters).trimmingCharacters(in: .newlines))
+            return [.code(String(node.text.characters).trimmingCharacters(in: .newlines))]
         case .thematicBreak:
-            return .divider
+            return [.divider]
         case .blockQuote:
-            return .quote(node.children.compactMap(block(from:)))
+            return [.quote(node.children.flatMap(blocks(from:)))]
         case .orderedList, .unorderedList:
-            return .list(list(from: node))
+            return [.list(list(from: node))]
         case .table(let columns):
-            return .table(table(columns: columns, rows: node.children))
+            return [.table(table(columns: columns, rows: node.children))]
         default:
-            return nil
+            return []
         }
     }
 }
@@ -40,7 +40,8 @@ private extension MarkdownParser {
             if case .listItem(let value) = item.kind {
                 ordinal = value
             }
-            return MarkdownListItem(ordinal: ordinal, blocks: item.children.compactMap(block(from:)))
+            let content = taskContent(of: item.children.flatMap(blocks(from:)))
+            return MarkdownListItem(ordinal: ordinal, blocks: content.blocks, task: content.task)
         }
         return MarkdownList(isOrdered: node.kind == .orderedList, items: items)
     }

@@ -44,14 +44,12 @@ extension AttributedString {
 
 private extension AttributedString {
     func font(for intent: InlinePresentationIntent, size: CGFloat, isBold: Bool, style: MarkdownTextStyle) -> Font {
+        let isStrong = isBold || intent.contains(.stronglyEmphasized)
+        let isItalic = intent.contains(.emphasized)
         if intent.contains(.code) {
-            return .system(size: size, design: .monospaced)
+            let font = Font.system(size: size, weight: isStrong ? .bold : .regular, design: .monospaced)
+            return isItalic ? font.italic() : font
         }
-        // TODO: Fira Sans Bold Italic belum ada di paket font; tebal miring tampil tebal tegak.
-        if isBold || intent.contains(.stronglyEmphasized) {
-            return style.boldFontFace.swiftUIFont(size: size)
-        }
-        let face = intent.contains(.emphasized) ? style.italicFontFace : style.fontFace
-        return face.swiftUIFont(size: size)
+        return style.face(isStrong: isStrong, isItalic: isItalic).swiftUIFont(size: size)
     }
 }

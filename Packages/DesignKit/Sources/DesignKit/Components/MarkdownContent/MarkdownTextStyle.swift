@@ -12,6 +12,7 @@ struct MarkdownTextStyle {
     let fontFace: FontFace
     let boldFontFace: FontFace
     let italicFontFace: FontFace
+    let boldItalicFontFace: FontFace
     var listDepth = Int.zero
 
     var bodySize: CGFloat { FigmaSize.typographySizeDisplaySmall14.scaledToArtwork }
@@ -26,6 +27,19 @@ struct MarkdownTextStyle {
             return FigmaSize.typographySizeDisplayNormal16.scaledToArtwork
         default:
             return bodySize
+        }
+    }
+
+    func face(isStrong: Bool, isItalic: Bool) -> FontFace {
+        switch (isStrong, isItalic) {
+        case (true, true):
+            return boldItalicFontFace
+        case (true, false):
+            return boldFontFace
+        case (false, true):
+            return italicFontFace
+        case (false, false):
+            return fontFace
         }
     }
 

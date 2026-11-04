@@ -19,4 +19,5 @@ enum MarkdownBlock: Equatable, Sendable {
     case code(String)
     case divider
     case table(MarkdownTable)
+    case image(url: URL, alt: String)
 }

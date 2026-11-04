@@ -14,7 +14,8 @@ import Testing
 struct MarkdownStyleTests {
     private let colors = DefaultColorConstants()
     private let style = MarkdownTextStyle(
-        fontFace: .firaSansRegular, boldFontFace: .firaSansBold, italicFontFace: .firaSansItalic
+        fontFace: .firaSansRegular, boldFontFace: .firaSansBold, italicFontFace: .firaSansItalic,
+        boldItalicFontFace: .firaSansBoldItalic
     )
 
     @Test
@@ -43,14 +44,27 @@ struct MarkdownStyleTests {
     }
 
     @Test
-    func italicUsesTheItalicFaceAndBoldItalicUsesTheBoldFace() throws {
+    func italicAndBoldItalicUseTheirOwnFaces() throws {
         let italic = try #require(styledRuns("*miring*").first)
         let boldItalic = try #require(styledRuns("***keduanya***").first)
         #expect(italic[fontAttribute] == FontFace.firaSansItalic.swiftUIFont(size: style.bodySize))
-        #expect(boldItalic[fontAttribute] == FontFace.firaSansBold.swiftUIFont(size: style.bodySize))
+        #expect(boldItalic[fontAttribute] == FontFace.firaSansBoldItalic.swiftUIFont(size: style.bodySize))
     }
 
-    @Test(arguments: [(0, "•"), (1, "◦"), (2, "▪"), (3, "•")])
+    @Test
+    func taskMarkerReplacesTheBulletButKeepsTheNumber() {
+        let box = MarkdownSyntax.listMarker(ordinal: 1, isOrdered: false, depth: 0, task: .done)
+        #expect(box.unicodeScalars.first == "\u{2611}")
+        #expect(MarkdownSyntax.listMarker(ordinal: 3, isOrdered: true, depth: 0, task: .open).hasPrefix("3. "))
+    }
+
+    @Test
+    func boldCodeKeepsMonospaceAndWeight() throws {
+        let run = try #require(styledRuns("**`kode`**").first)
+        #expect(run[fontAttribute] == .system(size: style.bodySize, weight: .bold, design: .monospaced))
+    }
+
+    @Test(arguments: [(0, "•"), (1, "◦"), (2, "▪\u{FE0E}"), (3, "•")])
     func bulletChangesPerDepth(depth: Int, marker: String) {
         #expect(MarkdownSyntax.listMarker(ordinal: 1, isOrdered: false, depth: depth) == marker)
         #expect(MarkdownSyntax.listMarker(ordinal: 7, isOrdered: true, depth: depth) == "7.")

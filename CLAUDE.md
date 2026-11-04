@@ -22,7 +22,7 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pes
   kirim (`LocalQuestion`), diganti salinan SSE lewat `client_msg_id`/seq ack; gagal kirim = bubble abu-abu +
   hint tanpa retry. Loading hanya saat history pertama; sambutan hanya bila history kosong. Chip tanggal
   (`DateChip`, `d MMM yyyy`, zona perangkat) di atas pertanyaan pertama tiap hari; bubble lokal memakai waktu kirim.
-  Jawaban bot = `MarkdownContent` (parser Apple, tanpa dependency/HTML/gambar), link ke host lewat
+  Jawaban bot = `MarkdownContent` (parser Apple: CommonMark + GFM, tanpa HTML; gambar lewat `RemoteImage`), link ke host lewat
   `makeView(onOpenLink:)`.
   `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). Tanpa titik bergerak: tombol langsung stop
   (`cancelTurn` transport, ditahan sampai ack) dengan draft boleh diketik. Tombol memakai ikon berwarna
