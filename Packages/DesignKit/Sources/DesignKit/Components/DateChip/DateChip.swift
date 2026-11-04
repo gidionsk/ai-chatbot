@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// Label tanggal di tengah daftar pesan, di atas pesan pertama setiap hari. Teks sudah diformat caller.
-/// TODO: Cocokkan padding dan warna surface dengan Figma; sementara estimasi dari screenshot.
+/// Permukaan kartu tanpa bayangan. TODO: Konfirmasi warna teks dengan Figma; sementara dari screenshot.
 @MainActor
 public struct DateChip: View {
     @Environment(\.designColors)
@@ -23,12 +23,12 @@ public struct DateChip: View {
 
     public var body: some View {
         Text(text)
-            .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork))
-            .foregroundColor(colors.colorsTextPrimaryDark)
+            .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+            .foregroundColor(colors.colorsTextSecondary)
             .lineLimit(CustomTextLines.dateChip)
-            .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
+            .padding(.horizontal, FigmaSize.spacingMedium.scaledToArtwork)
             .padding(.vertical, FigmaSize.spacingSmall.scaledToArtwork)
-            .background(Capsule().fill(colors.colorsSurfaceSelected))
+            .cardStyle(isElevated: false, cornerRadius: CustomSizes.Chip.cornerRadius.scaledToArtwork)
             .frame(maxWidth: .infinity)
             .accessibilityAddTraits(.isHeader)
     }
