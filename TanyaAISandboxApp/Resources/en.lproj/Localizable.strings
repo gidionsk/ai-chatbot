@@ -19,3 +19,5 @@
 "sandbox.logout" = "Log out";
 "sandbox.login" = "Log in";
 "sandbox.prelogin.title" = "Not logged in";
+"sandbox.link.title" = "Link handed to the host";
+"sandbox.link.close" = "Close";

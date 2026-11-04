@@ -19,7 +19,7 @@ public struct MessageBubble: View {
     private let failureNote: String?
     private let fontFace: FontFace
 
-    public init(text: String, isOutgoing: Bool, failureNote: String? = nil, fontFace: FontFace = .openSansRegular) {
+    public init(text: String, isOutgoing: Bool, failureNote: String? = nil, fontFace: FontFace = .firaSansRegular) {
         self.text = text
         self.isOutgoing = isOutgoing
         self.failureNote = isOutgoing ? failureNote : nil

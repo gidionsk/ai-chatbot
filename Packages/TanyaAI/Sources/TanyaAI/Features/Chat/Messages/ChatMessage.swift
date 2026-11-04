@@ -5,10 +5,11 @@
 //  Created by Wendra on 28/10/26.
 //
 
+import DesignKit
 import Foundation
 
 /// Pesan siap tampil. `id` = `message_id` (stabil di history dan SSE), `seq` = urutan percakapan.
-struct ChatMessage: Identifiable, Equatable {
+struct ChatMessage: Identifiable, Equatable, Sendable {
     let id: String
     let seq: Int
     let author: ChatAuthor
@@ -19,6 +20,8 @@ struct ChatMessage: Identifiable, Equatable {
     let createdAt: Date?
     /// Penanda pertanyaan dari aplikasi ini; dicocokkan dengan pertanyaan yang sedang ditunggu.
     let clientMessageID: String?
+    /// Jawaban bot sebagai Markdown, di-parse sekali saat pesan datang (bukan setiap render). Nil untuk nasabah/agen.
+    let document: MarkdownDocument?
 
     /// Nil bila `seq` bukan angka desimal: pesan tanpa urutan tidak bisa digabung dengan aman.
     init?(wire: WireMessage) {
@@ -40,5 +43,6 @@ struct ChatMessage: Identifiable, Equatable {
         self.status = status
         self.createdAt = createdAt
         self.clientMessageID = clientMessageID
+        document = author == .bot ? text.map(MarkdownDocument.init) : nil
     }
 }

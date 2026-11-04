@@ -579,3 +579,41 @@ saja tidak memunculkan chip kosong; saat bubble bot tampil, pengelompokan memaka
 Test: `ChatDayTests` (pemisahan hari, zona perangkat, tanpa tanggal, hari mundur, id hari berulang, waktu kirim lokal, 5.000 baris),
 `ChatDateFormatTests` (pola id/en), `DateChipTests` (lebar penuh, padding vertikal), dan `WelcomeUITests`
 (history dua tanggal `14 Okt 2026`/`15 Okt 2026`, satu chip setelah salinan stream menggantikan bubble lokal).
+
+## Jawaban bot Markdown — 3 November 2026
+
+Keputusan user: renderer sendiri di atas parser Apple `AttributedString(markdown:)` (iOS 15, tanpa
+dependency). Pembanding: swift-markdown-ui 2.4.1 maintenance mode dengan tiga dependency (cmark C,
+NetworkImage, snapshot-testing) dan tabel hanya iOS 16; penerusnya Textual butuh iOS 18. Cakupan: heading,
+paragraf, list bullet/nomor bertingkat dengan hanging indent, quote, divider, code block, tabel GFM, serta
+tebal/miring/coret/kode/link, task list, dan gambar. HTML tampil sebagai teks. Jawaban di-parse sekali
+saat pesan dibuat (`ChatMessage.document`), bukan setiap render. Link diteruskan ke host lewat
+`makeView(onOpenLink:)`; sandbox menampilkan URL di alert sebagai pengganti webview host.
+
+Ukuran estimasi (TODO Figma): heading `#` 20 / `##` 16 / lainnya 14 tebal, jarak blok `spacingMedium`,
+garis quote 3, radius code 8, kolom penanda list 8.
+Miring dan tebal miring memakai face Fira Sans masing-masing, karena `.italic()` tidak memiringkan font tanpa face
+miring (terbukti pada Open Sans dan Fira Sans Bold).
+
+Cakupan: CommonMark dan spesifikasi GFM (tabel, coret, autolink, task list). Task list hanya tampilan. Gambar setinggi
+200 tetap (TODO Figma) agar selesai mengunduh tidak menggeser daftar; gambar di heading/sel tabel dan gambar ber-link
+tampil sebagai teks. HTML tampil sebagai teks, sesuai aturan tanpa HTML renderer. Footnote, highlight, subscript dan
+superscript di luar CommonMark/GFM dan tidak didukung parser Apple.
+
+Hanging indent: baris lanjutan item rata dengan teksnya, bukan dengan penanda. Kolom penanda selebar penanda
+terlebar di list itu, jadi teks item 9 dan 10 tetap satu kolom.
+
+Test: `MarkdownParserTests` (urutan blok, list bertingkat dan nomor awal, quote, code block, tabel dan sel
+kosong, nomor kartu dengan bintang tetap teks), `MarkdownStyleTests` (link, coret, kode, intent dilepas,
+bullet per level), `MarkdownListViewTests` (hanging indent, kolom penanda), `MarkdownTableViewTests` (baris ringkasan, lebar kolom), `ChatHistoryPageTests` (halaman history), `ChatMessageDocumentTests` (hanya bot yang Markdown, baris tanpa tampilan disembunyikan),
+dan `WelcomeUITests` (dua jawaban history, link diteruskan ke host).
+
+## Review Markdown: format payload, parsing history, tabel Figma — 4 November 2026
+
+Payload jawaban bot full Markdown (keputusan user). Tag `[link]`/`[color]` milik kontrak dan renderer lama yang
+sudah dihapus, jadi tidak dibuat lagi, begitu juga warna per teks. Decode dan parse satu halaman history
+pindah ke `ChatHistoryPage.decoded(from:)` di background, karena satu halaman berisi jawaban panjang menahan main
+actor. Pesan SSE tetap di-parse saat datang (satu pesan, urutan terjaga). `largestOrdinal` dihitung sekali saat
+parse, bukan per baris (kuadratik pada list panjang), dan bullet tidak memakainya. Tabel mengikuti Figma: tanpa
+bingkai dan latar header, rata dengan teks, garis di bawah setiap baris, dan baris ringkasan lewat sel tengah
+kosong karena GFM tidak punya colspan. List masuk 8 dari teks, kolom teks tetap di 20.

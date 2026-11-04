@@ -6,7 +6,7 @@
 //
 
 /// `direction` pesan: nasabah, bot, atau agen manusia. Nilai baru dari server menjadi `unknown`.
-enum ChatAuthor: String, Decodable {
+enum ChatAuthor: String, Decodable, Sendable {
     case customer, bot, agent, unknown
 
     init(from decoder: Decoder) throws {

@@ -118,6 +118,6 @@ private extension WelcomeSection {
     }
 
     var bodyFont: Font {
-        FontFace.openSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
+        FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
     }
 }

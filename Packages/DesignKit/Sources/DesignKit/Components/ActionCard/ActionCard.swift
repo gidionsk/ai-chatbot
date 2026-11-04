@@ -96,6 +96,6 @@ private extension ActionCard {
     }
 
     var descriptionFont: Font {
-        FontFace.openSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork)
+        FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork)
     }
 }

@@ -26,16 +26,19 @@ public struct ChatScreen<Content: View>: View {
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
+    private let onOpenLink: (URL) -> Void
     private let content: Content
 
     public init(
         isEnabled: Bool = true, welcome: WelcomeContent? = nil, bridge: TanyaAIBridge,
-        onBack: (() -> Void)? = nil, @ViewBuilder content: () -> Content
+        onBack: (() -> Void)? = nil, onOpenLink: @escaping (URL) -> Void = { _ in },
+        @ViewBuilder content: () -> Content
     ) {
         _bridge = ObservedObject(wrappedValue: bridge)
         self.isEnabled = isEnabled
         self.welcome = welcome
         self.onBack = onBack
+        self.onOpenLink = onOpenLink
         self.content = content()
     }
 
@@ -57,7 +60,7 @@ public struct ChatScreen<Content: View>: View {
         if let welcome, bridge.isWelcomeVisible {
             WelcomeSection(content: welcome, isEnabled: isEnabled && isSendable, onSelect: select)
         }
-        MessagesSection(rows: bridge.rows)
+        MessagesSection(rows: bridge.rows, onOpenLink: onOpenLink)
         content
     }
 

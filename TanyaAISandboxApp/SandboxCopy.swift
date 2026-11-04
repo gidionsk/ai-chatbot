@@ -25,6 +25,8 @@ enum SandboxCopy: String, CaseIterable {
     case logout = "sandbox.logout"
     case login = "sandbox.login"
     case preloginTitle = "sandbox.prelogin.title"
+    case linkTitle = "sandbox.link.title"
+    case linkClose = "sandbox.link.close"
 }
 
 extension String {

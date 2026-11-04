@@ -5,6 +5,8 @@ CustomColors), nilai awal, theme environment, fonts, localization dan style. Sco
 shared header, composer maksimal empat baris, halaman sambutan (welcome) dari BE, dan
 bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pesan menyusul. Minimum iOS 15 (host ikut naik ke iOS 15 untuk revamp).
 
+- Tanpa `if ... else`, pakai early return; atribut variabel satu baris dengan variabelnya. Detail di AGENTS.md.
+- Semua teks memakai Fira Sans. Open Sans belum dipakai: jangan jadi default komponen atau dipakai di layar.
 - Ukuran dan area tap 1:1 Figma lewat `.scaledToArtwork`. Jangan menambahkan
   minimum touch target 44 atau hit frame tambahan; ini keputusan UI/UX.
 - Header = ukuran navigation bar host: dari tepi layar, padding atas 50/28 tanpa scale
@@ -21,7 +23,8 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pes
   kirim (`LocalQuestion`), diganti salinan SSE lewat `client_msg_id`/seq ack; gagal kirim = bubble abu-abu +
   hint tanpa retry. Loading hanya saat history pertama; sambutan hanya bila history kosong. Chip tanggal
   (`DateChip`, `d MMM yyyy`, zona perangkat) di atas pertanyaan pertama tiap hari; bubble lokal memakai waktu kirim.
-  Bubble bot menyusul.
+  Jawaban bot = `MarkdownContent` (parser Apple: CommonMark + GFM, tanpa HTML; gambar lewat `RemoteImage`), link ke host lewat
+  `makeView(onOpenLink:)`.
   `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). Tanpa titik bergerak: tombol langsung stop
   (`cancelTurn` transport, ditahan sampai ack) dengan draft boleh diketik. Tombol memakai ikon berwarna
   `DesignColorIcon` `send-on`/`send-off`/`send-pause` (dummy, nama aset Byon); stopping = redup `.plain` bawaan.

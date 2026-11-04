@@ -8,18 +8,22 @@
 import DesignKit
 import SwiftUI
 
-/// Bubble pertanyaan nasabah di area scroll `ScreenContainer`, kronologis, dengan chip tanggal di atas pesan
-/// pertama setiap hari. Pertanyaan yang gagal dikirim tampil abu-abu dengan hint di bawahnya.
-/// TODO: Bubble bot dan list ber-recycle menyusul di PR daftar pesan; saat itu pengelompokan memakai semua baris.
+/// Daftar pesan di area scroll `ScreenContainer`, kronologis, dengan chip tanggal di atas pesan pertama setiap
+/// hari. Pertanyaan nasabah = bubble merah (gagal kirim: abu-abu dengan hint); jawaban bot = Markdown tanpa
+/// background; agen = teks polos tanpa background. Link di jawaban diteruskan ke host.
+/// TODO: List ber-recycle menyusul.
 @MainActor
 struct MessagesSection: View {
     @Environment(\.locale)
     private var locale
     private let days: [ChatDay]
+    private let onOpenLink: (URL) -> Void
 
-    /// Hanya baris yang tampil yang dikelompokkan, supaya hari berisi pesan bot saja tidak memunculkan chip kosong.
-    init(rows: [ChatRow]) {
-        days = rows.filter(\.isQuestion).groupedByDay()
+    /// Pesan yang tidak punya tampilan (payload non-teks, pengirim tidak dikenal) tidak ikut, supaya tidak
+    /// memunculkan chip tanggal tanpa isi.
+    init(rows: [ChatRow], onOpenLink: @escaping (URL) -> Void) {
+        days = rows.filter(\.isVisible).groupedByDay()
+        self.onOpenLink = onOpenLink
     }
 
     var body: some View {
@@ -51,10 +55,7 @@ private extension MessagesSection {
     func bubble(for row: ChatRow) -> some View {
         switch row {
         case .message(let message):
-            if let text = message.text {
-                MessageBubble(text: text, isOutgoing: true)
-                    .accessibilityIdentifier(ChatElementIdentifier.question)
-            }
+            messageView(message)
         case .local(let question) where question.isFailed:
             MessageBubble(
                 text: question.text, isOutgoing: true, failureNote: String(ChatCopy.sendFailed, locale: locale)
@@ -63,6 +64,20 @@ private extension MessagesSection {
         case .local(let question):
             MessageBubble(text: question.text, isOutgoing: true)
                 .accessibilityIdentifier(ChatElementIdentifier.question)
+        }
+    }
+
+    @ViewBuilder
+    func messageView(_ message: ChatMessage) -> some View {
+        if let document = message.document {
+            MarkdownContent(document: document, onOpenLink: onOpenLink)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier(ChatElementIdentifier.answer)
+        } else if let text = message.text {
+            MessageBubble(text: text, isOutgoing: message.author == .customer)
+                .accessibilityIdentifier(
+                    message.author == .customer ? ChatElementIdentifier.question : ChatElementIdentifier.answer
+                )
         }
     }
 }

@@ -87,12 +87,14 @@ tersedia pada history/main.
   dan `openSansRegular/Medium/Bold`. Jangan memakai case `.regular/.medium` yang
   ambigu antar-family. Tambahkan file asli beserta lisensi dan nama PostScript
   yang dibaca dari metadata; jangan menyamakan nama file dengan PostScript.
+- Semua teks memakai Fira Sans. Open Sans belum dipakai: case dan file-nya hanya
+  cadangan, jangan menjadi default komponen atau dipakai di layar.
 - Typography memakai token `FigmaSize` yang sudah berpasangan per role, misalnya
   `typographySizeDisplaySmall14` dengan `typographyLineHeightDisplaySmall14`, dan
   `FontFace` eksplisit. Composer memakai Display Small 14/21, hanya dengan `.scaledToArtwork`. Ukuran font/leading tidak mengikuti
   pengaturan Dynamic Type pengguna; jangan menambahkan `@ScaledMetric` atau
   UIFontMetrics. Editor dan placeholder menerima UIFont fixed yang sama.
-  Glyph Chinese yang tidak ada di Open Sans menggunakan fallback native iOS.
+  Glyph Chinese yang tidak ada di Fira Sans menggunakan fallback native iOS.
 - Copy fitur berada di resource `en`, `id`, `zh-Hans`. Screen membaca locale dari
   environment dan menyuplai label ke DesignKit. Tidak ada copy bisnis di DesignKit.
 - Tanpa R.swift dan tanpa build tool plugin (CI host tidak bisa trust plugin). Key copy
@@ -226,6 +228,9 @@ tersedia pada history/main.
   `@ViewBuilder`, `@MainActor`, dan `@main` pada app mempunyai peran jelas.
   Jangan menambahkan macro kustom, `@Observable`/`@Model`, wrapper baru atau
   inheritance hanya untuk menyeragamkan layout.
+- Tanpa `if ... else`: pakai `if A { return A }` lalu `return B`, `continue` di dalam loop, atau `switch`.
+  Pengecualian: di dalam `@ViewBuilder` yang tidak bisa `return` lebih awal, dan `guard ... else`.
+- Atribut variabel satu baris dengan variabelnya: `@Environment(\.designColors) private var colors`.
 - Maksimal 250 baris/file, 50 baris fisik/method, 120 karakter/baris; Bool berawalan
   `is`, kecuali nama wajib protocol seperti `PreferenceKey.defaultValue` dengan
   pengecualian lint lokal beralasan. Jangan padatkan implementasi agar lolos batas.

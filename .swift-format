@@ -7,7 +7,7 @@
   "maximumBlankLines": 1,
   "respectsExistingLineBreaks": true,
   "lineBreakBeforeEachArgument": false,
-  "lineBreakBetweenDeclarationAttributes": true,
+  "lineBreakBetweenDeclarationAttributes": false,
   "multiElementCollectionTrailingCommas": false,
   "rules": {
     "OrderedImports": true,

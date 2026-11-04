@@ -80,7 +80,21 @@ final class WelcomeUITests: XCTestCase {
         let chips = application.staticTexts.matching(identifier: "chat.date")
         XCTAssertTrue(chips.firstMatch.waitForExistence(timeout: 5))
         XCTAssertEqual(chips.allElementsBoundByIndex.map(\.label), ["14 Okt 2026", "15 Okt 2026"])
+        XCTAssertEqual(application.descendants(matching: .any).matching(identifier: "chat.answer").count, 2)
         capture("chat-history-without-welcome")
+    }
+
+    /// Jawaban bot Markdown: link tidak dibuka sendiri, tetapi diteruskan ke host (sandbox menampilkan URL-nya).
+    func testAnswerLinkIsHandedToTheHost() {
+        launch(locale: "id", extra: ["--with-history"])
+        let link = application.links["halaman kurs"]
+        XCTAssertTrue(link.waitForExistence(timeout: 10))
+        capture("chat-markdown-answers")
+        link.tap()
+        let alert = application.alerts["Link diteruskan ke host"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        XCTAssertTrue(alert.staticTexts["https://www.ocbc.id/id/kurs"].exists)
+        alert.buttons["Tutup"].tap()
     }
 
     /// Ikon gagal diunduh: kartu tetap tampil dengan ikon fallback FE dan tetap bisa diketuk.

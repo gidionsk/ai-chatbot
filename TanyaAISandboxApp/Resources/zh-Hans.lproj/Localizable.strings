@@ -19,3 +19,5 @@
 "sandbox.logout" = "退出登录";
 "sandbox.login" = "登录";
 "sandbox.prelogin.title" = "未登录";
+"sandbox.link.title" = "链接已交给主机";
+"sandbox.link.close" = "关闭";

@@ -62,8 +62,9 @@ Packages/
    memisahkan nama file dan nama PostScript; `FontLoader` memproses Bundle.module.
    Package berisi Fira Sans Regular/Medium/SemiBold/Bold dan Open Sans
    Regular/Medium/Bold beserta lisensinya. Gunakan nama eksplisit seperti
-   `.openSansRegular` atau `.firaSansMedium`; `.regular/.medium` lama diganti.
-   Composer default memakai `.openSansRegular`. Chinese menggunakan fallback
+   `.firaSansRegular` atau `.firaSansMedium`; `.regular/.medium` lama diganti.
+   Open Sans belum dipakai; semua teks memakai Fira Sans.
+   Composer default memakai `.firaSansRegular`. Chinese menggunakan fallback
    glyph iOS; font Chinese brand final masih dapat diganti kemudian. Pemetaan
    file/PostScript dan sumbernya ada pada [katalog font](../Packages/DesignKit/Sources/DesignKit/Resources/Fonts/SOURCES.md).
 4. Buat `BoundedTextView`, lalu bridge `GrowingTextInput`. Intrinsic width tidak
