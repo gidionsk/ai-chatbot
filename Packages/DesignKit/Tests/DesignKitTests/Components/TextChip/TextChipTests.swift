@@ -11,7 +11,7 @@ import UIKit
 
 @testable import DesignKit
 
-/// Chip selebar isinya dengan padding di dalam kapsul; posisi di dalam baris milik pemakai.
+/// Chip selebar isinya dengan padding di dalam permukaan; posisi di dalam baris milik pemakai.
 @MainActor
 struct TextChipTests {
     @Test
@@ -22,8 +22,8 @@ struct TextChipTests {
         let text = size(
             of: Text("14 Okt 2026").font(
                 FontFace.openSansRegular.swiftUIFont(
-                    size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)), width: width)
-        #expect(abs(chip.width - text.width - FigmaSize.spacingLarge.scaledToArtwork * 2) <= 0.5)
+                    size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork)), width: width)
+        #expect(abs(chip.width - text.width - FigmaSize.spacingMedium.scaledToArtwork * 2) <= 0.5)
         #expect(abs(chip.height - text.height - FigmaSize.spacingSmall.scaledToArtwork * 2) <= 0.5)
     }
 }

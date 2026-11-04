@@ -7,9 +7,8 @@
 
 import SwiftUI
 
-/// Label teks pendek di dalam kapsul, selebar isinya. Teks sudah diformat caller; posisi dan peran aksesibilitas
-/// milik pemakai.
-/// TODO: Cocokkan padding dan warna surface dengan Figma; sementara estimasi dari screenshot.
+/// Label teks pendek di atas permukaan kartu tanpa bayangan, selebar isinya. Teks sudah diformat caller; posisi
+/// dan peran aksesibilitas milik pemakai. TODO: Konfirmasi warna teks dengan Figma; sementara dari screenshot.
 @MainActor
 public struct TextChip: View {
     @Environment(\.designColors)
@@ -24,11 +23,11 @@ public struct TextChip: View {
 
     public var body: some View {
         Text(text)
-            .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork))
-            .foregroundColor(colors.colorsTextPrimaryDark)
+            .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+            .foregroundColor(colors.colorsTextSecondary)
             .lineLimit(CustomTextLines.textChip)
-            .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
+            .padding(.horizontal, FigmaSize.spacingMedium.scaledToArtwork)
             .padding(.vertical, FigmaSize.spacingSmall.scaledToArtwork)
-            .background(Capsule().fill(colors.colorsSurfaceSelected))
+            .cardStyle(isElevated: false, cornerRadius: CustomSizes.Chip.cornerRadius.scaledToArtwork)
     }
 }
