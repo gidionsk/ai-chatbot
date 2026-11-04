@@ -568,8 +568,8 @@ fase yang mengunci draft), dan `WelcomeUITests` (bubble + stop seketika, bubble 
 
 Keputusan user: teks tanggal tampil di atas pesan pertama setiap hari kalender (ikut ter-scroll, bukan sticky),
 pola Figma `d MMM yyyy` untuk semua bahasa (nama bulan ikut bahasa fitur), zona waktu perangkat. Tampilan
-memakai estimasi PR #36 (`DateChip`: kapsul `colorsSurfaceSelected`, teks 14 `colorsTextPrimaryDark`, padding
-`spacingLarge`/`spacingSmall`), TODO cocokkan Figma. Bubble lokal memakai waktu kirim (`LocalQuestion.sentAt`);
+mengikuti Figma node 2553-23910 (`DateChip`: `cardStyle` tanpa bayangan, radius 16, garis 1, padding 8/4, teks 12);
+warna teks `colorsTextSecondary` dari screenshot, TODO konfirmasi. Bubble lokal memakai waktu kirim (`LocalQuestion.sentAt`);
 pesan gateway tanpa `created_at` ikut hari sebelumnya. Hari berganti ke dua arah: baris yang harinya mundur (jam perangkat
 berbeda dengan server) membuka kelompok sendiri, jadi setiap baris tampil di bawah tanggalnya dan urutan percakapan
 tetap. Id kelompok (`ChatDayID`) = awal hari + kemunculan ke berapa, jadi tetap unik saat hari muncul lagi dan chip

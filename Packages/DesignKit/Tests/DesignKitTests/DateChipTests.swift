@@ -11,7 +11,7 @@ import UIKit
 
 @testable import DesignKit
 
-/// Chip selebar daftar (teks di tengah) dengan padding vertikal kecil di dalam kapsul; satu baris.
+/// Chip selebar daftar (teks di tengah) dengan padding vertikal kecil; satu baris.
 @MainActor
 struct DateChipTests {
     @Test
@@ -22,7 +22,7 @@ struct DateChipTests {
         let text = size(
             of: Text("14 Okt 2026").font(
                 FontFace.openSansRegular.swiftUIFont(
-                    size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)), width: width)
+                    size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork)), width: width)
         #expect(abs(chip.width - width) <= 0.5)
         #expect(abs(chip.height - text.height - FigmaSize.spacingSmall.scaledToArtwork * 2) <= 0.5)
     }

@@ -17,6 +17,7 @@ struct SurfaceStyleTests {
         let plain = size(of: Text("Kartu").padding())
         #expect(size(of: Text("Kartu").padding().cardStyle()) == plain)
         #expect(size(of: Text("Kartu").padding().cardStyle(isOutlined: false)) == plain)
+        #expect(size(of: Text("Kartu").padding().cardStyle(isElevated: false, cornerRadius: .zero)) == plain)
         #expect(size(of: Text("Kartu").padding().designShadow()) == plain)
     }
 }
