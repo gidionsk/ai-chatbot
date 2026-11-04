@@ -70,6 +70,7 @@ struct ChatEventTests {
         }
         #expect(message.author == .assistant)
         #expect(message.document == MarkdownDocument("Halo **Lara**"))
+        #expect(message.followUps == ["Lanjut?"])
         #expect(ChatRow.message(message).isVisible)
     }
 

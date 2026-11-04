@@ -13,9 +13,14 @@ public extension View {
     /// untuk permukaan rata, misalnya `DateChip`. `cornerRadius` sudah di-scale oleh pemakai.
     func cardStyle(
         isOutlined: Bool = true, isElevated: Bool = true,
-        cornerRadius: CGFloat = CustomSizes.Card.cornerRadius.scaledToArtwork
+        cornerRadius: CGFloat = CustomSizes.Card.cornerRadius.scaledToArtwork,
+        outlineColor: Color = CustomColors.Stroke.color
     ) -> some View {
-        modifier(CardStyle(isOutlined: isOutlined, isElevated: isElevated, cornerRadius: cornerRadius))
+        modifier(
+            CardStyle(
+                isOutlined: isOutlined, isElevated: isElevated, cornerRadius: cornerRadius, outlineColor: outlineColor
+            )
+        )
     }
 
     /// Bayangan standar untuk permukaan yang mengambang.

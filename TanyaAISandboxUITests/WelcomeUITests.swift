@@ -84,6 +84,19 @@ final class WelcomeUITests: XCTestCase {
         capture("chat-history-without-welcome")
     }
 
+    /// Saran lanjutan di bawah jawaban terakhir; diketuk = terkirim sebagai pertanyaan dan saran hilang.
+    func testFollowUpBecomesAQuestion() {
+        launch(locale: "id", extra: ["--with-history"])
+        let followUp = application.buttons["chat.followUp.0"]
+        XCTAssertTrue(followUp.waitForExistence(timeout: 10))
+        XCTAssertTrue(application.buttons["chat.followUp.1"].exists)
+        capture("chat-follow-ups")
+        followUp.tap()
+        waitUntilGone(followUp)
+        let question = application.staticTexts["Bandingkan dengan pasar"]
+        XCTAssertTrue(question.waitForExistence(timeout: 5))
+    }
+
     /// Jawaban bot Markdown: link tidak dibuka sendiri, tetapi diteruskan ke host (sandbox menampilkan URL-nya).
     func testAnswerLinkIsHandedToTheHost() {
         launch(locale: "id", extra: ["--with-history"])

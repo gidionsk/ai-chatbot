@@ -11,6 +11,8 @@ import SwiftUI
 public enum CustomColors {
     public enum Stroke {
         public static let color = CustomBasePaletteColor.royalPastelBlue
+        /// Figma N400 Gray - Primary, untuk chip yang bisa diketuk.
+        public static let strong = CustomBasePaletteColor.glossySilver
     }
 
     public enum Shadow {

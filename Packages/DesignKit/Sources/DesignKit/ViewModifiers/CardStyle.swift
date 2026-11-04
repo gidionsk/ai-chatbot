@@ -16,6 +16,7 @@ struct CardStyle: ViewModifier {
     let isOutlined: Bool
     let isElevated: Bool
     let cornerRadius: CGFloat
+    let outlineColor: Color
 
     func body(content: Content) -> some View {
         content.background(surface)
@@ -39,6 +40,6 @@ struct CardStyle: ViewModifier {
     }
 
     private var outline: Color {
-        isOutlined ? CustomColors.Stroke.color : .clear
+        isOutlined ? outlineColor : .clear
     }
 }

@@ -82,6 +82,12 @@ public final class TanyaAIBridge: ObservableObject {
     /// Sambutan hanya untuk percakapan kosong; bubble pertanyaan pertama langsung menggantikannya.
     var isWelcomeVisible: Bool { isHistoryLoaded && messages.isEmpty && localQuestions.isEmpty }
 
+    /// Saran hanya dari jawaban terakhir, dan hilang selama menunggu jawaban berikutnya.
+    var followUps: [String] {
+        guard !isAwaitingReply, let latest = messages.last, latest.author == .assistant else { return [] }
+        return latest.followUps
+    }
+
     /// Bisa mengirim setelah init berhasil, juga selama menyambung ulang; tidak setelah ditutup atau sesi habis.
     var isReady: Bool {
         conversationID != nil && connection != .closed && connection != .expired

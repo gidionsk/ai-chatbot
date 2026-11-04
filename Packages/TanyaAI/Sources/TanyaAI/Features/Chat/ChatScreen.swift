@@ -61,6 +61,11 @@ public struct ChatScreen<Content: View>: View {
             WelcomeSection(content: welcome, isEnabled: isEnabled && isSendable, onSelect: select)
         }
         MessagesSection(rows: bridge.rows, onOpenLink: onOpenLink)
+        if !bridge.followUps.isEmpty {
+            FollowUpsSection(
+                questions: bridge.followUps, isEnabled: isEnabled && isSendable, onSelect: selectFollowUp
+            )
+        }
         content
     }
 
@@ -109,6 +114,11 @@ private extension ChatScreen {
     /// Menghentikan jawaban yang sedang berjalan; kunci dibuka oleh `turn_end` dari stream.
     func stop() {
         Task { [bridge] in await bridge.cancelTurn() }
+    }
+
+    /// Saran lanjutan dikirim sebagai chat, sama seperti shortcut.
+    func selectFollowUp(_ question: String) {
+        bridge.send(question)
     }
 
     /// Shortcut dikirim sebagai chat; bubble pertanyaan langsung tampil.

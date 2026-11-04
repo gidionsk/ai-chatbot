@@ -15,6 +15,9 @@ enum ChatElementIdentifier {
     static let dateChip = "chat.date"
     static let answer = "chat.answer"
 
+    /// Saran pertanyaan lanjutan ke-`index` (mulai 0) sesuai urutan dari gateway.
+    static func followUp(_ index: Int) -> String { "chat.followUp.\(index)" }
+
     /// Kartu shortcut ke-`index` (mulai 0) sesuai urutan dari BE.
     static func shortcut(_ index: Int) -> String { "welcome.shortcut.\(index)" }
 }
