@@ -25,7 +25,7 @@ struct ChatMessageMergeTests {
 
     @Test
     func sameMessageIdReplacesTheStoredCopyInPlace() {
-        let tombstone = ChatMessage(id: "m-2", seq: 2, author: .customer, text: "pesan 2", status: .canceled)
+        let tombstone = ChatMessage(id: "m-2", seq: 2, author: .user, text: "pesan 2", status: .canceled)
         let merged = messages([1, 2, 3]).merging([tombstone])
         #expect(merged.map(\.seq) == [1, 2, 3])
         #expect(merged[1].status == .canceled)
@@ -48,6 +48,6 @@ struct ChatMessageMergeTests {
 
 private extension ChatMessageMergeTests {
     func messages(_ seqs: [Int]) -> [ChatMessage] {
-        seqs.map { ChatMessage(id: "m-\($0)", seq: $0, author: .bot, text: "pesan \($0)", status: .active) }
+        seqs.map { ChatMessage(id: "m-\($0)", seq: $0, author: .assistant, text: "pesan \($0)", status: .active) }
     }
 }

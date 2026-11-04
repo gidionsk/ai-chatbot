@@ -43,6 +43,6 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
         self.status = status
         self.createdAt = createdAt
         self.clientMessageID = clientMessageID
-        document = author == .bot ? text.map(MarkdownDocument.init) : nil
+        document = author == .assistant ? text.map(MarkdownDocument.init) : nil
     }
 }

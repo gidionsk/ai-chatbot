@@ -5,7 +5,7 @@
 //  Created by Wendra on 30/10/26.
 //
 
-/// `data` 200 `POST /chat/conversations/{id}/cancel`. True = turn yang berjalan dibatalkan; pembuka kunci
+/// `data` 200 `POST /v1/chat/conversations/{id}/cancel`. True = turn yang berjalan dibatalkan; pembuka kunci
 /// tetap `turn_end {"status":"canceled"}` di stream. False = tidak ada turn aktif (no-op).
 struct WireCancel: Decodable {
     let isCanceled: Bool

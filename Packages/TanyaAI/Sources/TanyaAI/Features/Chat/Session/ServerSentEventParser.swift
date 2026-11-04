@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Menyusun baris SSE menjadi frame. Contract 1.0.1: urutan `id:`, `event:`, `data:` dengan `data` JSON satu
+/// Menyusun baris SSE menjadi frame. Contract 1.5.0: urutan `id:`, `event:`, `data:` dengan `data` JSON satu
 /// baris, jadi frame selesai tepat di baris `data:`. Tidak bergantung pada baris kosong (host boleh
 /// membuangnya), sehingga `turn_end` terakhir tidak tertahan sampai event berikutnya. Komentar diabaikan.
 struct ServerSentEventParser {

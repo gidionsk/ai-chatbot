@@ -23,9 +23,9 @@ struct TanyaAIBridgeTurnTests {
         await delivery?.value
         transport.emit(
             WireFixture.messageFrame(
-                seq: 2, direction: "customer", clientMessageID: transport.lastClientMessageID
+                seq: 2, direction: "user", clientMessageID: transport.lastClientMessageID
             ))
-        transport.emit(WireFixture.messageFrame(seq: 3, direction: "bot"))
+        transport.emit(WireFixture.messageFrame(seq: 3, direction: "assistant"))
         await waitUntil { bridge.messages.count == 2 }
         #expect(bridge.turnPhase == .awaitingReply)
         transport.emit(WireFixture.turnEndFrame(seq: 4))
@@ -42,7 +42,7 @@ struct TanyaAIBridgeTurnTests {
         #expect(bridge.turnPhase == .canceling)
         await bridge.cancelTurn()
         #expect(transport.calls.filter { $0 == "cancel" }.count == 1, "stop yang diproses tidak dikirim lagi")
-        transport.emit(WireFixture.messageFrame(seq: 2, direction: "customer", status: "canceled"))
+        transport.emit(WireFixture.messageFrame(seq: 2, direction: "user", status: "canceled"))
         transport.emit(WireFixture.turnEndFrame(seq: 3, status: "canceled"))
         await waitUntil { bridge.turnPhase == .idle }
         #expect(bridge.messages.map(\.status) == [.canceled])
@@ -153,7 +153,7 @@ private extension TanyaAIBridgeTurnTests {
         let (transport, bridge) = await connectedBridge()
         _ = await bridge.sendAndWait("Cek Portfolio saya")
         transport.emit(
-            WireFixture.messageFrame(seq: 2, direction: "customer", clientMessageID: transport.lastClientMessageID)
+            WireFixture.messageFrame(seq: 2, direction: "user", clientMessageID: transport.lastClientMessageID)
         )
         await waitUntil { bridge.localQuestions.isEmpty }
         return (transport, bridge)

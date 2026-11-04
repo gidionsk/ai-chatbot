@@ -26,7 +26,7 @@ struct LocalQuestion: Identifiable, Equatable {
     func isDelivered(in messages: [ChatMessage]) -> Bool {
         let floor = afterSeq ?? .min
         return messages.reversed().prefix { $0.seq > floor }.contains { message in
-            message.author == .customer && (message.clientMessageID == id || (seq != nil && message.seq == seq))
+            message.author == .user && (message.clientMessageID == id || (seq != nil && message.seq == seq))
         }
     }
 }

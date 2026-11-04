@@ -617,3 +617,9 @@ actor. Pesan SSE tetap di-parse saat datang (satu pesan, urutan terjaga). `large
 parse, bukan per baris (kuadratik pada list panjang), dan bullet tidak memakainya. Tabel mengikuti Figma: tanpa
 bingkai dan latar header, rata dengan teks, garis di bawah setiap baris, dan baris ringkasan lewat sel tengah
 kosong karena GFM tidak punya colspan. List masuk 8 dari teks, kolom teks tetap di 20.
+
+## Contract chat-gateway 1.5.0
+
+Contoh payload contract mengungkap `direction` `user`/`assistant` dan `state` `ASSISTANT_ACTIVE` terbaca `unknown`,
+sehingga pesan nasabah dan jawaban tidak tampil dan bubble lokal tidak pernah diganti. Enum, fixture sandbox, dan test
+disamakan; path host menjadi `/v1/chat/*`. Selisih yang belum dikerjakan ada di `docs/CHAT_GATEWAY.md`.

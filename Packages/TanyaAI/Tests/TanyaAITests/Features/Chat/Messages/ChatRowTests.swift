@@ -31,16 +31,16 @@ struct ChatRowTests {
     @Test
     func deliveredMatchesTheCustomerCopyByClientIDOrAckSeq() {
         var question = LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1)
-        let bot = ChatMessage(id: "m-2", seq: 2, author: .bot, text: "x", status: .active, clientMessageID: "q")
-        let other = ChatMessage(id: "m-3", seq: 3, author: .customer, text: "lain", status: .active)
+        let bot = ChatMessage(id: "m-2", seq: 2, author: .assistant, text: "x", status: .active, clientMessageID: "q")
+        let other = ChatMessage(id: "m-3", seq: 3, author: .user, text: "lain", status: .active)
         #expect(!question.isDelivered(in: [bot, other]))
         question.seq = 3
         #expect(question.isDelivered(in: [bot, other]))
         let copy = ChatMessage(
-            id: "m-4", seq: 4, author: .customer, text: "Beli USD", status: .active, clientMessageID: "q")
+            id: "m-4", seq: 4, author: .user, text: "Beli USD", status: .active, clientMessageID: "q")
         #expect(LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1).isDelivered(in: [copy]))
         let older = ChatMessage(
-            id: "m-1", seq: 1, author: .customer, text: "lama", status: .active, clientMessageID: "q")
+            id: "m-1", seq: 1, author: .user, text: "lama", status: .active, clientMessageID: "q")
         #expect(!LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1).isDelivered(in: [older]))
     }
 }
@@ -49,6 +49,6 @@ struct ChatRowTests {
 
 private extension ChatRowTests {
     func messages(_ seqs: [Int]) -> [ChatMessage] {
-        seqs.map { ChatMessage(id: "m-\($0)", seq: $0, author: .bot, text: "pesan \($0)", status: .active) }
+        seqs.map { ChatMessage(id: "m-\($0)", seq: $0, author: .assistant, text: "pesan \($0)", status: .active) }
     }
 }

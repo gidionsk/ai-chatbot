@@ -5,7 +5,7 @@
 //  Created by Wendra on 28/10/26.
 //
 
-/// Metadata teknis contract chat-gateway 1.0.1: prefix baris SSE, nama event, dan batas paging.
+/// Metadata teknis contract chat-gateway 1.5.0: prefix baris SSE, nama event, dan batas paging.
 /// Bukan copy untuk pengguna.
 enum ChatWire {
     static let idField = "id:"
