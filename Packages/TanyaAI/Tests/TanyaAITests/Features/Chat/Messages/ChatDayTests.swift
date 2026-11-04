@@ -41,16 +41,48 @@ struct ChatDayTests {
         #expect([message(1, nil)].groupedByDay(calendar: calendar).first?.date == nil)
     }
 
-    /// Jam perangkat bisa berbeda dengan server: hari yang mundur tidak memunculkan chip kedua untuk hari lama.
+    /// Jam perangkat bisa berbeda dengan server: setiap pesan tetap di bawah tanggalnya sendiri dan urutan
+    /// percakapan tidak berubah, walau hari yang sama muncul dua kali.
     @Test
-    func earlierDayJoinsTheCurrentDay() throws {
+    func dayGoingBackOpensItsOwnGroup() throws {
+        let calendar = try jakartaCalendar()
+        let sentAt = try #require(Date(wire: "2026-11-05T08:00:00+07:00"))
+        let failed = ChatRow.local(
+            LocalQuestion(id: "q", text: "gagal", afterSeq: 1, sentAt: sentAt, isFailed: true)
+        )
+        let days = [message(1, "2026-11-04T09:00:00+07:00"), failed, message(2, "2026-11-04T10:00:00+07:00")]
+            .groupedByDay(calendar: calendar)
+        #expect(days.map { $0.rows.map(\.id) } == [["m-1"], ["q"], ["m-2"]])
+        #expect(
+            days.map(\.date) == [
+                day("2026-11-04T00:00:00+07:00"), day("2026-11-05T00:00:00+07:00"), day("2026-11-04T00:00:00+07:00")
+            ]
+        )
+    }
+
+    /// Hari yang muncul lagi tetap punya id unik untuk `ForEach`.
+    @Test
+    func repeatedDayKeepsUniqueIDs() throws {
         let calendar = try jakartaCalendar()
         let days = [
             message(1, "2026-10-14T09:00:00+07:00"), message(2, "2026-10-15T00:01:00+07:00"),
-            message(3, "2026-10-14T23:59:00+07:00")
+            message(3, "2026-10-14T23:59:00+07:00"), message(4, "2026-10-15T00:02:00+07:00")
         ].groupedByDay(calendar: calendar)
-        #expect(days.map { $0.rows.map(\.id) } == [["m-1"], ["m-2", "m-3"]])
+        #expect(days.count == 4)
         #expect(Set(days.map(\.id)).count == days.count)
+    }
+
+    /// Id chip kedua dari hari yang sama tidak bergeser saat bubble lokal di dalamnya diganti salinan stream.
+    @Test
+    func repeatedDayKeepsItsIDWhenALocalQuestionIsReplaced() throws {
+        let calendar = try jakartaCalendar()
+        let first = message(1, "2026-11-04T09:00:00+07:00")
+        let later = message(2, "2026-11-05T09:00:00+07:00")
+        let sentAt = try #require(Date(wire: "2026-11-04T10:00:00+07:00"))
+        let local = ChatRow.local(LocalQuestion(id: "q", text: "Beli USD", afterSeq: 2, sentAt: sentAt))
+        let before = [first, later, local].groupedByDay(calendar: calendar)
+        let after = [first, later, message(3, "2026-11-04T10:00:01+07:00")].groupedByDay(calendar: calendar)
+        #expect(before.map(\.id) == after.map(\.id))
     }
 
     /// Bubble lokal memakai waktu kirim; diganti salinan stream di hari yang sama, chip (id hari) tetap.

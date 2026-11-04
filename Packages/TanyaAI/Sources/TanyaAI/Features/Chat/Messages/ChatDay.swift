@@ -9,11 +9,10 @@ import Foundation
 
 /// Baris pada satu hari kalender (zona waktu perangkat); chip tanggal tampil di atasnya.
 struct ChatDay: Identifiable, Equatable {
-    /// Awal hari; nil bila baris pertama tidak punya tanggal (tanpa chip).
-    let date: Date?
+    /// Berbasis tanggal, bukan id baris pertama: bubble lokal yang diganti salinan stream tidak membuat ulang chip.
+    let id: ChatDayID
     let rows: [ChatRow]
 
-    /// Awal hari, bukan id baris pertama: bubble lokal yang diganti salinan stream tidak membuat ulang chip.
-    /// Unik karena hari hanya maju (`groupedByDay`).
-    var id: Date? { date }
+    /// Awal hari; nil bila baris pertama tidak punya tanggal (tanpa chip).
+    var date: Date? { id.date }
 }
