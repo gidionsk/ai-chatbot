@@ -592,7 +592,8 @@ saat pesan dibuat (`ChatMessage.document`), bukan setiap render. Link diteruskan
 
 Ukuran estimasi (TODO Figma): heading `#` 20 / `##` 16 / lainnya 14 tebal, jarak blok `spacingMedium`,
 garis quote 3, radius code 8, kolom penanda list 8.
-Open Sans belum punya face italic, jadi miring masih sintetis (TODO).
+Miring memakai face Fira Sans Italic. `.italic()` tidak memiringkan font tanpa face miring (terbukti pada Open Sans
+dan Fira Sans Bold), jadi tebal miring tampil tebal tegak sampai file Bold Italic ditambahkan (TODO).
 
 Hanging indent: baris lanjutan item rata dengan teksnya, bukan dengan penanda. Kolom penanda selebar penanda
 terlebar di list itu, jadi teks item 9 dan 10 tetap satu kolom.

@@ -5,6 +5,7 @@ CustomColors), nilai awal, theme environment, fonts, localization dan style. Sco
 shared header, composer maksimal empat baris, halaman sambutan (welcome) dari BE, dan
 bridge host ke chat-gateway (init → history → SSE, retry, merge); daftar pesan menyusul. Minimum iOS 15 (host ikut naik ke iOS 15 untuk revamp).
 
+- Semua teks memakai Fira Sans. Open Sans belum dipakai: jangan jadi default komponen atau dipakai di layar.
 - Ukuran dan area tap 1:1 Figma lewat `.scaledToArtwork`. Jangan menambahkan
   minimum touch target 44 atau hit frame tambahan; ini keputusan UI/UX.
 - Header = ukuran navigation bar host: dari tepi layar, padding atas 50/28 tanpa scale

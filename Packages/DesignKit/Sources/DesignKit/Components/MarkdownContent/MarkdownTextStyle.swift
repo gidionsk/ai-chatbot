@@ -11,6 +11,7 @@ import CoreGraphics
 struct MarkdownTextStyle {
     let fontFace: FontFace
     let boldFontFace: FontFace
+    let italicFontFace: FontFace
     var listDepth = Int.zero
 
     var bodySize: CGFloat { FigmaSize.typographySizeDisplaySmall14.scaledToArtwork }

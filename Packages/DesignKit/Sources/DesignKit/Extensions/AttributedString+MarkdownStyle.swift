@@ -11,7 +11,6 @@ extension AttributedString {
     /// Mengubah style inline Markdown menjadi atribut SwiftUI: tebal = face bold, miring, coret, kode monospace
     /// berlatar, dan link berwarna hyperlink bergaris bawah. `isBold` untuk teks yang seluruhnya tebal (heading,
     /// header tabel). Intent inline dilepas agar SwiftUI tidak menebalkan face bold dua kali.
-    /// TODO: Open Sans belum punya face italic; miring masih sintetis dari sistem.
     func markdownStyled(
         size: CGFloat, isBold: Bool = false, style: MarkdownTextStyle, colors: any FigmaColorProtocol
     ) -> AttributedString {
@@ -48,8 +47,11 @@ private extension AttributedString {
         if intent.contains(.code) {
             return .system(size: size, design: .monospaced)
         }
-        let face = isBold || intent.contains(.stronglyEmphasized) ? style.boldFontFace : style.fontFace
-        let font = face.swiftUIFont(size: size)
-        return intent.contains(.emphasized) ? font.italic() : font
+        // TODO: Fira Sans Bold Italic belum ada di paket font; tebal miring tampil tebal tegak.
+        if isBold || intent.contains(.stronglyEmphasized) {
+            return style.boldFontFace.swiftUIFont(size: size)
+        }
+        let face = intent.contains(.emphasized) ? style.italicFontFace : style.fontFace
+        return face.swiftUIFont(size: size)
     }
 }

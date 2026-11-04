@@ -28,7 +28,7 @@ public struct MessageComposer: View {
     /// draft selalu bisa diketik.
     public init(
         text: Binding<String>, placeholder: String, actionLabel: String,
-        isEnabled: Bool = true, action: MessageComposerAction = .send, fontFace: FontFace = .openSansRegular,
+        isEnabled: Bool = true, action: MessageComposerAction = .send, fontFace: FontFace = .firaSansRegular,
         onSend: @escaping () -> Void, onStop: @escaping () -> Void = {}
     ) {
         self._text = text

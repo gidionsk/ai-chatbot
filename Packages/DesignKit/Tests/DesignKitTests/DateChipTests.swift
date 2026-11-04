@@ -21,7 +21,7 @@ struct DateChipTests {
         let chip = size(of: DateChip(text: "14 Okt 2026"), width: width)
         let text = size(
             of: Text("14 Okt 2026").font(
-                FontFace.openSansRegular.swiftUIFont(
+                FontFace.firaSansRegular.swiftUIFont(
                     size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork)), width: width)
         #expect(abs(chip.width - width) <= 0.5)
         #expect(abs(chip.height - text.height - FigmaSize.spacingSmall.scaledToArtwork * 2) <= 0.5)

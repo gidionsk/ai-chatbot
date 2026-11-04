@@ -17,11 +17,11 @@ public struct MarkdownContent: View {
     private let onOpenLink: (URL) -> Void
 
     public init(
-        document: MarkdownDocument, fontFace: FontFace = .openSansRegular, boldFontFace: FontFace = .openSansBold,
-        onOpenLink: @escaping (URL) -> Void
+        document: MarkdownDocument, fontFace: FontFace = .firaSansRegular, boldFontFace: FontFace = .firaSansBold,
+        italicFontFace: FontFace = .firaSansItalic, onOpenLink: @escaping (URL) -> Void
     ) {
         self.document = document
-        self.style = MarkdownTextStyle(fontFace: fontFace, boldFontFace: boldFontFace)
+        self.style = MarkdownTextStyle(fontFace: fontFace, boldFontFace: boldFontFace, italicFontFace: italicFontFace)
         self.onOpenLink = onOpenLink
     }
 

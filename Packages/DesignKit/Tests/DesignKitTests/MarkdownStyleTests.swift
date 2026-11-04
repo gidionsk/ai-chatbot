@@ -13,7 +13,9 @@ import Testing
 /// Style inline menjadi atribut SwiftUI dari token; intent inline dilepas agar tidak ditebalkan dua kali.
 struct MarkdownStyleTests {
     private let colors = DefaultColorConstants()
-    private let style = MarkdownTextStyle(fontFace: .openSansRegular, boldFontFace: .openSansBold)
+    private let style = MarkdownTextStyle(
+        fontFace: .firaSansRegular, boldFontFace: .firaSansBold, italicFontFace: .firaSansItalic
+    )
 
     @Test
     func linkKeepsItsURLAndGetsTheHyperlinkColorAndUnderline() throws {
@@ -40,6 +42,14 @@ struct MarkdownStyleTests {
         #expect(run[AttributeScopes.SwiftUIAttributes.UnderlineStyleAttribute.self] == nil)
     }
 
+    @Test
+    func italicUsesTheItalicFaceAndBoldItalicUsesTheBoldFace() throws {
+        let italic = try #require(styledRuns("*miring*").first)
+        let boldItalic = try #require(styledRuns("***keduanya***").first)
+        #expect(italic[fontAttribute] == FontFace.firaSansItalic.swiftUIFont(size: style.bodySize))
+        #expect(boldItalic[fontAttribute] == FontFace.firaSansBold.swiftUIFont(size: style.bodySize))
+    }
+
     @Test(arguments: [(0, "•"), (1, "◦"), (2, "▪"), (3, "•")])
     func bulletChangesPerDepth(depth: Int, marker: String) {
         #expect(MarkdownSyntax.listMarker(ordinal: 1, isOrdered: false, depth: depth) == marker)
@@ -50,6 +60,10 @@ struct MarkdownStyleTests {
 // MARK: - Helpers
 
 private extension MarkdownStyleTests {
+    var fontAttribute: AttributeScopes.SwiftUIAttributes.FontAttribute.Type {
+        AttributeScopes.SwiftUIAttributes.FontAttribute.self
+    }
+
     func styledRuns(_ markdown: String) -> [AttributedSubstring] {
         guard case .paragraph(let text) = MarkdownDocument(markdown).blocks.first else { return [] }
         let styled = text.markdownStyled(size: style.bodySize, style: style, colors: colors)

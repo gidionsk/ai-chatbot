@@ -16,7 +16,7 @@ public struct DateChip: View {
     private let text: String
     private let fontFace: FontFace
 
-    public init(text: String, fontFace: FontFace = .openSansRegular) {
+    public init(text: String, fontFace: FontFace = .firaSansRegular) {
         self.text = text
         self.fontFace = fontFace
     }
