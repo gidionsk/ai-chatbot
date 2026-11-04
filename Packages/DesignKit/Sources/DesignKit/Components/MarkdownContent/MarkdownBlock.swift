@@ -9,7 +9,7 @@ import Foundation
 
 /// Satu blok Markdown hasil parser Apple, siap dirender. Teks inline masih membawa `inlinePresentationIntent`
 /// dan `link`; style diterapkan saat render agar mengikuti palette dan font pemakai.
-enum MarkdownBlock: Equatable {
+enum MarkdownBlock: Equatable, Sendable {
     case paragraph(AttributedString)
     /// Level 1 = `#`.
     case heading(level: Int, text: AttributedString)
