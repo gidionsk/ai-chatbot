@@ -97,7 +97,7 @@ struct ChatDayTests {
         #expect(before.first?.date == day("2026-11-03T00:00:00+07:00"))
     }
 
-    /// Buffer di-append, kelompok dibentuk sekali per hari (bukan menyalin kelompok setiap baris).
+    /// Baris di-append di tempat, bukan menyalin kelompok setiap baris.
     @Test
     func thousandsOfSameDayRowsStayInOneGroupInOrder() throws {
         let calendar = try jakartaCalendar()

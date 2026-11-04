@@ -10,32 +10,19 @@ import Foundation
 extension Array where Element == ChatRow {
     /// Kelompok per hari kalender untuk chip tanggal; urutan baris tetap kronologis. Hari berganti ke dua arah
     /// (jam perangkat bisa berbeda dengan server), jadi setiap baris tampil di bawah tanggalnya sendiri. Baris
-    /// tanpa tanggal ikut hari sebelumnya. O(n): setiap baris diproses sekali, kelompok dibentuk saat hari berganti.
+    /// tanpa tanggal ikut hari sebelumnya. O(n): setiap baris diproses sekali dan di-append di tempat.
     func groupedByDay(calendar: Calendar = .current) -> [ChatDay] {
         var days: [ChatDay] = []
-        var current: [ChatRow] = []
-        var currentDate: Date?
         var nextIDs: [Date?: ChatDayID] = [:]
-
-        func closeCurrentDay() {
-            let id = nextIDs[currentDate] ?? ChatDayID(date: currentDate)
-            nextIDs[currentDate] = id.next
-            days.append(ChatDay(id: id, rows: current))
-            current.removeAll(keepingCapacity: true)
-        }
-
         for row in self {
             let date = row.date.map(calendar.startOfDay(for:))
-            if !current.isEmpty, let date, date != currentDate {
-                closeCurrentDay()
+            let isNewDay = days.isEmpty || (date != nil && date != days.last?.date)
+            if isNewDay {
+                let id = nextIDs[date] ?? ChatDayID(date: date)
+                nextIDs[date] = id.next
+                days.append(ChatDay(id: id))
             }
-            if current.isEmpty {
-                currentDate = date
-            }
-            current.append(row)
-        }
-        if !current.isEmpty {
-            closeCurrentDay()
+            days[days.index(before: days.endIndex)].rows.append(row)
         }
         return days
     }

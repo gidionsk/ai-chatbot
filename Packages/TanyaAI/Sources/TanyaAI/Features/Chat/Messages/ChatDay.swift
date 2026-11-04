@@ -11,7 +11,7 @@ import Foundation
 struct ChatDay: Identifiable, Equatable {
     /// Berbasis tanggal, bukan id baris pertama: bubble lokal yang diganti salinan stream tidak membuat ulang chip.
     let id: ChatDayID
-    let rows: [ChatRow]
+    var rows: [ChatRow] = []
 
     /// Awal hari; nil bila baris pertama tidak punya tanggal (tanpa chip).
     var date: Date? { id.date }
