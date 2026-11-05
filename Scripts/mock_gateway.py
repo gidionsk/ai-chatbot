@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mock SSE di port 3001 untuk `events` dan kirim pesan. Mockoon tetap di port 3000 untuk service biasa."""
+"""Mock SSE di port 3001 untuk `events`, kirim pesan, dan cancel. Mockoon tetap di port 3000 untuk service biasa."""
 import json
 import threading
 import urllib.error
@@ -11,13 +11,20 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 PORT = 3001
 MOCKOON_URL = "http://127.0.0.1:3000"
 KEEPALIVE_SECONDS = 15
-REPLY_DELAY_SECONDS = 1
+REPLY_DELAY_SECONDS = 5  # Cukup lama untuk sempat menekan stop.
 SEND_PATH = "/v1/chat/messages"
 SKIPPED_HEADERS = {"connection", "content-length", "date", "host", "server", "transfer-encoding"}
 
 frames = []  # (seq, teks frame), urut seq
 changed = threading.Condition()
-next_seq = 1000
+next_seq = 1000  # Harus di atas seq terbesar history Mockoon.
+active_turn = None  # (timer, pesan pertanyaan) yang sedang dijawab
+
+
+def append_frame(seq, event, data):
+    text = json.dumps(data, ensure_ascii=False)
+    frames.append((seq, f"id: {seq}\nevent: {event}\ndata: {text}\n\n"))
+    changed.notify_all()
 
 
 def publish(event, build_data):
@@ -25,10 +32,9 @@ def publish(event, build_data):
     global next_seq
     with changed:
         next_seq += 1
-        data = json.dumps(build_data(str(next_seq)), ensure_ascii=False)
-        frames.append((next_seq, f"id: {next_seq}\nevent: {event}\ndata: {data}\n\n"))
-        changed.notify_all()
-        return next_seq
+        data = build_data(str(next_seq))
+        append_frame(next_seq, event, data)
+        return data
 
 
 def publish_message(direction, payload, client_msg_id=None):
@@ -44,9 +50,36 @@ def publish_message(direction, payload, client_msg_id=None):
     })
 
 
+def publish_turn_end(status):
+    publish("turn_end", lambda _: {"status": status, "active_turn_id": None})
+
+
+def take_active_turn():
+    """Hanya satu pemenang antara jawaban dan cancel, jadi tiap turn berakhir tepat sekali."""
+    global active_turn
+    with changed:
+        turn, active_turn = active_turn, None
+        return turn
+
+
 def publish_reply(question):
+    if take_active_turn() is None:
+        return
     publish_message("assistant", f"**Jawaban mock** untuk: {question}")
-    publish("turn_end", lambda _: {"status": "completed", "active_turn_id": None})
+    publish_turn_end("completed")
+
+
+def cancel_active_turn():
+    """Tombstone memakai message_id dan seq pertanyaan yang sama, lalu `turn_end` dengan seq baru."""
+    turn = take_active_turn()
+    if turn is None:
+        return False
+    timer, question = turn
+    timer.cancel()
+    with changed:
+        append_frame(int(question["seq"]), "message", {**question, "status": "canceled"})
+    publish_turn_end("canceled")
+    return True
 
 
 class Gateway(BaseHTTPRequestHandler):
@@ -60,8 +93,12 @@ class Gateway(BaseHTTPRequestHandler):
             self.forward()
 
     def do_POST(self):
-        if self.path.split("?")[0] == SEND_PATH:
+        path = self.path.split("?")[0]
+        if path == SEND_PATH:
             self.accept_message()
+        elif path.endswith("/cancel"):
+            self.read_body()
+            self.respond_json(200, {"success": True, "data": {"canceled": cancel_active_turn()}})
         else:
             self.forward()
 
@@ -76,13 +113,20 @@ class Gateway(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def respond_json(self, status, payload):
+        self.respond(status, json.dumps(payload).encode(), [("Content-Type", "application/json")])
+
     def accept_message(self):
+        global active_turn
         body = json.loads(self.read_body())
-        question = body.get("payload", "")
-        seq = publish_message("user", question, body.get("client_msg_id"))
-        threading.Timer(REPLY_DELAY_SECONDS, publish_reply, args=[question]).start()
-        ack = {"success": True, "data": {"message_id": str(uuid.uuid4()), "seq": str(seq)}}
-        self.respond(202, json.dumps(ack).encode(), [("Content-Type", "application/json")])
+        text = body.get("payload", "")
+        question = publish_message("user", text, body.get("client_msg_id"))
+        timer = threading.Timer(REPLY_DELAY_SECONDS, publish_reply, args=[text])
+        with changed:
+            active_turn = (timer, question)
+        timer.start()
+        ack = {"message_id": question["message_id"], "seq": question["seq"]}
+        self.respond_json(202, {"success": True, "data": ack})
 
     def stream_events(self):
         last_id = self.headers.get("Last-Event-ID")

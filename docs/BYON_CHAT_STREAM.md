@@ -211,12 +211,13 @@ port 3001. Mockoon tetap di port 3000 untuk service biasa.
 
 | Service | Tujuan |
 | --- | --- |
-| Login, `init`, history, cancel, service lain | Mockoon `localhost:3000` |
-| `events`, `sendMessage` | Skrip `localhost:3001` |
+| Login, `init`, history, service lain | Mockoon `localhost:3000` |
+| `events`, `sendMessage`, `cancelTurn` | Skrip `localhost:3001` |
 
 `sendMessage` ikut ke skrip karena dari situlah skrip tahu ada pertanyaan. Setelah menerimanya, skrip mengirim
-echo pertanyaan, jawaban 1 detik kemudian, lalu `turn_end` lewat stream. Tombol stop tidak menghentikan jawaban,
-dan seq dimulai dari 1001, jadi seq di history Mockoon harus lebih kecil.
+echo pertanyaan, jawaban 5 detik kemudian, lalu `turn_end` lewat stream. `cancelTurn` ikut ke skrip karena hanya
+skrip yang bisa menghentikan jawaban: stream mengirim tombstone pertanyaan lalu `turn_end` canceled, tanpa jawaban.
+Seq dimulai dari 1001, jadi seq di history Mockoon harus lebih kecil.
 
 ```bash
 python3 Scripts/mock_gateway.py
@@ -239,7 +240,7 @@ final class ChatGatewayStreamService: ChatGatewayService {
 ```
 
 Di `TanyaAIUseCase+Chat.swift`, ganti `ChatGatewayService(identifier)` menjadi
-`ChatGatewayStreamService(identifier)` hanya di `sendMessage` dan `events`.
+`ChatGatewayStreamService(identifier)` hanya di `sendMessage`, `events`, dan `cancelTurn`.
 
 ## Yang sudah diuji
 
