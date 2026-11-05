@@ -211,12 +211,13 @@ port 3001. Mockoon tetap di port 3000 untuk service biasa.
 
 | Service | Tujuan |
 | --- | --- |
-| Login, `init`, history, cancel, service lain | Mockoon `localhost:3000` |
-| `events`, `sendMessage` | Skrip `localhost:3001` |
+| Login, `init`, history, service lain | Mockoon `localhost:3000` |
+| `events`, `sendMessage`, `cancelTurn` | Skrip `localhost:3001` |
 
 `sendMessage` ikut ke skrip karena dari situlah skrip tahu ada pertanyaan. Setelah menerimanya, skrip mengirim
-echo pertanyaan, jawaban 1 detik kemudian, lalu `turn_end` lewat stream. Tombol stop tidak menghentikan jawaban,
-dan seq dimulai dari 1001, jadi seq di history Mockoon harus lebih kecil.
+echo pertanyaan, jawaban 5 detik kemudian, lalu `turn_end` lewat stream. `cancelTurn` ikut ke skrip karena hanya
+skrip yang bisa menghentikan jawaban: stream mengirim tombstone pertanyaan lalu `turn_end` canceled, tanpa jawaban.
+Seq dimulai dari 1001, jadi seq di history Mockoon harus lebih kecil.
 
 ```bash
 python3 Scripts/mock_gateway.py
@@ -239,7 +240,140 @@ final class ChatGatewayStreamService: ChatGatewayService {
 ```
 
 Di `TanyaAIUseCase+Chat.swift`, ganti `ChatGatewayService(identifier)` menjadi
-`ChatGatewayStreamService(identifier)` hanya di `sendMessage` dan `events`.
+`ChatGatewayStreamService(identifier)` hanya di `sendMessage`, `events`, dan `cancelTurn`.
+
+### Satu flow mock
+
+Semua id di bawah sudah sama dalam satu flow. Conversation id: `6ba7b810-9dad-41d1-80b4-00c04fd430c8`.
+
+#### 1. Init
+
+`POST http://localhost:3000/v1/chat/init`, status 200:
+
+```json
+{
+  "success": true,
+  "data": {
+    "conversation_id": "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
+    "state": "ASSISTANT_ACTIVE"
+  }
+}
+```
+
+#### 2. History
+
+`GET http://localhost:3000/v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/messages`, status 200:
+
+```json
+{
+  "success": true,
+  "data": {
+    "messages": [
+      {
+        "message_id": "h-2",
+        "seq": "2",
+        "direction": "assistant",
+        "type": "markdown",
+        "payload": "Halo, **ada yang bisa dibantu?**",
+        "follow_up_questions": ["Berapa total investasi aku?"],
+        "client_msg_id": null,
+        "status": "active",
+        "created_at": "2026-11-05T09:00:05+07:00"
+      },
+      {
+        "message_id": "h-1",
+        "seq": "1",
+        "direction": "user",
+        "type": "text",
+        "payload": "Halo",
+        "follow_up_questions": null,
+        "client_msg_id": "c-0001",
+        "status": "active",
+        "created_at": "2026-11-05T09:00:00+07:00"
+      }
+    ],
+    "next_before": null
+  }
+}
+```
+
+#### 3. Stream
+
+`GET http://localhost:3001/v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/events`, status 200, header
+`Content-Type: text/event-stream`, koneksi tetap terbuka:
+
+```text
+: connected
+
+```
+
+#### 4. Kirim pesan
+
+`POST http://localhost:3001/v1/chat/messages`, status 202:
+
+```json
+{"success": true, "data": {"message_id": "m-1001", "seq": "1001"}}
+```
+
+Isi stream sampai selesai:
+
+```text
+id: 1001
+event: message
+data: {"message_id": "m-1001", "seq": "1001", "direction": "user", "type": "text", "payload": "Cek portofolio", "status": "active", "client_msg_id": "c-0002", "created_at": "2026-11-05T10:00:00+07:00"}
+
+id: 1002
+event: message
+data: {"message_id": "m-1002", "seq": "1002", "direction": "assistant", "type": "text", "payload": "**Jawaban mock** untuk: Cek portofolio", "status": "active", "client_msg_id": null, "created_at": "2026-11-05T10:00:05+07:00"}
+
+id: 1003
+event: turn_end
+data: {"status": "completed", "active_turn_id": null}
+
+```
+
+#### 5. Kirim pesan kedua, lalu stop
+
+`POST http://localhost:3001/v1/chat/messages`, status 202:
+
+```json
+{"success": true, "data": {"message_id": "m-1004", "seq": "1004"}}
+```
+
+Isi stream setelah kirim:
+
+```text
+id: 1004
+event: message
+data: {"message_id": "m-1004", "seq": "1004", "direction": "user", "type": "text", "payload": "Beli valas", "status": "active", "client_msg_id": "c-0003", "created_at": "2026-11-05T10:01:00+07:00"}
+
+```
+
+`POST http://localhost:3001/v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/cancel`, tanpa body, status 200:
+
+```json
+{"success": true, "data": {"canceled": true}}
+```
+
+Isi stream setelah cancel:
+
+```text
+id: 1004
+event: message
+data: {"message_id": "m-1004", "seq": "1004", "direction": "user", "type": "text", "payload": "Beli valas", "status": "canceled", "client_msg_id": "c-0003", "created_at": "2026-11-05T10:01:00+07:00"}
+
+id: 1005
+event: turn_end
+data: {"status": "canceled", "active_turn_id": null}
+
+```
+
+#### Yang perlu dibuat
+
+- Mockoon: langkah 1 dan 2 saja.
+- Skrip `mock_gateway.py`: langkah 3, 4, dan 5 otomatis, jadi tidak perlu di-copy manual.
+- Kalau stream ditulis sendiri tanpa skrip: `client_msg_id` harus sama dengan yang dikirim SDK di request, karena SDK
+  membuat nilainya sendiri. `c-0002` dan `c-0003` di atas hanya contoh.
 
 ## Yang sudah diuji
 
