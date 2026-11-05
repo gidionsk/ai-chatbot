@@ -19,6 +19,7 @@ extension TanyaAIBridge {
         let clientMessageID = UUID().uuidString
         turn.start(clientMessageID: clientMessageID)
         localQuestions.append(LocalQuestion(id: clientMessageID, text: text, afterSeq: messages.latestSeq))
+        latestSentQuestionID = clientMessageID
         return Task {
             await deliver(text, clientMessageID: clientMessageID, conversationID: conversationID)
         }

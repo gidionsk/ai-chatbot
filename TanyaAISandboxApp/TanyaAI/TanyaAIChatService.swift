@@ -123,10 +123,12 @@ private extension TanyaAIChatService {
     }
 
     func scheduleLateMessage() {
-        guard options.isSendingLateMessage else { return }
+        guard options.isSendingLateMessage || options.isSendingLateQuestion else { return }
+        let isQuestion = options.isSendingLateQuestion
         schedule(after: SandboxOptions.lateMessageDelay) { service in
-            let text = SandboxGatewayFrames.lateMessage
-            service.emit(service.frames.message(direction: SandboxWireMessage.assistant, text: text))
+            let text = isQuestion ? SandboxGatewayFrames.lateQuestion : SandboxGatewayFrames.lateMessage
+            let direction = isQuestion ? SandboxWireMessage.user : SandboxWireMessage.assistant
+            service.emit(service.frames.message(direction: direction, text: text))
         }
     }
 

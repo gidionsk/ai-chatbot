@@ -57,8 +57,8 @@ public struct ChatScreen<Content: View>: View {
 
     private var scrollContent: some View {
         ChatScrollSection(
-            sentQuestionID: bridge.sentQuestionID, latestReplyID: bridge.rows.last { !$0.isQuestion }?.id,
-            isAwaitingReply: bridge.isAwaitingReply, historyPhase: bridge.historyPhase
+            sentQuestionID: bridge.latestSentQuestionID, incomingMessageID: bridge.latestIncomingMessageID,
+            historyPhase: bridge.historyPhase
         ) {
             conversation
         }

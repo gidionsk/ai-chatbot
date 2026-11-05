@@ -48,6 +48,7 @@ struct SandboxGatewayFrames {
     static let longHistoryLatestSeq = 30
     private static let longAnswerSectionLimit = 4
     static let lateMessage = "Pesan baru tanpa pertanyaan"
+    static let lateQuestion = "Pertanyaan dari kanal lain"
     static let longHistoryLastAnswer = "Jawaban terakhir history"
     /// Pesan selang-seling, terbaru dulu seperti gateway.
     static var longHistory: Data {

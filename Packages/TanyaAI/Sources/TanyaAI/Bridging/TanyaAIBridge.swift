@@ -22,6 +22,12 @@ public final class TanyaAIBridge: ObservableObject {
     /// Pertanyaan yang sedang ditunggu jawabannya (lihat `ChatTurn`).
     @Published
     var turn = ChatTurn()
+    /// Pertanyaan terbaru yang dikirim dari halaman ini. Hanya berubah saat kirim, jadi salinan dari stream atau
+    /// bubble gagal yang tersisa tidak dianggap kiriman baru.
+    @Published var latestSentQuestionID: String?
+    /// Pesan terlihat terbaru yang datang di luar turn nasabah, termasuk pertanyaan dari kanal lain. Jawaban turn
+    /// sendiri tidak dihitung, karena pertanyaannya tetap parkir.
+    @Published private(set) var latestIncomingMessageID: String?
     /// True setelah history pertama selesai; sebelum itu halaman menampilkan loading, bukan sambutan.
     @Published
     private(set) var isHistoryLoaded = false
@@ -84,9 +90,6 @@ public final class TanyaAIBridge: ObservableObject {
         return messages.isEmpty ? .empty : .restored
     }
 
-    /// Pertanyaan terbaru yang baru dikirim dari halaman ini; berubah = pertanyaan baru parkir di dekat atas.
-    var sentQuestionID: String? { localQuestions.last?.id }
-
     /// Sambutan hanya untuk percakapan kosong; bubble pertanyaan pertama langsung menggantikannya.
     var isWelcomeVisible: Bool { isHistoryLoaded && messages.isEmpty && localQuestions.isEmpty }
 
@@ -137,6 +140,7 @@ public final class TanyaAIBridge: ObservableObject {
         case .message(let message):
             messages = messages.merging([message])
             removeDeliveredQuestions()
+            updateLatestIncomingMessage()
         case .turnEnd(let seq):
             turn.end(seq: seq)
         case .ignored:
@@ -153,6 +157,7 @@ public final class TanyaAIBridge: ObservableObject {
             eventCursor = nil
             self.conversationID = conversationID
             isHistoryLoaded = true
+            updateLatestIncomingMessage()
             return
         }
         self.conversationID = conversationID
@@ -160,5 +165,11 @@ public final class TanyaAIBridge: ObservableObject {
         isHistoryLoaded = true
         // Pertanyaan yang terlewat stream saat putus datang lewat history.
         removeDeliveredQuestions()
+        updateLatestIncomingMessage()
+    }
+
+    private func updateLatestIncomingMessage() {
+        guard !isAwaitingReply, let message = messages.last(where: { ChatRow.message($0).isVisible }) else { return }
+        latestIncomingMessageID = message.id
     }
 }

@@ -71,6 +71,15 @@ final class ChatScrollUITests: XCTestCase {
         XCTAssertTrue(isOnScreen(late))
     }
 
+    func testQuestionFromAnotherChannelFollowsWhenAtTheBottom() {
+        launch(extra: ["--long-history", "--late-question"])
+        XCTAssertTrue(text(lastAnswer).waitForExistence(timeout: 10))
+        let question = text("Pertanyaan dari kanal lain")
+        XCTAssertTrue(question.waitForExistence(timeout: 10))
+        settle()
+        XCTAssertTrue(isOnScreen(question))
+    }
+
     func testMessageWithoutQuestionLeavesAReaderWhereTheyAre() {
         launch(extra: ["--long-history", "--late-message"])
         XCTAssertTrue(text(lastAnswer).waitForExistence(timeout: 10))

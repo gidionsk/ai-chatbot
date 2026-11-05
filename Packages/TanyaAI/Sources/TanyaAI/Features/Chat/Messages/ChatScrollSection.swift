@@ -10,29 +10,28 @@ import SwiftUI
 
 /// Mengatur posisi scroll daftar pesan. Halaman dibuka di pesan terbaru. Pertanyaan baru parkir dekat atas dengan
 /// preview jawaban sebelumnya; ruang kosong di bawahnya membuat itu tetap bisa walau jawaban masih pendek, dan
-/// menyusut saat jawaban datang. Pesan lain di luar turn mengikuti ke bawah hanya bila posisi sudah dekat bawah,
+/// menyusut saat jawaban datang. Pesan di luar turn mengikuti ke bawah hanya bila posisi sudah dekat bawah,
 /// jadi nasabah yang sedang membaca ke atas tidak terseret.
 /// Closure `onChange` membaca nilai dari body sebelumnya, jadi nilai baru selalu lewat parameternya.
 @MainActor
 struct ChatScrollSection<Content: View>: View {
     @Environment(\.screenViewport) private var viewport
+    @Environment(\.accessibilityReduceMotion) private var isReducingMotion
     /// Tinggi dari pertanyaan terbaru sampai ujung konten; nil sampai barisnya terukur.
     @State private var turnHeight: CGFloat?
     @State private var isParked = false
     @State private var isOpenedAtLatest = false
     private let sentQuestionID: String?
-    private let latestReplyID: String?
-    private let isAwaitingReply: Bool
+    private let incomingMessageID: String?
     private let historyPhase: ChatHistoryPhase
     private let content: Content
 
     init(
-        sentQuestionID: String?, latestReplyID: String?, isAwaitingReply: Bool, historyPhase: ChatHistoryPhase,
+        sentQuestionID: String?, incomingMessageID: String?, historyPhase: ChatHistoryPhase,
         @ViewBuilder content: () -> Content
     ) {
         self.sentQuestionID = sentQuestionID
-        self.latestReplyID = latestReplyID
-        self.isAwaitingReply = isAwaitingReply
+        self.incomingMessageID = incomingMessageID
         self.historyPhase = historyPhase
         self.content = content()
     }
@@ -47,7 +46,7 @@ struct ChatScrollSection<Content: View>: View {
             .onAppear { open(historyPhase, proxy) }
             .onChange(of: historyPhase) { open($0, proxy) }
             .onChange(of: sentQuestionID) { park($0, proxy) }
-            .onChange(of: latestReplyID) { _ in followLatest(proxy) }
+            .onChange(of: incomingMessageID) { _ in followLatest(proxy) }
         }
     }
 
@@ -111,15 +110,23 @@ private extension ChatScrollSection {
         turnHeight = nil
         let anchor = UnitPoint(x: UnitPoint.top.x, y: viewport.chatParkingOffset / viewport.height)
         DispatchQueue.main.async {
-            withAnimation(.easeOut) { proxy.scrollTo(ChatElementIdentifier.parking, anchor: anchor) }
+            animateScroll { proxy.scrollTo(ChatElementIdentifier.parking, anchor: anchor) }
         }
     }
 
-    /// Jawaban pertanyaan yang sedang ditunggu tidak ikut: pertanyaannya tetap parkir supaya terbaca dari awal.
     func followLatest(_ proxy: ScrollViewProxy) {
-        guard isOpenedAtLatest, viewport.isNearBottom, !isAwaitingReply else { return }
+        guard isOpenedAtLatest, viewport.isNearBottom else { return }
         DispatchQueue.main.async {
-            withAnimation(.easeOut) { scrollToLatest(proxy) }
+            animateScroll { scrollToLatest(proxy) }
         }
+    }
+
+    /// Reduce Motion aktif = langsung pindah tanpa animasi.
+    func animateScroll(_ scroll: () -> Void) {
+        guard !isReducingMotion else {
+            scroll()
+            return
+        }
+        withAnimation(.easeOut, scroll)
     }
 }

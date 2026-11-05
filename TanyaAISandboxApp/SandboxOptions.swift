@@ -37,6 +37,7 @@ struct SandboxOptions {
     private static let historyFlag = "--with-history"
     private static let longHistoryFlag = "--long-history"
     private static let lateMessageFlag = "--late-message"
+    private static let lateQuestionFlag = "--late-question"
     private static let headerDemoFlag = "--header-demo"
     private static let offlineFlag = "--offline"
     private static let brokenIconsFlag = "--broken-icons"
@@ -58,6 +59,8 @@ struct SandboxOptions {
     let isShowingLongHistory: Bool
     /// `--late-message`: bot mengirim pesan sendiri tanpa ada pertanyaan, misalnya dari agen atau kanal lain.
     let isSendingLateMessage: Bool
+    /// `--late-question`: pertanyaan nasabah datang dari kanal lain tanpa dikirim dari halaman ini.
+    let isSendingLateQuestion: Bool
     let isHeaderDemo: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
@@ -70,6 +73,7 @@ struct SandboxOptions {
         isShowingHistory = arguments.contains(Self.historyFlag)
         isShowingLongHistory = arguments.contains(Self.longHistoryFlag)
         isSendingLateMessage = arguments.contains(Self.lateMessageFlag)
+        isSendingLateQuestion = arguments.contains(Self.lateQuestionFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {
