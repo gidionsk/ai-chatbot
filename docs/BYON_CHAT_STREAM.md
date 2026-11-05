@@ -22,7 +22,7 @@ jaringan tidak bisa dijamin, jadi host yang menyusun barisnya.
 | 3 | `BaseService+SSE.swift`, `BaseService+Method.swift` | Ganti seluruh isi SSE; hapus `private` di `isSuccess` | Lolos batas 50 baris; `onEvent` tetap `String` per baris; body error non-2xx terbaca |
 | 4 | `ChatGatewayService+Stream.swift` | Ganti seluruh isi | Mengirim `Last-Event-ID`, meneruskan hasil akhir, memetakan error |
 | 5 | `TanyaAIUseCase+Chat.swift` | Ganti fungsi `events` | Callback menjadi `AsyncThrowingStream` |
-| 6 | `ChatGatewayStreamService.swift` | Baru, opsional | Hanya bila stream butuh base URL sendiri |
+| 6 | `ChatGatewayStreamService.swift` | Baru, opsional, jangan di-commit | Hanya untuk mock SSE lokal |
 
 `NetworkHandler.StreamData` tidak berubah. Parameter `onFailed` di `streamRequest` hilang, karena hasil akhir
 stream dibaca dari `onComplete`.
@@ -202,23 +202,44 @@ func events(conversationID: String, lastEventID: String?) -> AsyncThrowingStream
 }
 ```
 
-## 6. Opsional: base URL khusus stream
+## 6. Opsional: mock SSE lokal
 
-Satu port bisa melayani SSE dan POST bersamaan, jadi ini hanya perlu bila memang ada dua server. Kalau POST
-macet saat SSE terbuka di server lokal, penyebabnya biasanya server single-thread: SSE memakai satu-satunya
-worker. Perbaiki servernya lebih dulu, misalnya `ThreadingHTTPServer` di Python atau `threaded=True` di Flask.
+Hanya untuk testing, jadi file dan perubahan di langkah ini jangan di-commit ke Byon.
 
-Kalau tetap perlu, buat `ChatGatewayStreamService.swift`, lalu isi `ApiConfig.chatStreamBaseUrl` per
-environment dan samakan dengan `ApiConfig.baseUrl` di luar lokal.
+Mockoon belum mendukung SSE, jadi stream dilayani [`Scripts/mock_gateway.py`](../Scripts/mock_gateway.py) di
+port 3001. Mockoon tetap di port 3000 untuk service biasa.
+
+| Service | Tujuan |
+| --- | --- |
+| Login, `init`, history, cancel, service lain | Mockoon `localhost:3000` |
+| `events`, `sendMessage` | Skrip `localhost:3001` |
+
+`sendMessage` ikut ke skrip karena dari situlah skrip tahu ada pertanyaan. Setelah menerimanya, skrip mengirim
+echo pertanyaan, jawaban 1 detik kemudian, lalu `turn_end` lewat stream. Tombol stop tidak menghentikan jawaban,
+dan seq dimulai dari 1001, jadi seq di history Mockoon harus lebih kecil.
+
+```bash
+python3 Scripts/mock_gateway.py
+```
+
+Buat `ChatGatewayStreamService.swift`. Kelasnya turunan `ChatGatewayService`, jadi semua fungsi ikut, dan yang
+berbeda hanya `baseUrl` sesuai instance yang dibuat.
 
 ```swift
-/// Stream dengan base URL sendiri; endpoint lain tetap lewat `ChatGatewayService`.
+/// Hanya untuk mock lokal; jangan di-commit.
 final class ChatGatewayStreamService: ChatGatewayService {
-    override var baseUrl: String { ApiConfig.chatStreamBaseUrl + "/v1/chat" }
+    override var baseUrl: String {
+        #if DEBUG
+        return "http://localhost:3001/v1/chat"
+        #else
+        return super.baseUrl
+        #endif
+    }
 }
 ```
 
-Di `events`, ganti `ChatGatewayService(identifier)` menjadi `ChatGatewayStreamService(identifier)`.
+Di `TanyaAIUseCase+Chat.swift`, ganti `ChatGatewayService(identifier)` menjadi
+`ChatGatewayStreamService(identifier)` hanya di `sendMessage` dan `events`.
 
 ## Yang sudah diuji
 
