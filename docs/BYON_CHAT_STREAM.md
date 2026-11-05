@@ -242,6 +242,112 @@ final class ChatGatewayStreamService: ChatGatewayService {
 Di `TanyaAIUseCase+Chat.swift`, ganti `ChatGatewayService(identifier)` menjadi
 `ChatGatewayStreamService(identifier)` hanya di `sendMessage`, `events`, dan `cancelTurn`.
 
+### Response per service
+
+Mockoon cukup punya dua route: `init` dan history. `sendMessage`, `cancelTurn`, dan `events` dibalas skrip, jadi
+tidak perlu route Mockoon. Kalau `sendMessage` dibalas Mockoon, skrip tidak tahu ada pertanyaan sehingga
+`turn_end` tidak datang dan tombol nyangkut di stop. Kalau `cancelTurn` ke Mockoon tanpa route, 404 menutup
+percakapan dan chip saran ikut nonaktif.
+
+**Mockoon: `POST /v1/chat/init`, status 200.** `state` jangan `CLOSED`, karena stream tidak akan dibuka.
+
+```json
+{
+  "success": true,
+  "data": {
+    "conversation_id": "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
+    "state": "ASSISTANT_ACTIVE"
+  }
+}
+```
+
+**Mockoon: `GET /v1/chat/conversations/:id/messages`, status 200.** Urutan `seq` terbaru dulu.
+
+```json
+{
+  "success": true,
+  "data": {
+    "messages": [
+      {
+        "message_id": "h-2",
+        "seq": "2",
+        "direction": "assistant",
+        "type": "markdown",
+        "payload": "Halo, **ada yang bisa dibantu?**",
+        "follow_up_questions": ["Berapa total investasi aku?"],
+        "client_msg_id": null,
+        "status": "active",
+        "created_at": "2026-11-05T09:00:05+07:00"
+      },
+      {
+        "message_id": "h-1",
+        "seq": "1",
+        "direction": "user",
+        "type": "text",
+        "payload": "Halo",
+        "follow_up_questions": null,
+        "client_msg_id": "c-0001",
+        "status": "active",
+        "created_at": "2026-11-05T09:00:00+07:00"
+      }
+    ],
+    "next_before": null
+  }
+}
+```
+
+History kosong, supaya welcome tampil:
+
+```json
+{"success": true, "data": {"messages": [], "next_before": null}}
+```
+
+**Skrip: `POST /v1/chat/messages`, status 202.**
+
+```json
+{"success": true, "data": {"message_id": "<uuid>", "seq": "1001"}}
+```
+
+**Skrip: `POST /v1/chat/conversations/:id/cancel`, status 200.** `canceled` bernilai `false` bila tidak ada jawaban
+yang sedang berjalan; SDK langsung membuka kunci dan stream tidak mengirim apa-apa.
+
+```json
+{"success": true, "data": {"canceled": true}}
+```
+
+**Skrip: `GET /v1/chat/conversations/:id/events`, jawaban selesai.** Tombol kembali ke send saat `turn_end` tiba
+dengan `id` lebih besar dari `seq` di ack. Setiap frame diakhiri baris kosong.
+
+```text
+id: 1001
+event: message
+data: {pesan user, status "active", client_msg_id sama dengan request}
+
+id: 1002
+event: message
+data: {pesan assistant}
+
+id: 1003
+event: turn_end
+data: {"status":"completed","active_turn_id":null}
+
+```
+
+**Skrip: `GET /v1/chat/conversations/:id/events`, stop ditekan.** Tidak ada pesan assistant. Tombstone memakai
+`message_id` dan `id` pertanyaan yang sama, sedangkan `turn_end` memakai `id` baru. Bubble pertanyaan tetap tampil
+seperti biasa karena tampilan pesan `canceled` masih TODO.
+
+```text
+id: 1001
+event: message
+data: {pesan user yang sama, status "canceled"}
+
+id: 1002
+event: turn_end
+data: {"status":"canceled","active_turn_id":null}
+
+```
+
 ## Yang sudah diuji
 
 Kode di dokumen ini dikompilasi dengan Alamofire 5.12.2 dan dijalankan di macOS terhadap server SSE lokal.
