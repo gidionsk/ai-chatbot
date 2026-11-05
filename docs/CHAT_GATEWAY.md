@@ -36,13 +36,19 @@ Typing, limits, list conversations, close, leave-agent, dan `success-id` belum d
   teks biasa adalah Markdown yang valid. `html` tampil sebagai teks, karena tidak ada HTML renderer.
   Payload objek (`interaction`, `json`) belum punya tampilan dan disembunyikan.
 
+## Saran lanjutan
+
+`follow_up_questions` tampil sebagai `SuggestionChip` di bawah jawaban terakhir. Diketuk = terkirim sebagai
+pertanyaan lewat `send`, sama seperti shortcut. Saran dari jawaban lama tidak tampil lagi, dan hilang selama
+menunggu jawaban. Gagal kirim membuka kunci, jadi saran bisa diketuk lagi.
+
 ## Selisih dengan contract 1.5.0 yang belum dikerjakan
 
 - `AGENT_*` tanpa turn lock dan `turn_end`: setelah kirim, tombol tertahan di stop sampai ditekan.
 - Reconnect selalu lewat init, jadi percakapan yang ditutup admin atau perangkat lain terbuka lagi.
 - Pesan `agent` tampil sebagai bubble polos, bukan Markdown.
 - 401 langsung ke `onSessionExpired`, sedangkan contract menyarankan init ulang.
-- `follow_up_questions`, CTA `action` dan `success-id`, serta event `typing`, `system`, `state` belum tampil.
+- CTA `action` dan `success-id`, serta event `typing`, `system`, `state` belum tampil.
 
 ## Alur
 

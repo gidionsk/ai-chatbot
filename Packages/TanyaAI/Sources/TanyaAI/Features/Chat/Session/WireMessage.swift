@@ -17,9 +17,11 @@ struct WireMessage: Decodable {
     let createdAt: String?
     /// `client_msg_id` yang dikirim aplikasi saat bertanya; nil untuk pesan bot atau dari kanal lain.
     let clientMsgId: String?
+    /// Nil bila server tidak memberi saran (contract: `null`, bukan `[]`).
+    let followUpQuestions: [String]?
 
     private enum CodingKeys: CodingKey {
-        case messageId, seq, direction, payload, status, createdAt, clientMsgId
+        case messageId, seq, direction, payload, status, createdAt, clientMsgId, followUpQuestions
     }
 
     init(from decoder: Decoder) throws {
@@ -31,5 +33,6 @@ struct WireMessage: Decodable {
         status = try container.decode(ChatMessageStatus.self, forKey: .status)
         createdAt = try? container.decodeIfPresent(String.self, forKey: .createdAt)
         clientMsgId = try? container.decodeIfPresent(String.self, forKey: .clientMsgId)
+        followUpQuestions = try? container.decodeIfPresent([String].self, forKey: .followUpQuestions)
     }
 }

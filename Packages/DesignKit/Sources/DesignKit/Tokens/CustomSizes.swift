@@ -26,6 +26,7 @@ public enum CustomSizes {
 
     public enum Chip {
         public static let cornerRadius: CGFloat = 16
+        public static let suggestionCornerRadius: CGFloat = 20
     }
 
     /// Gambar bulat di atas sapaan halaman sambutan; 60 disesuaikan user di Byon (28 Oktober 2026).

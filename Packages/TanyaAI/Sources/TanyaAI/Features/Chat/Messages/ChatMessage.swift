@@ -22,19 +22,22 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
     let clientMessageID: String?
     /// Jawaban bot sebagai Markdown, di-parse sekali saat pesan datang (bukan setiap render). Nil untuk nasabah/agen.
     let document: MarkdownDocument?
+    /// Saran pertanyaan lanjutan dari `follow_up_questions`; yang tampil hanya milik jawaban terakhir.
+    let followUps: [String]
 
     /// Nil bila `seq` bukan angka desimal: pesan tanpa urutan tidak bisa digabung dengan aman.
     init?(wire: WireMessage) {
         guard let seq = Int(wire.seq) else { return nil }
         self.init(
             id: wire.messageId, seq: seq, author: wire.direction, text: wire.payload, status: wire.status,
-            createdAt: wire.createdAt.flatMap(Date.init(wire:)), clientMessageID: wire.clientMsgId
+            createdAt: wire.createdAt.flatMap(Date.init(wire:)), clientMessageID: wire.clientMsgId,
+            followUps: wire.followUpQuestions ?? []
         )
     }
 
     init(
         id: String, seq: Int, author: ChatAuthor, text: String?, status: ChatMessageStatus, createdAt: Date? = nil,
-        clientMessageID: String? = nil
+        clientMessageID: String? = nil, followUps: [String] = []
     ) {
         self.id = id
         self.seq = seq
@@ -43,6 +46,7 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
         self.status = status
         self.createdAt = createdAt
         self.clientMessageID = clientMessageID
+        self.followUps = followUps
         document = author == .assistant ? text.map(MarkdownDocument.init) : nil
     }
 }

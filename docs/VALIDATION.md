@@ -623,3 +623,9 @@ kosong karena GFM tidak punya colspan. List masuk 8 dari teks, kolom teks tetap 
 Contoh payload contract mengungkap `direction` `user`/`assistant` dan `state` `ASSISTANT_ACTIVE` terbaca `unknown`,
 sehingga pesan nasabah dan jawaban tidak tampil dan bubble lokal tidak pernah diganti. Enum, fixture sandbox, dan test
 disamakan; path host menjadi `/v1/chat/*`. Selisih yang belum dikerjakan ada di `docs/CHAT_GATEWAY.md`.
+
+## Saran lanjutan — 4 November 2026
+
+`SuggestionChip` mengikuti Figma `suggestion_set`: tinggi 40, radius 20, padding 8/16/8/8, jarak 4, garis N400, teks
+Fira Sans SemiBold 12 N900, ikon `reply` 24. Jarak antarchip 8 dan jarak dari jawaban 16 diukur dari foto, bukan panel
+Figma. Ikon `reply` masih PDF dummy (TODO aset Figma).
