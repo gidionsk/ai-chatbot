@@ -43,6 +43,26 @@ struct TanyaAIBridgeTests {
         #expect(transport.calls.filter { $0.hasPrefix("send") } == ["send:Cek Portfolio saya"])
     }
 
+    /// Daftar hanya dibuka di pesan terbaru bila history berisi pesan.
+    @Test
+    func historyPhaseFollowsWhatTheFirstLoadReturned() async {
+        let empty = FakeChatTransport()
+        let emptyBridge = makeBridge(empty)
+        #expect(emptyBridge.historyPhase == .loading)
+        let emptyTask = Task { await emptyBridge.run() }
+        defer { emptyTask.cancel() }
+        await waitUntil { emptyBridge.isHistoryLoaded }
+        #expect(emptyBridge.historyPhase == .empty)
+
+        let restored = FakeChatTransport()
+        restored.historyPages = [WireFixture.history([2, 1])]
+        let restoredBridge = makeBridge(restored)
+        let restoredTask = Task { await restoredBridge.run() }
+        defer { restoredTask.cancel() }
+        await waitUntil { restoredBridge.isHistoryLoaded }
+        #expect(restoredBridge.historyPhase == .restored)
+    }
+
     /// Reconnect me-replay `turn_end` pertanyaan sebelumnya setelah pertanyaan baru dikirim: tetap terkunci.
     @Test
     func replayedTurnEndOfAnEarlierQuestionKeepsTheNewOneWaiting() async {

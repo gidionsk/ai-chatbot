@@ -44,6 +44,16 @@ struct SandboxGatewayFrames {
 
     /// `seq` terbesar di `TanyaAIHistoryDummy.json`; pesan baru melanjutkan setelahnya.
     static let historyLatestSeq = 4
+    /// Jumlah pesan `longHistory`, lebih panjang dari satu layar.
+    static let longHistoryLatestSeq = 30
+    private static let longAnswerSectionLimit = 4
+    static let lateMessage = "Pesan baru tanpa pertanyaan"
+    static let longHistoryLastAnswer = "Jawaban terakhir history"
+    /// Pesan selang-seling, terbaru dulu seperti gateway.
+    static var longHistory: Data {
+        let messages = (1...longHistoryLatestSeq).reversed().map(longHistoryMessage).joined(separator: ",")
+        return Data(#"{"success":true,"data":{"messages":[\#(messages)],"next_before":null}}"#.utf8)
+    }
 
     private var seq: Int
 
@@ -86,6 +96,36 @@ struct SandboxGatewayFrames {
     mutating func turnEnd(status: String = completedStatus) -> [String] {
         seq += 1
         return ["id: \(seq)", "event: turn_end", #"data: {"status":"\#(status)","active_turn_id":"sandbox"}"#, ""]
+    }
+
+    private static func longHistoryMessage(seq: Int) -> String {
+        let isQuestion = seq.isMultiple(of: 2) == false
+        let filler = isQuestion ? "Pertanyaan nomor \(seq)" : longAnswer(seq: seq)
+        let payload = seq == longHistoryLatestSeq ? longHistoryLastAnswer : filler
+        return json(
+            SandboxWireMessage(
+                messageId: "long-\(seq)", seq: String(seq),
+                direction: isQuestion
+                    ? SandboxWireMessage.user
+                    : SandboxWireMessage.assistant,
+                payload: payload, status: SandboxWireMessage.active, clientMsgId: nil
+            ))
+    }
+
+    /// Tinggi berbeda-beda seperti jawaban asli: tinggi baris `LazyVStack` baru diketahui saat dibuat.
+    private static func longAnswer(seq: Int) -> String {
+        let section = """
+            ### Bagian jawaban \(seq)
+
+            | Produk | Nilai |
+            |:---|---:|
+            | Reksadana | 35.000.000 |
+            | Obligasi | 30.000.000 |
+
+            - Poin pertama yang cukup panjang supaya memakai beberapa baris di layar.
+            - Poin kedua
+            """
+        return Array(repeating: section, count: seq % longAnswerSectionLimit + 1).joined(separator: "\n\n")
     }
 
     private static func json(_ message: SandboxWireMessage) -> String {

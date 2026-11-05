@@ -36,6 +36,36 @@ extension HostWindowTests {
             let expectedTop = ScreenHeader.height(isNotched: isNotched) + FigmaSize.spacingLarge.scaledToArtwork
             #expect(abs(firstFrame.minY - expectedTop) <= 1)
         }
+
+        /// Konten bisa menghitung posisi scroll sendiri; konten yang lebih pendek dari layar dianggap sudah di bawah.
+        @Test
+        func contentReadsTheViewportBelowTheHeader() throws {
+            let probe = ViewportProbe()
+            let content = ScreenContainer(
+                title: "General screen", backLabel: "Back", onBack: {}, content: { ViewportSample(probe: probe) }
+            )
+            let fixture = try HostWindowFixture(content)
+            defer { fixture.close() }
+            let viewport = try #require(probe.viewport)
+            #expect(viewport.height > .zero)
+            #expect(viewport.headerHeight > .zero)
+            #expect(viewport.isNearBottom)
+        }
+    }
+}
+
+private final class ViewportProbe {
+    var viewport: ScreenViewport?
+}
+
+private struct ViewportSample: View {
+    @Environment(\.screenViewport) private var viewport
+    let probe: ViewportProbe
+
+    var body: some View {
+        Color.clear.frame(height: 50)
+            .onAppear { probe.viewport = viewport }
+            .onChange(of: viewport) { probe.viewport = $0 }
     }
 }
 

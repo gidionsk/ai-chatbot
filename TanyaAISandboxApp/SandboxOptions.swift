@@ -23,6 +23,8 @@ struct SandboxOptions {
     static let demoParagraphCount = 12
     /// Jeda pertanyaan nasabah muncul di stream setelah ack; selama ini bubble lokal yang tampil.
     static let echoDelay: TimeInterval = 0.6
+    /// Jeda pesan bot yang datang sendiri setelah stream tersambung (`--late-message`).
+    static let lateMessageDelay: TimeInterval = 3
     /// Jeda jawaban bot tiruan setelah pertanyaan muncul di stream.
     static let replyDelay: TimeInterval = 1
     /// File yang tidak ada: unduhan ikon pasti gagal tanpa bergantung pada jaringan.
@@ -33,6 +35,8 @@ struct SandboxOptions {
     private static let rejectFlag = "--reject-send"
     private static let holdReplyFlag = "--hold-reply"
     private static let historyFlag = "--with-history"
+    private static let longHistoryFlag = "--long-history"
+    private static let lateMessageFlag = "--late-message"
     private static let headerDemoFlag = "--header-demo"
     private static let offlineFlag = "--offline"
     private static let brokenIconsFlag = "--broken-icons"
@@ -50,6 +54,10 @@ struct SandboxOptions {
     let isHoldingReply: Bool
     /// `--with-history`: gateway tiruan mengembalikan history fixture, jadi sambutan tidak tampil.
     let isShowingHistory: Bool
+    /// `--long-history`: history lebih panjang dari satu layar, untuk menguji posisi scroll.
+    let isShowingLongHistory: Bool
+    /// `--late-message`: bot mengirim pesan sendiri tanpa ada pertanyaan, misalnya dari agen atau kanal lain.
+    let isSendingLateMessage: Bool
     let isHeaderDemo: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
@@ -60,6 +68,8 @@ struct SandboxOptions {
         isRejectingSend = arguments.contains(Self.rejectFlag)
         isHoldingReply = arguments.contains(Self.holdReplyFlag)
         isShowingHistory = arguments.contains(Self.historyFlag)
+        isShowingLongHistory = arguments.contains(Self.longHistoryFlag)
+        isSendingLateMessage = arguments.contains(Self.lateMessageFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {

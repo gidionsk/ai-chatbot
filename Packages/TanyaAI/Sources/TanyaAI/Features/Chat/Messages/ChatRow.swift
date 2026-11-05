@@ -31,6 +31,16 @@ enum ChatRow: Identifiable, Equatable {
         }
     }
 
+    /// Pertanyaan nasabah, baik yang masih lokal maupun yang sudah datang dari gateway.
+    var isQuestion: Bool {
+        switch self {
+        case .message(let message):
+            return message.author == .user
+        case .local:
+            return true
+        }
+    }
+
     /// Punya tampilan di daftar: teks dari nasabah, bot, atau agen, serta setiap pertanyaan lokal.
     var isVisible: Bool {
         switch self {

@@ -629,3 +629,11 @@ disamakan; path host menjadi `/v1/chat/*`. Selisih yang belum dikerjakan ada di 
 `SuggestionChip` mengikuti Figma `suggestion_set`: tinggi 40, radius 20, padding 8/16/8/8, jarak 4, garis N400, teks
 Fira Sans SemiBold 12 N900, ikon `reply` 24. Jarak antarchip 8 dan jarak dari jawaban 16 diukur dari foto, bukan panel
 Figma. Ikon `reply` masih PDF dummy (TODO aset Figma).
+
+## Posisi scroll chat — 5 November 2026
+
+Halaman dibuka di pesan terbaru tanpa terlihat melompat. Pertanyaan yang dikirim (composer, shortcut, saran lanjutan)
+parkir di bawah header dengan preview 48 dari jawaban sebelumnya, ruang kosong di bawah menyusut saat jawaban datang,
+dan jawaban tidak menggeser pertanyaan. Pesan di luar turn mengikuti ke bawah hanya bila posisi dekat bawah (48).
+`ChatScrollUITests` memakai `--long-history` (30 pesan tinggi berbeda-beda) dan `--late-message`. Arrow kembali ke
+pesan terbaru belum dibuat.

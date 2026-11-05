@@ -79,6 +79,14 @@ public final class TanyaAIBridge: ObservableObject {
     /// Loading hanya selama pembukaan pertama masih berjalan; gagal permanen atau sesi habis menghentikannya.
     var isLoadingHistory: Bool { !isHistoryLoaded && connection == .connecting }
 
+    var historyPhase: ChatHistoryPhase {
+        guard isHistoryLoaded else { return .loading }
+        return messages.isEmpty ? .empty : .restored
+    }
+
+    /// Pertanyaan terbaru yang baru dikirim dari halaman ini; berubah = pertanyaan baru parkir di dekat atas.
+    var sentQuestionID: String? { localQuestions.last?.id }
+
     /// Sambutan hanya untuk percakapan kosong; bubble pertanyaan pertama langsung menggantikannya.
     var isWelcomeVisible: Bool { isHistoryLoaded && messages.isEmpty && localQuestions.isEmpty }
 

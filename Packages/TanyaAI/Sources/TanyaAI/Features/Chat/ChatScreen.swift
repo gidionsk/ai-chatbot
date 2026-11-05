@@ -55,8 +55,17 @@ public struct ChatScreen<Content: View>: View {
         .task { await bridge.run() }
     }
 
-    @ViewBuilder
     private var scrollContent: some View {
+        ChatScrollSection(
+            sentQuestionID: bridge.sentQuestionID, latestReplyID: bridge.rows.last { !$0.isQuestion }?.id,
+            isAwaitingReply: bridge.isAwaitingReply, historyPhase: bridge.historyPhase
+        ) {
+            conversation
+        }
+    }
+
+    @ViewBuilder
+    private var conversation: some View {
         if let welcome, bridge.isWelcomeVisible {
             WelcomeSection(content: welcome, isEnabled: isEnabled && isSendable, onSelect: select)
         }

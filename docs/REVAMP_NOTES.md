@@ -30,6 +30,11 @@ Pada iOS 15:
   `defaultScrollAnchor`/`scrollPosition` baru ada di iOS 17.
 - `List` me-recycle row, tetapi background dan inset sulit dikendalikan di iOS 15
   (`scrollContentBackground` baru iOS 16).
+- `scrollTo` pada `LazyVStack` berbaris tidak seragam membuat update SwiftUI berputar
+  tanpa henti (main thread 100%, ditemukan di simulator setelah kirim pertanyaan).
+  Karena itu `MessagesSection` memakai `VStack`, jadi semua baris di-layout sekaligus.
+  Aman untuk satu halaman history (30 pesan); 300 pesan butuh sekitar 12 detik di
+  simulator Debug, jadi paging history harus menunggu list ber-recycle.
 - **Rekomendasi:** `UITableView` atau `UICollectionView` di dalam
   `UIViewControllerRepresentable`, dengan row SwiftUI. Pakai `UIHostingConfiguration`
   di iOS 16+ dan hosting controller per cell sebagai fallback iOS 15. Branch `main`

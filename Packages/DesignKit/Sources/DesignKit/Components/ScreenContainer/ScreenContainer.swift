@@ -21,6 +21,8 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
     /// 0 di posisi teratas sampai 1 setelah digulir setinggi header; header memudar sebanding nilai ini.
     @State
     private var scrollProgress: CGFloat = .zero
+    @State private var viewportHeight: CGFloat = .zero
+    @State private var isNearBottom = true
     private let title: String
     private let backLabel: String
     private let onBack: () -> Void
@@ -63,19 +65,41 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
         .accessibilityHidden(true)
     }
 
+    private var viewportReader: some View {
+        GeometryReader { geometry in
+            Color.clear
+                .onAppear { viewportHeight = geometry.size.height }
+                .onChange(of: geometry.size.height) { viewportHeight = $0 }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
     private func surface(isNotched: Bool) -> some View {
-        ZStack(alignment: .top) {
+        let headerHeight = ScreenHeader.height(isNotched: isNotched)
+        return ZStack(alignment: .top) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: .zero) { content }
+                    .environment(
+                        \.screenViewport,
+                        ScreenViewport(height: viewportHeight, headerHeight: headerHeight, isNearBottom: isNearBottom)
+                    )
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
-                    .padding(.top, ScreenHeader.height(isNotched: isNotched) + FigmaSize.spacingLarge.scaledToArtwork)
+                    .padding(.top, headerHeight + FigmaSize.spacingLarge.scaledToArtwork)
                     .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
-                    .onScrollProgressChange(in: scrollSpaceID, distance: ScreenHeader.height(isNotched: isNotched)) {
+                    .onScrollProgressChange(in: scrollSpaceID, distance: headerHeight) {
                         scrollProgress = $0
+                    }
+                    .onScrollBottomChange(
+                        in: scrollSpaceID, viewportHeight: viewportHeight,
+                        distance: FigmaSize.spacingDoubleExtraLarge.scaledToArtwork
+                    ) {
+                        isNearBottom = $0
                     }
             }
             .coordinateSpace(name: scrollSpaceID)
+            .background(viewportReader)
             ScreenHeader(
                 title: title, backLabel: backLabel, scrollProgress: scrollProgress, isNotched: isNotched,
                 onBack: onBack, trailing: { trailing }
