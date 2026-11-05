@@ -635,5 +635,11 @@ Figma. Ikon `reply` masih PDF dummy (TODO aset Figma).
 Halaman dibuka di pesan terbaru tanpa terlihat melompat. Pertanyaan yang dikirim (composer, shortcut, saran lanjutan)
 parkir di bawah header dengan preview 48 dari jawaban sebelumnya, ruang kosong di bawah menyusut saat jawaban datang,
 dan jawaban tidak menggeser pertanyaan. Pesan di luar turn mengikuti ke bawah hanya bila posisi dekat bawah (48).
-`ChatScrollUITests` memakai `--long-history` (30 pesan tinggi berbeda-beda) dan `--late-message`. Arrow kembali ke
-pesan terbaru belum dibuat.
+`ChatScrollUITests` memakai `--long-history` (30 pesan tinggi berbeda-beda), `--late-message` dan `--late-question`.
+Arrow kembali ke pesan terbaru belum dibuat.
+
+Daftar pesan memakai `ChatTable` (`UITableView` ber-recycle). Probe sementara di simulator Debug, baris Markdown asli,
+`update` pertama: 100 pesan 43 ms, 300 pesan 44 ms, sekitar 10 sel dibuat, tambah satu pesan sekitar 5 ms. Run pertama
+(30 pesan) 150 ms dan kemungkinan masih termasuk pemanasan. Angka ini hanya menunjukkan biaya tidak naik mengikuti
+jumlah pesan, bukan FPS produksi. Jalur iOS 15 (`configureLegacy`) hanya diuji lewat `HostingTableViewCellTests` di
+runtime lebih baru, karena runtime iOS 15 tidak terpasang.

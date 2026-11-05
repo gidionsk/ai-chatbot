@@ -83,7 +83,7 @@ final class ChatScrollUITests: XCTestCase {
     func testMessageWithoutQuestionLeavesAReaderWhereTheyAre() {
         launch(extra: ["--long-history", "--late-message"])
         XCTAssertTrue(text(lastAnswer).waitForExistence(timeout: 10))
-        application.scrollViews.firstMatch.swipeDown()
+        application.tables["chat.messages"].swipeDown()
         settle()
         XCTAssertFalse(isOnScreen(text(lastAnswer)))
         RunLoop.current.run(until: Date().addingTimeInterval(4))

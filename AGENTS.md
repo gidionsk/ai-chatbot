@@ -3,7 +3,7 @@
 Scope branch ini adalah migrasi bertahap: fondasi DesignKit, font package,
 screen kosong dengan composer, dan shared header dengan boundary/blur scroll.
 Konten dummy untuk mengecek scroll hanya berada pada sandbox. iOS 15. Gunakan SwiftUI; UIKit hanya untuk editor
-multiline terukur dan bridge presentasi terisolasi. Flow chat lengkap tetap
+multiline terukur, table daftar pesan (`ChatTable`) dan bridge presentasi terisolasi. Flow chat lengkap tetap
 tersedia pada history/main.
 
 ## Header file
@@ -129,6 +129,8 @@ tersedia pada history/main.
   dan ID coordinate space lokal. Jangan membuat inheritance/BaseScreen protocol, ViewModel
   layout atau navigation container tambahan. Content tidak menambahkan ScrollView
   vertikal lagi. Footer memiliki margin sesuai komponen caller.
+- Layar dengan pemilik scroll sendiri memakai `ScreenScaffold` (header, footer, latar) dan melaporkan
+  `scrollProgress`; `ChatScreen` memakai ini dengan `ChatTable`. Aturan table ada di `docs/REVAMP_NOTES.md`.
 - `ScreenHeader` tetap komponen standalone untuk layout dengan scroll owner lain
   seperti List. Label/aksi back dan trailing berasal dari caller. Ukuran sama dengan
   navigation bar host: mulai dari tepi atas layar (caller menaruhnya tanpa safe area atas,

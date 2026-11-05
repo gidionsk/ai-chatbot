@@ -1,0 +1,151 @@
+//
+//  ChatTableController+Parking.swift
+//  TanyaAI
+//
+//  Created by Wendra on 5/11/26.
+//
+
+import DesignKit
+import UIKit
+
+/// Aturan posisi: halaman dibuka di pesan terbaru. Pertanyaan baru parkir dekat atas dengan preview jawaban sebelumnya;
+/// ruang kosong di bawahnya membuat itu tetap bisa walau jawaban masih pendek, dan menyusut saat jawaban datang.
+/// Pesan di luar turn mengikuti ke bawah hanya bila posisi sudah dekat bawah, jadi nasabah yang membaca ke atas tidak
+/// terseret.
+extension ChatTableController {
+    var isUserScrolling: Bool { tableView.isDragging || tableView.isDecelerating }
+
+    var baseBottomInset: CGFloat { FigmaSize.spacingLarge.scaledToArtwork }
+
+    /// Jarak tepi atas table ke pertanyaan yang parkir: di bawah header, menyisakan preview jawaban sebelumnya.
+    var parkingOffset: CGFloat { headerHeight + FigmaSize.spacingDoubleExtraLarge.scaledToArtwork }
+
+    /// Posisi saat ujung konten tepat di bawah, tanpa ruang kosong parkir. Negatif bila konten lebih pendek dari layar.
+    var contentEndOffset: CGFloat { tableView.contentSize.height - tableView.bounds.height + baseBottomInset }
+
+    /// Posisi terbawah yang bisa dicapai tanpa ruang kosong parkir.
+    var bottomOffset: CGFloat { max(-tableView.adjustedContentInset.top, contentEndOffset) }
+
+    /// `adjustedContentInset` menambahkan safe area ke `contentInset`, jadi bagian atasnya dikurangi lagi.
+    func applyInsets() {
+        let insets = UIEdgeInsets(
+            top: headerHeight + FigmaSize.spacingLarge.scaledToArtwork - tableView.safeAreaInsets.top, left: .zero,
+            bottom: baseBottomInset + trailingInset, right: .zero
+        )
+        guard tableView.contentInset != insets else { return }
+        tableView.contentInset = insets
+    }
+
+    /// Percakapan yang dimulai dari kosong dianggap sudah terbuka, jadi pesan pertamanya tidak memicu ini.
+    func openIfNeeded() {
+        guard !isOpened, state.historyPhase != .loading, tableView.bounds.height > .zero else { return }
+        isOpened = true
+        guard state.historyPhase == .restored else { return }
+        settleAtBottom()
+        recordSettledPosition()
+        refreshNearBottom()
+    }
+
+    func parkLatestQuestion() {
+        isFollowingLatest = false
+        isParked = true
+        isHoldingParking = true
+        tableView.layoutIfNeeded()
+        refreshTrailingInset()
+        guard let target = parkingTarget else { return }
+        scroll(to: target, isAnimated: true)
+    }
+
+    func followLatest() {
+        guard isOpened else { return }
+        isParked = false
+        isHoldingParking = false
+        setTrailingInset(.zero)
+        tableView.layoutIfNeeded()
+        scroll(to: bottomOffset, isAnimated: true)
+        isFollowingLatest = isScrollAnimating
+        guard !isFollowingLatest else { return }
+        settleAtBottom()
+        recordSettledPosition()
+    }
+
+    /// Baris baru masih memakai perkiraan tinggi saat dibidik, jadi setelah terukur sisa jaraknya digeser lagi.
+    func continueFollowingLatest() {
+        scroll(to: bottomOffset, isAnimated: true)
+        isFollowingLatest = isScrollAnimating
+    }
+
+    /// Ruang kosong selalu diperbarui; posisi hanya dikoreksi selama parkir dijaga dan tidak ada animasi berjalan.
+    func maintainParking() {
+        guard isParked else { return }
+        refreshTrailingInset()
+        guard !isScrollAnimating else { return }
+        guard isHoldingParking, let target = parkingTarget else {
+            clampToContentEnd()
+            return
+        }
+        scroll(to: target, isAnimated: false)
+    }
+
+    func stickToBottomIfNeeded() {
+        defer { isStickingToBottom = false }
+        guard isStickingToBottom, !isHoldingParking, !isUserScrolling else { return }
+        scroll(to: bottomOffset + trailingInset, isAnimated: false)
+    }
+
+    func scroll(to offset: CGFloat, isAnimated: Bool) {
+        isScrollAnimating = false
+        guard abs(tableView.contentOffset.y - offset) > LayoutTolerance.measurement else { return }
+        isScrollAnimating = isAnimated && !isReducingMotion()
+        tableView.setContentOffset(CGPoint(x: tableView.contentOffset.x, y: offset), animated: isScrollAnimating)
+    }
+
+    func refreshNearBottom() {
+        let visibleBottom = tableView.contentOffset.y + tableView.bounds.height
+        let contentEnd = tableView.contentSize.height + baseBottomInset
+        isNearBottom = contentEnd - visibleBottom <= FigmaSize.spacingDoubleExtraLarge.scaledToArtwork
+    }
+}
+
+// MARK: - Helpers
+
+private extension ChatTableController {
+    /// Tepi atas isi pertanyaan terbaru pada posisi parkir, tidak melewati posisi teratas.
+    var parkingTarget: CGFloat? {
+        guard let index = state.items.lastIndex(where: \.isQuestion) else { return nil }
+        let rowTop = tableView.rectForRow(at: IndexPath(row: index, section: .zero)).minY
+        return max(-tableView.adjustedContentInset.top, rowTop + state.items[index].topSpacing - parkingOffset)
+    }
+
+    func refreshTrailingInset() {
+        guard let target = parkingTarget else { return }
+        setTrailingInset(max(.zero, target - contentEndOffset))
+    }
+
+    func setTrailingInset(_ inset: CGFloat) {
+        guard abs(trailingInset - inset) > LayoutTolerance.measurement else { return }
+        trailingInset = inset
+        applyInsets()
+    }
+
+    /// Ruang kosong bisa menyusut saat posisi ada di dalamnya; table tidak mengoreksi itu sendiri.
+    func clampToContentEnd() {
+        let contentEnd = bottomOffset + trailingInset
+        guard !isUserScrolling, tableView.contentOffset.y > contentEnd else { return }
+        scroll(to: contentEnd, isAnimated: false)
+    }
+
+    /// `contentSize` masih memakai perkiraan tinggi untuk baris yang belum terukur, jadi yang dibidik baris terakhir,
+    /// bukan ujung `contentSize`. Diulang sampai stabil dalam putaran yang sama, supaya frame pertama yang tampil
+    /// sudah di pesan terbaru tanpa lompatan dari atas.
+    func settleAtBottom() {
+        guard !state.items.isEmpty else { return }
+        let lastRow = IndexPath(row: state.items.index(before: state.items.endIndex), section: .zero)
+        var previousHeight: CGFloat?
+        for _ in .zero..<LayoutTolerance.settlingPasses where tableView.contentSize.height != previousHeight {
+            previousHeight = tableView.contentSize.height
+            tableView.scrollToRow(at: lastRow, at: .bottom, animated: false)
+            tableView.layoutIfNeeded()
+        }
+    }
+}

@@ -51,6 +51,11 @@ public enum CustomSizes {
         public static let sendButton: CGFloat = 24
     }
 
+    /// Perkiraan awal tinggi baris table sebelum terukur; bukan nilai Figma dan tidak terlihat di layar.
+    public enum HostedTable {
+        public static let estimatedRowHeight: CGFloat = 80
+    }
+
     /// Garis quote, radius code block, dan lebar kolom penanda list (hanging indent) pada `MarkdownContent`.
     /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari screenshot.
     public enum Markdown {

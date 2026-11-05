@@ -13,8 +13,6 @@ import SwiftUI
 /// `background` (misalnya gambar latar) tampil di atas warna surface, di belakang header, konten dan footer.
 @MainActor
 public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Background: View>: View {
-    @Environment(\.designColors)
-    private var colors
     // Keep the coordinate-space ID stable when the parent view updates.
     @State
     private var scrollSpaceID = UUID()
@@ -46,23 +44,11 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
     }
 
     public var body: some View {
-        // Safe area atas dibaca sekali di root; header dan scroll sendiri mulai dari tepi atas layar.
-        GeometryReader { geometry in
-            VStack(spacing: .zero) {
-                surface(isNotched: ScreenHeader.isNotched(safeAreaTop: geometry.safeAreaInsets.top))
-                footer
-            }
-        }
-        .background(backdrop)
-    }
-
-    private var backdrop: some View {
-        ZStack {
-            colors.colorsSurfacePrimary
-            background
-        }
-        .ignoresSafeArea()
-        .accessibilityHidden(true)
+        ScreenScaffold(
+            title: title, backLabel: backLabel, scrollProgress: scrollProgress, onBack: onBack,
+            content: { scrollArea(headerHeight: $0) }, trailing: { trailing }, footer: { footer },
+            background: { background }
+        )
     }
 
     private var viewportReader: some View {
@@ -75,37 +61,29 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
         .accessibilityHidden(true)
     }
 
-    private func surface(isNotched: Bool) -> some View {
-        let headerHeight = ScreenHeader.height(isNotched: isNotched)
-        return ZStack(alignment: .top) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: .zero) { content }
-                    .environment(
-                        \.screenViewport,
-                        ScreenViewport(height: viewportHeight, headerHeight: headerHeight, isNearBottom: isNearBottom)
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
-                    .padding(.top, headerHeight + FigmaSize.spacingLarge.scaledToArtwork)
-                    .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
-                    .onScrollProgressChange(in: scrollSpaceID, distance: headerHeight) {
-                        scrollProgress = $0
-                    }
-                    .onScrollBottomChange(
-                        in: scrollSpaceID, viewportHeight: viewportHeight,
-                        distance: FigmaSize.spacingDoubleExtraLarge.scaledToArtwork
-                    ) {
-                        isNearBottom = $0
-                    }
-            }
-            .coordinateSpace(name: scrollSpaceID)
-            .background(viewportReader)
-            ScreenHeader(
-                title: title, backLabel: backLabel, scrollProgress: scrollProgress, isNotched: isNotched,
-                onBack: onBack, trailing: { trailing }
-            )
+    private func scrollArea(headerHeight: CGFloat) -> some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: .zero) { content }
+                .environment(
+                    \.screenViewport,
+                    ScreenViewport(height: viewportHeight, headerHeight: headerHeight, isNearBottom: isNearBottom)
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
+                .padding(.top, headerHeight + FigmaSize.spacingLarge.scaledToArtwork)
+                .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
+                .onScrollProgressChange(in: scrollSpaceID, distance: headerHeight) {
+                    scrollProgress = $0
+                }
+                .onScrollBottomChange(
+                    in: scrollSpaceID, viewportHeight: viewportHeight,
+                    distance: FigmaSize.spacingDoubleExtraLarge.scaledToArtwork
+                ) {
+                    isNearBottom = $0
+                }
         }
-        .ignoresSafeArea(.container, edges: .top)
+        .coordinateSpace(name: scrollSpaceID)
+        .background(viewportReader)
     }
 }
 

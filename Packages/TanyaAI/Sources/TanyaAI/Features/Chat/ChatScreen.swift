@@ -23,6 +23,7 @@ public struct ChatScreen<Content: View>: View {
     private var colors
     @ObservedObject
     private var bridge: TanyaAIBridge
+    @State private var scrollProgress = CGFloat.zero
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
@@ -43,10 +44,11 @@ public struct ChatScreen<Content: View>: View {
     }
 
     public var body: some View {
-        ScreenContainer(
+        ScreenScaffold(
             title: String(ChatCopy.title, locale: locale),
             backLabel: String(ChatCopy.back, locale: locale),
-            onBack: close, content: { scrollContent }, trailing: { EmptyView() },
+            scrollProgress: scrollProgress, onBack: close,
+            content: { conversation(headerHeight: $0) }, trailing: { EmptyView() },
             footer: { composer },
             background: { backgroundImage }
         )
@@ -55,27 +57,23 @@ public struct ChatScreen<Content: View>: View {
         .task { await bridge.run() }
     }
 
-    private var scrollContent: some View {
-        ChatScrollSection(
-            sentQuestionID: bridge.latestSentQuestionID, incomingMessageID: bridge.latestIncomingMessageID,
-            historyPhase: bridge.historyPhase
-        ) {
-            conversation
-        }
+    private func conversation(headerHeight: CGFloat) -> some View {
+        ChatTable(
+            state: tableState, headerHeight: headerHeight, onScrollProgress: { scrollProgress = $0 },
+            row: listRow
+        )
     }
 
-    @ViewBuilder
-    private var conversation: some View {
-        if let welcome, bridge.isWelcomeVisible {
-            WelcomeSection(content: welcome, isEnabled: isEnabled && isSendable, onSelect: select)
-        }
-        MessagesSection(rows: bridge.rows, onOpenLink: onOpenLink)
-        if !bridge.followUps.isEmpty {
-            FollowUpsSection(
-                questions: bridge.followUps, isEnabled: isEnabled && isSendable, onSelect: selectFollowUp
-            )
-        }
-        content
+    /// Baris table tidak mewarisi environment halaman, jadi nilainya dipasang di sini. `id` mencegah state view
+    /// terbawa saat sel dipakai ulang untuk pesan lain.
+    private func listRow(_ item: ChatListItem) -> some View {
+        ChatListRow(
+            item: item, welcome: welcome, content: content, onSelectShortcut: select,
+            onSelectFollowUp: selectFollowUp, onOpenLink: onOpenLink
+        )
+        .id(item.id)
+        .designColors(colors)
+        .environment(\.locale, locale)
     }
 
     /// Hanya saat pertama dibuka; menyambung ulang tidak menutupi pesan yang sudah tampil. Gagal permanen
@@ -110,6 +108,27 @@ public struct ChatScreen<Content: View>: View {
 
 private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
+
+    var tableState: ChatTableState {
+        ChatTableState(
+            items: listItems, sentQuestionID: bridge.latestSentQuestionID,
+            incomingMessageID: bridge.latestIncomingMessageID, historyPhase: bridge.historyPhase
+        )
+    }
+
+    var listItems: [ChatListItem] {
+        var items = [ChatListItem](rows: bridge.rows)
+        if welcome != nil, bridge.isWelcomeVisible {
+            items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
+        }
+        if !bridge.followUps.isEmpty {
+            items.append(.followUps(bridge.followUps, isEnabled: isEnabled && isSendable))
+        }
+        if Content.self != EmptyView.self {
+            items.append(.content)
+        }
+        return items
+    }
 
     func close() {
         if let onBack { onBack() } else { dismiss() }

@@ -20,37 +20,53 @@ ini menjelaskan alasannya.
 
 ## Daftar pesan untuk ratusan chat
 
-`ScreenContainer` cocok untuk halaman form/konten biasa. Untuk chat dengan ratusan
-pesan, gunakan `ScreenHeader` mandiri ditambah list yang memiliki scroll sendiri.
-Pada iOS 15:
+`ScreenContainer` cocok untuk halaman form/konten biasa. Daftar pesan memakai `ChatTable`
+(`UITableView` di dalam `UIViewControllerRepresentable`, baris SwiftUI) di dalam `ScreenScaffold`,
+karena scroll-nya milik table. Pilihan lain pada iOS 15:
 
-- `ScrollView` + `LazyVStack` membuat row secara lazy tetapi tidak me-recycle,
-  sehingga memori bertambah selama scroll. Row dengan tinggi bervariasi bisa
-  meloncat saat scroll ke atas, dan API anchor bawah seperti
-  `defaultScrollAnchor`/`scrollPosition` baru ada di iOS 17.
+- `ScrollView` + `LazyVStack` membuat row secara lazy tetapi tidak me-recycle, dan
+  `scrollTo` pada baris tidak seragam membuat update SwiftUI berputar tanpa henti
+  (main thread 100%, ditemukan di simulator setelah kirim pertanyaan).
+- `ScrollView` + `VStack` aman dari itu, tetapi semua baris di-layout sekaligus dan
+  biayanya naik mengikuti jumlah pesan.
 - `List` me-recycle row, tetapi background dan inset sulit dikendalikan di iOS 15
   (`scrollContentBackground` baru iOS 16).
-- `scrollTo` pada `LazyVStack` berbaris tidak seragam membuat update SwiftUI berputar
-  tanpa henti (main thread 100%, ditemukan di simulator setelah kirim pertanyaan).
-  Karena itu `MessagesSection` memakai `VStack`, jadi semua baris di-layout sekaligus.
-  Satu halaman history (30 pesan) sekitar 0,4 detik di simulator Debug, tetapi pesan
-  terus bertambah selama sesi dan 300 pesan butuh beberapa detik. Paging history dan
-  percakapan panjang harus menunggu list ber-recycle.
-- **Rekomendasi:** `UITableView` atau `UICollectionView` di dalam
-  `UIViewControllerRepresentable`, dengan row SwiftUI. Pakai `UIHostingConfiguration`
-  di iOS 16+ dan hosting controller per cell sebagai fallback iOS 15. Branch `main`
-  sudah membuktikan pola ini; bawa idenya saja, tanpa lapisan tambahan.
+
+Sel memakai `UIHostingConfiguration` di iOS 16+ dan hosting controller di iOS 15
+(`HostingTableViewCell`). Controller-nya `UIViewController` biasa supaya keyboard dan safe area
+hanya diatur SwiftUI.
+
+Hal yang harus dijaga, semuanya pernah menjadi bug nyata saat migrasi:
+
+1. **Snapshot lewat batch update.** `apply(animatingDifferences: false)` berperilaku seperti
+   `reloadData`: tinggi terukur hilang, posisi pindah ke baris lain, dan baris bisa tampil ganda.
+   Pakai `animatingDifferences: true` di dalam `UIView.performWithoutAnimation`, lalu `layoutIfNeeded`
+   sebelum menghitung posisi.
+2. **Tinggi terukur disimpan per baris** dan dikembalikan lewat `estimatedHeightForRowAt`.
+3. **`contentSize` bukan ujung sebenarnya** selama ada baris belum terukur. Saat membuka history,
+   bidik baris terakhir dengan `scrollToRow`, bukan `contentSize`.
+4. **Posisi baca berpatokan pada baris, bukan offset.** Penelusuran aksesibilitas (XCUITest, dan
+   diduga VoiceOver) mengukur semua baris tanpa scroll, sehingga tinggi konten berubah dan table tidak
+   mengoreksi offset. Baris acuan hanya direkam saat posisi pasti; scroll terprogram yang belum
+   ter-layout masih melaporkan baris lama.
+5. **`contentInsetAdjustmentBehavior = .always`, bukan `.never`.** Table membentang sampai tepi atas layar
+   di belakang header. Dengan `.never`, safe area diteruskan ke sel dan menambah tinggi baris (62 pt di
+   iPhone 17 Pro). `contentInset.top` dikurangi safe area, jadi `adjustedContentInset` tetap
+   tinggi header + jarak.
+6. **Sel hosting tidak mewarisi environment SwiftUI.** `designColors` dan `locale` dipasang di
+   `ChatScreen.listRow`, dan `.id(item.id)` mencegah `@State` terbawa saat sel dipakai ulang.
+7. **`headerHeight` berubah setelah render pertama**, karena safe area baru terbaca setelah halaman terpasang.
+8. **Id ganda membuat diffable data source crash**, dan id pesan berasal dari server, jadi dibuang di
+   `[ChatListItem](rows:)`.
 
 Aturan supaya tetap ringan:
 
-1. Pesan berupa value type dengan ID stabil. ViewModel memegang array; list
-   menerapkan `UITableViewDiffableDataSource` snapshot, bukan `reloadData`.
-2. Update satu pesan (misalnya jawaban yang sedang streaming) memakai
-   `reconfigureItems` (iOS 15), bukan publish ulang seluruh array per token.
-3. Rich text/tabel diproses sekali di mapper menjadi model siap tampil; `body` row
+1. Pesan berupa value type dengan ID stabil. Isi yang berubah memakai `reconfigureItems`
+   (iOS 15), bukan publish ulang seluruh array per token.
+2. Rich text/tabel diproses sekali di mapper menjadi model siap tampil; `body` row
    tidak mem-parse atau memformat.
-4. History dimuat per halaman (mis. 30–50 pesan) saat mendekati atas.
-5. Ukur dengan Instruments di device nyata memakai fixture 500 pesan sebelum
+3. History dimuat per halaman (mis. 30–50 pesan) saat mendekati atas.
+4. Ukur dengan Instruments di device nyata memakai fixture 500 pesan sebelum
    menyimpulkan performa. Hasil simulator bukan FPS produksi.
 
 ## Skala artwork, `UIScreen.main`, dan iPhone lipat

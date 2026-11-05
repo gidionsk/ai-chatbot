@@ -1,0 +1,63 @@
+//
+//  ChatListRow.swift
+//  TanyaAI
+//
+//  Created by Wendra on 5/11/26.
+//
+
+import DesignKit
+import SwiftUI
+
+/// Isi satu baris table percakapan. Margin horizontal dan jarak antarbaris milik baris ini.
+@MainActor
+struct ChatListRow<Content: View>: View {
+    @Environment(\.locale) private var locale
+    let item: ChatListItem
+    let welcome: WelcomeContent?
+    let content: Content
+    let onSelectShortcut: (WelcomeShortcut) -> Void
+    let onSelectFollowUp: (String) -> Void
+    let onOpenLink: (URL) -> Void
+
+    var body: some View {
+        rowContent
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
+            .padding(.top, item.topSpacing)
+    }
+
+    @ViewBuilder
+    private var rowContent: some View {
+        switch item {
+        case .welcome(let isEnabled):
+            welcomeSection(isEnabled: isEnabled)
+        case .date(let day, _):
+            dateChip(day)
+        case .message(let row, _):
+            MessageRow(row: row, onOpenLink: onOpenLink)
+        case .followUps(let questions, let isEnabled):
+            FollowUpsSection(questions: questions, isEnabled: isEnabled, onSelect: onSelectFollowUp)
+        case .content:
+            VStack(spacing: .zero) { content }
+        }
+    }
+}
+
+// MARK: - Helpers
+
+private extension ChatListRow {
+    @ViewBuilder
+    func welcomeSection(isEnabled: Bool) -> some View {
+        if let welcome {
+            WelcomeSection(content: welcome, isEnabled: isEnabled, onSelect: onSelectShortcut)
+        }
+    }
+
+    @ViewBuilder
+    func dateChip(_ day: ChatDayID) -> some View {
+        if let date = day.date {
+            DateChip(text: ChatDateFormat.dayLabel(for: date, locale: locale))
+                .accessibilityIdentifier(ChatElementIdentifier.dateChip)
+        }
+    }
+}
