@@ -242,14 +242,26 @@ final class ChatGatewayStreamService: ChatGatewayService {
 Di `TanyaAIUseCase+Chat.swift`, ganti `ChatGatewayService(identifier)` menjadi
 `ChatGatewayStreamService(identifier)` hanya di `sendMessage`, `events`, dan `cancelTurn`.
 
-### Response per service
+### Satu flow mock
 
-Mockoon cukup punya dua route: `init` dan history. `sendMessage`, `cancelTurn`, dan `events` dibalas skrip, jadi
-tidak perlu route Mockoon. Kalau `sendMessage` dibalas Mockoon, skrip tidak tahu ada pertanyaan sehingga
-`turn_end` tidak datang dan tombol nyangkut di stop. Kalau `cancelTurn` ke Mockoon tanpa route, 404 menutup
-percakapan dan chip saran ikut nonaktif.
+Semua nilai di bawah saling cocok, jadi bisa langsung dipakai. `conversation_id` dari `init` sama dengan id di URL
+berikutnya, dan route Mockoon memakai id itu apa adanya, bukan `:id`.
 
-**Mockoon: `POST /v1/chat/init`, status 200.** `state` jangan `CLOSED`, karena stream tidak akan dibuka.
+| Urutan | Service | Dibalas |
+| --- | --- | --- |
+| 1 | `POST /v1/chat/init` | Mockoon |
+| 2 | `GET /v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/messages` | Mockoon |
+| 3 | `GET /v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/events` | Skrip |
+| 4 | `POST /v1/chat/messages` | Skrip |
+| 5 | `POST /v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/cancel` | Skrip |
+
+Yang perlu dibuat di Mockoon hanya langkah 1 dan 2. Langkah 3 sampai 5 sudah dibalas skrip dengan isi persis seperti
+di bawah, kecuali `client_msg_id` yang mengikuti request dan `created_at` yang mengikuti waktu sekarang.
+
+`sendMessage` jangan ke Mockoon: skrip tidak tahu ada pertanyaan, `turn_end` tidak datang, dan tombol nyangkut di
+stop. `cancelTurn` juga jangan ke Mockoon: tanpa route, 404 menutup percakapan dan chip saran ikut nonaktif.
+
+**1. Buka halaman: `POST /v1/chat/init`, status 200.** `state` jangan `CLOSED`, karena stream tidak akan dibuka.
 
 ```json
 {
@@ -261,7 +273,8 @@ percakapan dan chip saran ikut nonaktif.
 }
 ```
 
-**Mockoon: `GET /v1/chat/conversations/:id/messages`, status 200.** Urutan `seq` terbaru dulu.
+**2. Muat history: `GET /v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/messages`, status 200.** Urutan
+`seq` terbaru dulu. Untuk menampilkan welcome, isi `messages` dengan `[]`.
 
 ```json
 {
@@ -296,57 +309,87 @@ percakapan dan chip saran ikut nonaktif.
 }
 ```
 
-History kosong, supaya welcome tampil:
+**3. Buka stream: `GET /v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/events`.** Status 200 dan koneksi
+tetap terbuka.
 
-```json
-{"success": true, "data": {"messages": [], "next_before": null}}
+```text
+: connected
+
 ```
 
-**Skrip: `POST /v1/chat/messages`, status 202.**
+**4. Tanya "Cek portofolio": `POST /v1/chat/messages`.** Request dari SDK:
 
 ```json
-{"success": true, "data": {"message_id": "<uuid>", "seq": "1001"}}
+{
+  "conversation_id": "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
+  "client_msg_id": "c-0002",
+  "type": "text",
+  "payload": "Cek portofolio"
+}
 ```
 
-**Skrip: `POST /v1/chat/conversations/:id/cancel`, status 200.** `canceled` bernilai `false` bila tidak ada jawaban
-yang sedang berjalan; SDK langsung membuka kunci dan stream tidak mengirim apa-apa.
+Response status 202:
+
+```json
+{"success": true, "data": {"message_id": "m-1001", "seq": "1001"}}
+```
+
+Stream, dengan jawaban 5 detik setelah pertanyaan. Tombol kembali ke send saat `turn_end` tiba.
+
+```text
+id: 1001
+event: message
+data: {"message_id": "m-1001", "seq": "1001", "direction": "user", "type": "text", "payload": "Cek portofolio", "status": "active", "client_msg_id": "c-0002", "created_at": "2026-11-05T16:16:03+07:00"}
+
+id: 1002
+event: message
+data: {"message_id": "m-1002", "seq": "1002", "direction": "assistant", "type": "text", "payload": "**Jawaban mock** untuk: Cek portofolio", "status": "active", "client_msg_id": null, "created_at": "2026-11-05T16:16:08+07:00"}
+
+id: 1003
+event: turn_end
+data: {"status": "completed", "active_turn_id": null}
+
+```
+
+**5. Tanya "Beli valas" lalu stop: `POST /v1/chat/messages`.** Request sama seperti langkah 4 dengan
+`"client_msg_id": "c-0003"` dan `"payload": "Beli valas"`. Response status 202:
+
+```json
+{"success": true, "data": {"message_id": "m-1004", "seq": "1004"}}
+```
+
+Stream:
+
+```text
+id: 1004
+event: message
+data: {"message_id": "m-1004", "seq": "1004", "direction": "user", "type": "text", "payload": "Beli valas", "status": "active", "client_msg_id": "c-0003", "created_at": "2026-11-05T16:17:00+07:00"}
+
+```
+
+Tekan stop dalam 5 detik: `POST /v1/chat/conversations/6ba7b810-9dad-41d1-80b4-00c04fd430c8/cancel` tanpa body,
+response status 200:
 
 ```json
 {"success": true, "data": {"canceled": true}}
 ```
 
-**Skrip: `GET /v1/chat/conversations/:id/events`, jawaban selesai.** Tombol kembali ke send saat `turn_end` tiba
-dengan `id` lebih besar dari `seq` di ack. Setiap frame diakhiri baris kosong.
+Stream mengirim ulang pesan yang sama dengan `status` `canceled`, lalu `turn_end` tanpa pesan assistant. Bubble
+pertanyaan tetap tampil seperti biasa karena tampilan pesan `canceled` masih TODO.
 
 ```text
-id: 1001
+id: 1004
 event: message
-data: {pesan user, status "active", client_msg_id sama dengan request}
+data: {"message_id": "m-1004", "seq": "1004", "direction": "user", "type": "text", "payload": "Beli valas", "status": "canceled", "client_msg_id": "c-0003", "created_at": "2026-11-05T16:17:00+07:00"}
 
-id: 1002
-event: message
-data: {pesan assistant}
-
-id: 1003
+id: 1005
 event: turn_end
-data: {"status":"completed","active_turn_id":null}
+data: {"status": "canceled", "active_turn_id": null}
 
 ```
 
-**Skrip: `GET /v1/chat/conversations/:id/events`, stop ditekan.** Tidak ada pesan assistant. Tombstone memakai
-`message_id` dan `id` pertanyaan yang sama, sedangkan `turn_end` memakai `id` baru. Bubble pertanyaan tetap tampil
-seperti biasa karena tampilan pesan `canceled` masih TODO.
-
-```text
-id: 1001
-event: message
-data: {pesan user yang sama, status "canceled"}
-
-id: 1002
-event: turn_end
-data: {"status":"canceled","active_turn_id":null}
-
-```
+Kalau stop ditekan saat tidak ada jawaban berjalan, `canceled` bernilai `false`, stream tidak mengirim apa-apa, dan
+SDK langsung membuka kunci.
 
 ## Yang sudah diuji
 

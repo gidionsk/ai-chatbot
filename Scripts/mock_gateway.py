@@ -4,8 +4,7 @@ import json
 import threading
 import urllib.error
 import urllib.request
-import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PORT = 3001
@@ -13,6 +12,7 @@ MOCKOON_URL = "http://127.0.0.1:3000"
 KEEPALIVE_SECONDS = 15
 REPLY_DELAY_SECONDS = 5  # Cukup lama untuk sempat menekan stop.
 SEND_PATH = "/v1/chat/messages"
+JAKARTA = timezone(timedelta(hours=7))
 SKIPPED_HEADERS = {"connection", "content-length", "date", "host", "server", "transfer-encoding"}
 
 frames = []  # (seq, teks frame), urut seq
@@ -39,14 +39,14 @@ def publish(event, build_data):
 
 def publish_message(direction, payload, client_msg_id=None):
     return publish("message", lambda seq: {
-        "message_id": str(uuid.uuid4()),
+        "message_id": f"m-{seq}",
         "seq": seq,
         "direction": direction,
         "type": "text",
         "payload": payload,
         "status": "active",
         "client_msg_id": client_msg_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(JAKARTA).isoformat(timespec="seconds"),
     })
 
 
