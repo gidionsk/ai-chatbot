@@ -91,6 +91,21 @@ final class ChatScrollUITests: XCTestCase {
         XCTAssertFalse(isOnScreen(text(lateMessage)))
     }
 
+    /// Simulator dengan keyboard fisik tidak menampilkan keyboard layar; table tidak mengecil, jadi tes ini dilewati.
+    func testKeyboardKeepsTheLatestMessageVisible() throws {
+        launch(extra: ["--long-history"])
+        let answer = text(lastAnswer)
+        XCTAssertTrue(answer.waitForExistence(timeout: 10))
+        settle()
+        let table = application.tables["chat.messages"]
+        let fullHeight = table.frame.height
+        application.textViews["composer.input"].tap()
+        settle()
+        capture("chat-keyboard-open")
+        try XCTSkipIf(table.frame.height == fullHeight, "Keyboard layar tidak tampil pada simulator ini")
+        XCTAssertTrue(isOnScreen(answer))
+    }
+
     private var header: XCUIElement {
         application.descendants(matching: .any)["header.scrolled"]
     }

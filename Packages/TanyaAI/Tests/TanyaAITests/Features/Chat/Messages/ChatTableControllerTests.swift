@@ -15,6 +15,7 @@ import UIKit
 @MainActor
 struct ChatTableControllerTests {
     private let rows = 60
+    private let keyboardHeight: CGFloat = 240
 
     @Test
     func restoredHistoryOpensAtTheLatestRowInOneUpdate() {
@@ -37,7 +38,7 @@ struct ChatTableControllerTests {
 
     /// Menerapkan snapshot tidak boleh membuang tinggi terukur: dulu ini memindahkan posisi ke baris lain.
     @Test
-    func aNewMessageKeepsThePositionOfAReader() {
+    func aNewMessageKeepsThePositionOfAReader() async {
         let fixture = ChatTableFixture()
         defer { fixture.close() }
         fixture.update(items: ChatTableFixture.history(count: rows), phase: .restored)
@@ -49,57 +50,57 @@ struct ChatTableControllerTests {
         fixture.update(
             items: ChatTableFixture.history(count: rows + 1), phase: .restored, incomingMessageID: "m\(rows)"
         )
-        fixture.spin()
+        await fixture.spin()
         #expect(abs(fixture.contentTop(ofRow: 40) - before) <= 1)
         #expect(!fixture.isRowVisible(rows))
     }
 
     @Test
-    func aNewMessageFollowsWhenAtTheBottom() {
+    func aNewMessageFollowsWhenAtTheBottom() async {
         let fixture = ChatTableFixture()
         defer { fixture.close() }
         fixture.update(items: ChatTableFixture.history(count: rows), phase: .restored)
         fixture.update(
             items: ChatTableFixture.history(count: rows + 1), phase: .restored, incomingMessageID: "m\(rows)"
         )
-        fixture.spin()
+        await fixture.spin()
         #expect(fixture.isRowVisible(rows))
         #expect(fixture.controller.isNearBottom)
     }
 
     @Test
-    func aSentQuestionParksBelowTheHeader() {
+    func aSentQuestionParksBelowTheHeader() async {
         let fixture = ChatTableFixture()
         defer { fixture.close() }
         let history = ChatTableFixture.history(count: rows + 1)
         fixture.update(items: history, phase: .restored)
         fixture.update(items: ChatTableFixture.history(count: rows + 2), phase: .restored, sentQuestionID: "m\(rows)")
-        fixture.spin()
+        await fixture.spin()
         #expect(abs(fixture.contentTop(ofRow: rows) - fixture.controller.parkingOffset) <= 1)
     }
 
     /// Konten lebih pendek dari layar: ruang kosong harus dihitung dari ujung konten, bukan dari posisi teratas.
     @Test
-    func aShortConversationStillParksTheQuestion() {
+    func aShortConversationStillParksTheQuestion() async {
         let fixture = ChatTableFixture()
         defer { fixture.close() }
         fixture.update(items: ChatTableFixture.history(count: 3), phase: .restored)
         fixture.update(items: ChatTableFixture.history(count: 5), phase: .restored, sentQuestionID: "m4")
-        fixture.spin()
+        await fixture.spin()
         #expect(fixture.controller.trailingInset > .zero)
         #expect(abs(fixture.contentTop(ofRow: 4) - fixture.controller.parkingOffset) <= 1)
     }
 
     @Test
-    func theTrailingSpaceShrinksAsTheAnswerGrows() {
+    func theTrailingSpaceShrinksAsTheAnswerGrows() async {
         let fixture = ChatTableFixture()
         defer { fixture.close() }
         fixture.update(items: ChatTableFixture.history(count: 30), phase: .restored)
         fixture.update(items: ChatTableFixture.history(count: 31), phase: .restored, sentQuestionID: "m30")
-        fixture.spin()
+        await fixture.spin()
         let empty = fixture.controller.trailingInset
         fixture.update(items: ChatTableFixture.history(count: 32), phase: .restored)
-        fixture.spin()
+        await fixture.spin()
         #expect(fixture.controller.trailingInset < empty)
         #expect(abs(fixture.contentTop(ofRow: 30) - fixture.controller.parkingOffset) <= 1)
     }
@@ -129,6 +130,34 @@ struct ChatTableControllerTests {
         #expect(!still.controller.isScrollAnimating)
     }
 
+    /// Dulu acuan posisi baca mengembalikan daftar ke posisi lama, jadi pesan terakhir tertutup keyboard.
+    @Test
+    func theKeyboardKeepsTheBottomOfTheConversationVisible() async {
+        let fixture = ChatTableFixture()
+        defer { fixture.close() }
+        fixture.update(items: ChatTableFixture.history(count: rows), phase: .restored)
+        await fixture.spin()
+        await fixture.resize(height: ChatTableFixture.size.height - keyboardHeight)
+        #expect(abs(fixture.distanceToContentEnd) <= 1)
+        #expect(fixture.controller.isNearBottom)
+        await fixture.resize(height: ChatTableFixture.size.height)
+        #expect(abs(fixture.distanceToContentEnd) <= 1)
+    }
+
+    @Test
+    func theKeyboardLeavesAReaderOnTheirRow() async {
+        let fixture = ChatTableFixture()
+        defer { fixture.close() }
+        fixture.update(items: ChatTableFixture.history(count: rows), phase: .restored)
+        fixture.table.scrollToRow(at: IndexPath(row: 40, section: .zero), at: .top, animated: false)
+        fixture.table.layoutIfNeeded()
+        fixture.controller.scrollViewDidScroll(fixture.table)
+        fixture.controller.recordReadingPosition()
+        let before = fixture.contentTop(ofRow: 40)
+        await fixture.resize(height: ChatTableFixture.size.height - keyboardHeight)
+        #expect(abs(fixture.contentTop(ofRow: 40) - before) <= 1)
+    }
+
     @Test
     func theHeaderInsetFollowsAHeightThatChangesAfterTheFirstRender() {
         let fixture = ChatTableFixture()
@@ -151,25 +180,26 @@ struct ChatTableControllerTests {
 
     /// Daftar panjang hanya membuat sel yang tampil; ini yang membedakannya dari `VStack`.
     @Test
-    func aLongConversationOnlyBuildsTheVisibleRows() {
+    func aLongConversationOnlyBuildsTheVisibleRows() async {
         var builtCells = 0
         let fixture = ChatTableFixture(onBuild: { builtCells += 1 })
         defer { fixture.close() }
         fixture.update(items: ChatTableFixture.history(count: 500), phase: .restored)
-        fixture.spin()
+        await fixture.spin()
         #expect(builtCells < 60)
     }
 
     @Test
-    func theControllerIsReleasedWithItsPage() {
+    func theControllerIsReleasedWithItsPage() async {
         weak var released: ChatTableController?
         autoreleasepool {
             let fixture = ChatTableFixture()
             fixture.update(items: ChatTableFixture.history(count: rows), phase: .restored)
-            fixture.spin()
             released = fixture.controller
             fixture.close()
         }
+        // Blok yang masih antre memegang controller secara weak, jadi tidak boleh menahannya.
+        await Task.yield()
         #expect(released == nil)
     }
 }

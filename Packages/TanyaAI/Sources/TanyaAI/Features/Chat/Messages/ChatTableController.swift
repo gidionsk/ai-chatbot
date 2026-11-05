@@ -166,8 +166,7 @@ private extension ChatTableController {
         isAdjustmentPending = false
         recordVisibleHeights()
         openIfNeeded()
-        stickToBottomIfNeeded()
-        restoreReadingPosition()
+        keepPositionAfterLayout()
         maintainParking()
         recordSettledPosition()
         refreshNearBottom()

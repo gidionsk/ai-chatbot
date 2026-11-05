@@ -643,3 +643,8 @@ Daftar pesan memakai `ChatTable` (`UITableView` ber-recycle). Probe sementara di
 (30 pesan) 150 ms dan kemungkinan masih termasuk pemanasan. Angka ini hanya menunjukkan biaya tidak naik mengikuti
 jumlah pesan, bukan FPS produksi. Jalur iOS 15 (`configureLegacy`) hanya diuji lewat `HostingTableViewCellTests` di
 runtime lebih baru, karena runtime iOS 15 tidak terpasang.
+
+Perubahan tinggi table: `ChatTableFixture.spin` menunggu giliran antrean utama, karena `RunLoop.main.run` di dalam tes
+`@MainActor` tidak menjalankan blok `DispatchQueue.main.async`, jadi penyesuaian sesudah layout sebelumnya tidak ikut
+teruji. `testKeyboardKeepsTheLatestMessageVisible` terbukti gagal tanpa perbaikan dan lulus dengan perbaikan pada
+simulator ukuran SE. Tes ini dilewati bila simulator tidak menampilkan keyboard layar.

@@ -87,9 +87,14 @@ extension ChatTableController {
         scroll(to: target, isAnimated: false)
     }
 
-    func stickToBottomIfNeeded() {
+    /// Nasabah di ujung daftar tetap di ujung saat tinggi table berubah. Acuan posisi baca hanya untuk yang lain: kalau
+    /// ikut dijalankan, daftar kembali ke posisi lama dan pesan terakhir tertutup keyboard.
+    func keepPositionAfterLayout() {
         defer { isStickingToBottom = false }
-        guard isStickingToBottom, !isHoldingParking, !isUserScrolling else { return }
+        guard isStickingToBottom, !isHoldingParking, !isUserScrolling else {
+            restoreReadingPosition()
+            return
+        }
         scroll(to: bottomOffset + trailingInset, isAnimated: false)
     }
 

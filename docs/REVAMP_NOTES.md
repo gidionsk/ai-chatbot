@@ -58,6 +58,9 @@ Hal yang harus dijaga, semuanya pernah menjadi bug nyata saat migrasi:
 7. **`headerHeight` berubah setelah render pertama**, karena safe area baru terbaca setelah halaman terpasang.
 8. **Id ganda membuat diffable data source crash**, dan id pesan berasal dari server, jadi dibuang di
    `[ChatListItem](rows:)`.
+9. **Bawah didahulukan saat tinggi table berubah.** Nasabah di ujung daftar tetap di ujung saat keyboard
+   muncul atau tertutup; acuan posisi baca hanya untuk nasabah yang sedang membaca ke atas. Kalau keduanya
+   dijalankan, acuan lama mengembalikan daftar dan bagian bawah tertutup setinggi keyboard.
 
 Aturan supaya tetap ringan:
 

@@ -14,10 +14,6 @@ enum ChatElementIdentifier {
     static let failedQuestion = "chat.question.failed"
     static let dateChip = "chat.date"
     static let answer = "chat.answer"
-    /// Penanda ujung daftar untuk scroll; bukan untuk UI test.
-    static let latest = "chat.latest"
-    /// Penanda posisi parkir pertanyaan terbaru untuk scroll; bukan untuk UI test.
-    static let parking = "chat.parking"
 
     /// Saran pertanyaan lanjutan ke-`index` (mulai 0) sesuai urutan dari gateway.
     static func followUp(_ index: Int) -> String { "chat.followUp.\(index)" }

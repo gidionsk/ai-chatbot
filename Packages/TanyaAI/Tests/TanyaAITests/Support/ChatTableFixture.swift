@@ -17,6 +17,8 @@ final class ChatTableFixture {
     typealias Cell = HostingTableViewCell<ChatTableFixtureRow>
     static let headerHeight: CGFloat = 100
     static let size = CGSize(width: 390, height: 700)
+    /// Penyesuaian layout bisa menjadwalkan satu penyesuaian lagi, jadi antrean diberi lebih dari satu giliran.
+    private static let queueTurns = 3
     let controller = ChatTableController()
     private let window = UIWindow(frame: CGRect(origin: .zero, size: ChatTableFixture.size))
     private var state = ChatTableState()
@@ -55,8 +57,21 @@ final class ChatTableFixture {
         controller.update(state)
     }
 
-    func spin(seconds: TimeInterval = 0.05) {
-        RunLoop.main.run(until: Date().addingTimeInterval(seconds))
+    /// Memberi giliran ke blok `DispatchQueue.main.async` milik controller. `RunLoop.main.run` tidak bisa dipakai:
+    /// di dalam tes `@MainActor` run loop bersarang tidak menjalankan antrean utama, jadi penyesuaian layout terlewat.
+    func spin() async {
+        for _ in .zero..<Self.queueTurns {
+            await withCheckedContinuation { continuation in
+                DispatchQueue.main.async { continuation.resume() }
+            }
+        }
+    }
+
+    /// Tinggi table berubah seperti saat keyboard muncul atau tertutup.
+    func resize(height: CGFloat) async {
+        window.frame.size.height = height
+        window.layoutIfNeeded()
+        await spin()
     }
 
     /// Pesan selang-seling; `m0` pertanyaan, `m1` jawaban, dan seterusnya.
@@ -74,6 +89,11 @@ final class ChatTableFixture {
     func contentTop(ofRow row: Int) -> CGFloat {
         table.rectForRow(at: IndexPath(row: row, section: .zero)).minY + state.items[row].topSpacing
             - table.contentOffset.y
+    }
+
+    /// Sisa jarak scroll sampai ujung konten; 0 berarti posisi tepat di paling bawah.
+    var distanceToContentEnd: CGFloat {
+        table.contentSize.height + table.adjustedContentInset.bottom - table.bounds.height - table.contentOffset.y
     }
 
     func isRowVisible(_ row: Int) -> Bool {
