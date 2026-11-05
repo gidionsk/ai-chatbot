@@ -648,3 +648,7 @@ Perubahan tinggi table: `ChatTableFixture.spin` menunggu giliran antrean utama, 
 `@MainActor` tidak menjalankan blok `DispatchQueue.main.async`, jadi penyesuaian sesudah layout sebelumnya tidak ikut
 teruji. `testKeyboardKeepsTheLatestMessageVisible` terbukti gagal tanpa perbaikan dan lulus dengan perbaikan pada
 simulator ukuran SE. Tes ini dilewati bila simulator tidak menampilkan keyboard layar.
+
+Konten sisipan host: `ChatScreenContentTests` memakai `host.makeView { ... }` asli dan terbukti gagal sebelum perbaikan,
+baik untuk nilai maupun tinggi baris. Halaman yang diam tidak terus membangun ulang konten. Perubahan `welcome`,
+`locale`, dan palette diuji di tingkat controller lewat `ChatRowInputs`, bukan lewat tampilan.

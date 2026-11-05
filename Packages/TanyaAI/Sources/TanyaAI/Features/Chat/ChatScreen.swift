@@ -112,7 +112,8 @@ private extension ChatScreen {
     var tableState: ChatTableState {
         ChatTableState(
             items: listItems, sentQuestionID: bridge.latestSentQuestionID,
-            incomingMessageID: bridge.latestIncomingMessageID, historyPhase: bridge.historyPhase
+            incomingMessageID: bridge.latestIncomingMessageID, historyPhase: bridge.historyPhase,
+            rowInputs: ChatRowInputs(welcome: welcome, locale: locale, colors: colors)
         )
     }
 

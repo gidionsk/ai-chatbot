@@ -57,6 +57,11 @@ final class ChatTableFixture {
         controller.update(state)
     }
 
+    func update(rowInputs: ChatRowInputs) {
+        state.rowInputs = rowInputs
+        controller.update(state)
+    }
+
     /// Memberi giliran ke blok `DispatchQueue.main.async` milik controller. `RunLoop.main.run` tidak bisa dipakai:
     /// di dalam tes `@MainActor` run loop bersarang tidak menjalankan antrean utama, jadi penyesuaian layout terlewat.
     func spin() async {

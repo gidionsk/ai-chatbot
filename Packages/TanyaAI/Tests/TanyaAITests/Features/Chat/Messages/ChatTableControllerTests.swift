@@ -190,6 +190,43 @@ struct ChatTableControllerTests {
     }
 
     @Test
+    func changedRowInputsRebuildTheVisibleRows() async {
+        var builtCells = 0
+        let fixture = ChatTableFixture(onBuild: { builtCells += 1 })
+        defer { fixture.close() }
+        fixture.update(items: ChatTableFixture.history(count: rows), phase: .restored)
+        await fixture.spin()
+        builtCells = 0
+        fixture.update(rowInputs: ChatRowInputs(locale: Locale(identifier: "zh-Hans")))
+        #expect(builtCells > 0)
+    }
+
+    /// Halaman berubah di tiap token stream, jadi menyegarkan konten sisipan tidak boleh membangun baris lain.
+    @Test
+    func refreshingInjectedContentRebuildsOnlyItsRow() async {
+        var builtCells = 0
+        let fixture = ChatTableFixture(onBuild: { builtCells += 1 })
+        defer { fixture.close() }
+        fixture.update(items: ChatTableFixture.history(count: rows) + [.content], phase: .restored)
+        await fixture.spin()
+        builtCells = 0
+        fixture.controller.refreshInjectedContent()
+        #expect(builtCells == 1)
+    }
+
+    @Test
+    func refreshingSkipsInjectedContentOutsideTheScreen() async {
+        var builtCells = 0
+        let fixture = ChatTableFixture(onBuild: { builtCells += 1 })
+        defer { fixture.close() }
+        fixture.update(items: [.content] + ChatTableFixture.history(count: rows), phase: .restored)
+        await fixture.spin()
+        builtCells = 0
+        fixture.controller.refreshInjectedContent()
+        #expect(builtCells == 0)
+    }
+
+    @Test
     func theControllerIsReleasedWithItsPage() async {
         weak var released: ChatTableController?
         autoreleasepool {

@@ -13,4 +13,5 @@ struct ChatTableState: Equatable {
     /// Berubah setiap pesan baru datang di luar turn yang sedang berjalan.
     var incomingMessageID: String?
     var historyPhase = ChatHistoryPhase.loading
+    var rowInputs = ChatRowInputs()
 }

@@ -69,12 +69,23 @@ final class ChatTableController: UIViewController {
         let previous = state
         let isReaderAtBottom = isNearBottom
         state = newState
-        applyItems(replacing: previous.items)
+        applyItems(replacing: previous)
         openIfNeeded()
         restoreReadingPosition()
         moveToNewContent(after: previous, isReaderAtBottom: isReaderAtBottom)
         maintainParking()
         refreshNearBottom()
+    }
+
+    /// Konten sisipan tidak bisa dibandingkan, jadi barisnya dibangun ulang setiap halaman berubah. Hanya baris ini,
+    /// karena halaman berubah di tiap token stream dan saat header memudar.
+    func refreshInjectedContent() {
+        guard let row = state.items.firstIndex(where: { $0.id == .content }),
+            tableView.indexPathsForVisibleRows?.contains(IndexPath(row: row, section: .zero)) == true,
+            var snapshot = dataSource?.snapshot()
+        else { return }
+        snapshot.reconfigureItems([.content])
+        apply(snapshot)
     }
 }
 
@@ -110,17 +121,24 @@ private extension ChatTableController {
     }
 
     /// Baris yang sama dengan isi berubah di-reconfigure di tempat, supaya sel dan posisi scroll tetap.
-    func applyItems(replacing previous: [ChatListItem]) {
-        guard state.items != previous else { return }
-        let previousByID = Dictionary(previous.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    func applyItems(replacing previous: ChatTableState) {
+        let isInputChanged = state.rowInputs != previous.rowInputs
+        guard isInputChanged || state.items != previous.items else { return }
+        let previousByID = Dictionary(previous.items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         var snapshot = NSDiffableDataSourceSnapshot<Int, ChatListItemID>()
         snapshot.appendSections([.zero])
         snapshot.appendItems(state.items.map(\.id))
         snapshot.reconfigureItems(
-            state.items.filter { item in previousByID[item.id].map { $0 != item } ?? false }.map(\.id)
+            state.items.filter { item in
+                previousByID[item.id].map { isInputChanged || $0 != item } ?? false
+            }.map(\.id)
         )
-        // Tanpa animasi, snapshot diterapkan seperti `reloadData` dan semua tinggi terukur hilang. Batch update di
-        // dalam `performWithoutAnimation` mempertahankannya tanpa animasi baris.
+        apply(snapshot)
+    }
+
+    /// Tanpa animasi, snapshot diterapkan seperti `reloadData` dan semua tinggi terukur hilang. Batch update di dalam
+    /// `performWithoutAnimation` mempertahankannya tanpa animasi baris.
+    func apply(_ snapshot: NSDiffableDataSourceSnapshot<Int, ChatListItemID>) {
         UIView.performWithoutAnimation {
             dataSource?.apply(snapshot, animatingDifferences: true)
             // Posisi dihitung sesudah ini; sebelum layout, baris yang diganti masih memakai perkiraan tinggi.

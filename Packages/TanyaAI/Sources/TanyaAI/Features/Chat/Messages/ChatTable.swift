@@ -34,7 +34,8 @@ struct ChatTable<Row: View>: UIViewControllerRepresentable {
         return controller
     }
 
-    /// Penyedia sel selalu dipasang ulang: closure `row` membawa nilai terbaru dari `ChatScreen`.
+    /// Penyedia sel selalu dipasang ulang: closure `row` membawa nilai terbaru dari `ChatScreen`. Itu hanya menjangkau
+    /// sel yang dibuat berikutnya; sel yang tampil diperbarui `update` dan `refreshInjectedContent`.
     func updateUIViewController(_ controller: ChatTableController, context: Context) {
         controller.onScrollProgress = onScrollProgress
         controller.updateHeaderHeight(headerHeight)
@@ -45,5 +46,6 @@ struct ChatTable<Row: View>: UIViewControllerRepresentable {
             return hostedCell
         }
         controller.update(state)
+        controller.refreshInjectedContent()
     }
 }

@@ -61,6 +61,10 @@ Hal yang harus dijaga, semuanya pernah menjadi bug nyata saat migrasi:
 9. **Bawah didahulukan saat tinggi table berubah.** Nasabah di ujung daftar tetap di ujung saat keyboard
    muncul atau tertutup; acuan posisi baca hanya untuk nasabah yang sedang membaca ke atas. Kalau keduanya
    dijalankan, acuan lama mengembalikan daftar dan bagian bawah tertutup setinggi keyboard.
+10. **Sel yang tampil tidak mengikuti update SwiftUI.** Mengganti `makeCell` hanya menjangkau sel berikutnya.
+    Nilai yang dibaca baris harus masuk `ChatListItem` atau `ChatRowInputs`; konten sisipan yang tidak bisa
+    dibandingkan disegarkan lewat `refreshInjectedContent`. Jangan menyegarkan semua sel di tiap update:
+    halaman berubah di tiap token stream. `onOpenLink` masih closure dari saat sel dibuat.
 
 Aturan supaya tetap ringan:
 
