@@ -139,7 +139,7 @@ SSE lewat `streamRequest` Alamofire (5.2+) agar tetap memakai session yang sama.
 `AsyncThrowingStream` harus satu baris. Jaringan bisa mengirim banyak frame sekaligus atau memutus baris
 dan karakter multi-byte di tengah, jadi host menyusun barisnya per byte dengan `StreamLineBuffer`, bukan
 `responseStreamString`. Bundle yang langsung dikirim sebagai satu `String` tidak menghasilkan event apa pun.
-Kode lengkap Byon, termasuk `StreamLineBuffer`, ada di [BYON_CHAT_SERVICE.md](BYON_CHAT_SERVICE.md).
+Kode stream Byon, termasuk `StreamLineBuffer`, ada di [BYON_CHAT_STREAM.md](BYON_CHAT_STREAM.md).
 
 ```swift
 func events(conversationID: String, lastEventID: String?) -> AsyncThrowingStream<String, Error> {
