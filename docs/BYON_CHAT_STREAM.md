@@ -19,7 +19,7 @@ jaringan tidak bisa dijamin, jadi host yang menyusun barisnya.
 | --- | --- | --- | --- |
 | 1 | `BaseService.HeaderKeys` | Tambah `lastEventId` | Nama header disimpan bersama key lain |
 | 2 | `StreamLineBuffer.swift` | Baru | Menyusun potongan stream menjadi baris |
-| 3 | `BaseService+SSE.swift` | Ganti seluruh isi | Lolos batas 50 baris; `onEvent` tetap `String` per baris; body error non-2xx terbaca |
+| 3 | `BaseService+SSE.swift`, `BaseService+Method.swift` | Ganti seluruh isi SSE; hapus `private` di `isSuccess` | Lolos batas 50 baris; `onEvent` tetap `String` per baris; body error non-2xx terbaca |
 | 4 | `ChatGatewayService+Stream.swift` | Ganti seluruh isi | Mengirim `Last-Event-ID`, meneruskan hasil akhir, memetakan error |
 | 5 | `TanyaAIUseCase+Chat.swift` | Ganti fungsi `events` | Callback menjadi `AsyncThrowingStream` |
 | 6 | `ChatGatewayStreamService.swift` | Baru, opsional | Hanya bila stream butuh base URL sendiri |
@@ -65,6 +65,9 @@ struct StreamLineBuffer {
 Non-2xx tidak ditutup lebih awal, supaya body error ikut terbaca. Dari situ SDK mendapat `retryable` dan
 `retry_after_ms`, misalnya pada 503 `capacity_full`.
 
+Kode ini memakai `isSuccess(statusCode:)` yang sudah ada di `BaseService+Method.swift`, jadi hapus `private`
+di fungsi itu.
+
 ```swift
 import Alamofire
 import Foundation
@@ -91,24 +94,20 @@ extension BaseService {
         let tracker = DynatraceNetworkTracker(urlString: data.baseUrl + data.path)
         tracker.startTracking()
         let request = streamSession.startStreamRequest(data, dynatraceNetworkTracker: tracker)
-        // `handleEvent` menahan `self`: streamSession ikut mati bila service dilepas.
         let handleEvent = streamEventHandler(onEvent: onEvent) { completion, errorBody in
             tracker.stopTracking(message: completion.response?.statusCode.description)
             onComplete(completion, errorBody)
         }
-        request.responseStream(on: .main) { [weak request] stream in
+        // `self` sengaja tidak weak: streamSession ikut mati bila service dilepas.
+        request.responseStream(on: .main) { [self, weak request] stream in
             let statusCode = request?.response?.statusCode ?? ApiConfig.successCodeBottomLimit
-            handleEvent(stream.event, Self.isStreamSuccess(statusCode))
+            handleEvent(stream.event, isSuccess(statusCode: statusCode))
         }
         return request
     }
 }
 
 private extension BaseService {
-    static func isStreamSuccess(_ statusCode: Int) -> Bool {
-        (ApiConfig.successCodeBottomLimit..<ApiConfig.successCodeUpperLimit).contains(statusCode)
-    }
-
     /// Dipisah agar `var` tidak berada langsung di closure Alamofire, yang bisa `@Sendable`.
     func streamEventHandler(
         onEvent: @escaping NetworkHandler.StreamData,
@@ -156,7 +155,7 @@ extension ChatGatewayService {
             headers: streamHeaders(lastEventIdentifier: lastEventIdentifier),
             onEvent: { line, _ in onLine(line) },
             onComplete: { completion, errorBody in
-                onComplete(Self.failure(from: completion, errorBody: errorBody))
+                onComplete(self.failure(from: completion, errorBody: errorBody))
             }
         )
     }
@@ -172,9 +171,8 @@ private extension ChatGatewayService {
     }
 
     /// Nil = selesai normal atau dibatalkan; TanyaAI yang memutuskan menyambung ulang.
-    static func failure(from completion: DataStreamRequest.Completion, errorBody: Data) -> Error? {
-        let successRange = ApiConfig.successCodeBottomLimit..<ApiConfig.successCodeUpperLimit
-        if let statusCode = completion.response?.statusCode, !successRange.contains(statusCode) {
+    func failure(from completion: DataStreamRequest.Completion, errorBody: Data) -> Error? {
+        if let statusCode = completion.response?.statusCode, !isSuccess(statusCode: statusCode) {
             return TanyaAITransportError.response(statusCode: statusCode, body: errorBody)
         }
         guard let error = completion.error, !error.isExplicitlyCancelledError else { return nil }
@@ -234,6 +232,7 @@ Kode di dokumen ini dikompilasi dengan Alamofire 5.12.2 dan dijalankan di macOS 
 | 503 dengan body | `TanyaAITransportError` beserta body, termasuk `retry_after_ms` |
 | 401 tanpa body, 410 dengan body | `TanyaAITransportError` dengan status yang benar |
 | Stream dibatalkan | Koneksi di server terputus, tanpa error, tracker berhenti |
+| Stream selesai atau dibatalkan | Service dilepas dari memori, tidak ada retain cycle tersisa |
 | Server tidak bisa dihubungi | Error koneksi diteruskan, SDK me-retry |
 
 ## Yang perlu dicek di Byon
