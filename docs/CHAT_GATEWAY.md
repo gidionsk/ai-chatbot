@@ -141,8 +141,11 @@ final class TanyaAIChatService: TanyaAIChatTransport {
 }
 ```
 
-SSE lewat `streamRequest` Alamofire (5.2+) agar tetap memakai session yang sama. Potongan data tidak
-selalu berakhir di batas baris, jadi host menyimpan sisa baris sampai `\n` berikutnya:
+SSE lewat `streamRequest` Alamofire (5.2+) agar tetap memakai session yang sama. Satu `String` di
+`AsyncThrowingStream` harus satu baris. Jaringan bisa mengirim banyak frame sekaligus atau memutus baris
+dan karakter multi-byte di tengah, jadi host menyusun barisnya per byte dengan `StreamLineBuffer`, bukan
+`responseStreamString`. Bundle yang langsung dikirim sebagai satu `String` tidak menghasilkan event apa pun.
+Kode stream Byon, termasuk `StreamLineBuffer`, ada di [BYON_CHAT_STREAM.md](BYON_CHAT_STREAM.md).
 
 ```swift
 func events(conversationID: String, lastEventID: String?) -> AsyncThrowingStream<String, Error> {
@@ -152,19 +155,15 @@ func events(conversationID: String, lastEventID: String?) -> AsyncThrowingStream
         if let lastEventID { headers.add(name: "Last-Event-ID", value: lastEventID) }
         let request = session.streamRequest(baseURL + "/v1/chat/conversations/\(conversationID)/events",
                                             headers: headers)
-        var pending = ""
+        var buffer = StreamLineBuffer()
         var errorBody = Data()
-        request.responseStreamString { stream in
+        request.responseStream { stream in
             let statusCode = request.response?.statusCode ?? 200
             switch stream.event {
             case let .stream(result):
-                let chunk = (try? result.get()) ?? ""
-                guard (200..<300).contains(statusCode) else { errorBody += Data(chunk.utf8); return }
-                pending += chunk
-                while let newline = pending.firstIndex(of: "\n") {
-                    continuation.yield(String(pending[..<newline]))
-                    pending = String(pending[pending.index(after: newline)...])
-                }
+                guard case let .success(chunk) = result else { return }
+                guard (200..<300).contains(statusCode) else { errorBody += chunk; return }
+                buffer.append(chunk).forEach { continuation.yield($0) }
             case let .complete(completion):
                 if !(200..<300).contains(statusCode) {
                     continuation.finish(throwing: TanyaAITransportError.response(statusCode: statusCode,
