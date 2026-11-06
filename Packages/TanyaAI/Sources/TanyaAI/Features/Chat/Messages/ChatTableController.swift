@@ -14,6 +14,8 @@ final class ChatTableController: UIViewController {
     let tableView = LayoutTrackingTableView(frame: .zero, style: .plain)
     var onScrollProgress: (CGFloat) -> Void = { _ in }
     var makeCell: ((UITableView, IndexPath, ChatListItem) -> UITableViewCell)?
+    /// Aksi terbaru dari halaman; baris memanggilnya lewat `forwardingActions`.
+    var rowActions = ChatRowActions()
     /// Bisa diganti di test; default mengikuti pengaturan Reduce Motion.
     var isReducingMotion: () -> Bool = { UIAccessibility.isReduceMotionEnabled }
     /// Bisa berubah setelah render pertama: safe area baru terbaca setelah halaman terpasang.
@@ -42,6 +44,15 @@ final class ChatTableController: UIViewController {
     var anchorItemID: ChatListItemID?
     var anchorDistance = CGFloat.zero
     private var dataSource: UITableViewDiffableDataSource<Int, ChatListItemID>?
+
+    /// Selalu sampai ke `rowActions` terbaru walau sel dibuat sebelum aksinya diganti.
+    var forwardingActions: ChatRowActions {
+        ChatRowActions(
+            onOpenLink: { [weak self] in self?.rowActions.onOpenLink($0) },
+            onSelectShortcut: { [weak self] in self?.rowActions.onSelectShortcut($0) },
+            onSelectFollowUp: { [weak self] in self?.rowActions.onSelectFollowUp($0) }
+        )
+    }
 
     override func loadView() {
         view = tableView

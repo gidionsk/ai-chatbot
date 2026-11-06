@@ -48,8 +48,57 @@ struct HostingTableViewCellTests {
         #expect(parent.children.isEmpty)
     }
 
+    /// Tinggi baris mengikuti konten saja: spacing desain tidak boleh bertambah oleh minimum bawaan sistem.
+    @Test(arguments: [18, 24, 80] as [CGFloat])
+    func aRowIsAsTallAsItsContent(height: CGFloat) {
+        let fixture = HostedRowFixture(contentHeight: height)
+        defer { fixture.close() }
+        #expect(abs(fixture.rowHeight - height) <= 1)
+    }
+
     @Test
     func theReuseIdentifierDiffersPerContent() {
         #expect(HostingTableViewCell<Text>.reuseIdentifier != HostingTableViewCell<Image>.reuseIdentifier)
+    }
+}
+
+/// Table sungguhan pada window, karena tinggi baris baru diputuskan saat table mengukur selnya.
+@MainActor
+private final class HostedRowFixture: NSObject, UITableViewDataSource {
+    private typealias Cell = HostingTableViewCell<AnyView>
+    private let contentHeight: CGFloat
+    private let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 375, height: 812))
+    private let parent = UIViewController()
+    private let table = UITableView(frame: .zero, style: .plain)
+
+    init(contentHeight: CGFloat) {
+        self.contentHeight = contentHeight
+        super.init()
+        table.register(Cell.self, forCellReuseIdentifier: Cell.reuseIdentifier)
+        table.dataSource = self
+        table.rowHeight = UITableView.automaticDimension
+        table.estimatedRowHeight = 100
+        parent.view = table
+        window.rootViewController = parent
+        window.isHidden = false
+        window.layoutIfNeeded()
+    }
+
+    var rowHeight: CGFloat {
+        table.layoutIfNeeded()
+        return table.rectForRow(at: IndexPath(row: .zero, section: .zero)).height
+    }
+
+    func close() {
+        window.isHidden = true
+        window.rootViewController = nil
+    }
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { 1 }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: Cell.reuseIdentifier, for: indexPath)
+        (cell as? Cell)?.configure(rootView: AnyView(Color.clear.frame(height: contentHeight)), parent: parent)
+        return cell
     }
 }

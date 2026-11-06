@@ -15,15 +15,18 @@ struct ChatTable<Row: View>: UIViewControllerRepresentable {
     private typealias HostedCell = HostingTableViewCell<Row>
     private let state: ChatTableState
     private let headerHeight: CGFloat
+    private let actions: ChatRowActions
     private let onScrollProgress: (CGFloat) -> Void
-    private let row: (ChatListItem) -> Row
+    private let row: (ChatListItem, ChatRowActions) -> Row
 
     init(
-        state: ChatTableState, headerHeight: CGFloat, onScrollProgress: @escaping (CGFloat) -> Void,
-        @ViewBuilder row: @escaping (ChatListItem) -> Row
+        state: ChatTableState, headerHeight: CGFloat, actions: ChatRowActions,
+        onScrollProgress: @escaping (CGFloat) -> Void,
+        @ViewBuilder row: @escaping (ChatListItem, ChatRowActions) -> Row
     ) {
         self.state = state
         self.headerHeight = headerHeight
+        self.actions = actions
         self.onScrollProgress = onScrollProgress
         self.row = row
     }
@@ -38,11 +41,12 @@ struct ChatTable<Row: View>: UIViewControllerRepresentable {
     /// sel yang dibuat berikutnya; sel yang tampil diperbarui `update` dan `refreshInjectedContent`.
     func updateUIViewController(_ controller: ChatTableController, context: Context) {
         controller.onScrollProgress = onScrollProgress
+        controller.rowActions = actions
         controller.updateHeaderHeight(headerHeight)
         controller.makeCell = { [row, weak controller] table, indexPath, item in
             let cell = table.dequeueReusableCell(withIdentifier: HostedCell.reuseIdentifier, for: indexPath)
             guard let controller, let hostedCell = cell as? HostedCell else { return cell }
-            hostedCell.configure(rootView: row(item), parent: controller)
+            hostedCell.configure(rootView: row(item, controller.forwardingActions), parent: controller)
             return hostedCell
         }
         controller.update(state)

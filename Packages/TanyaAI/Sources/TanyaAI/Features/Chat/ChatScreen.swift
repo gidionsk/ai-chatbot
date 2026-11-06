@@ -59,21 +59,18 @@ public struct ChatScreen<Content: View>: View {
 
     private func conversation(headerHeight: CGFloat) -> some View {
         ChatTable(
-            state: tableState, headerHeight: headerHeight, onScrollProgress: { scrollProgress = $0 },
-            row: listRow
+            state: tableState, headerHeight: headerHeight, actions: rowActions,
+            onScrollProgress: { scrollProgress = $0 }, row: listRow
         )
     }
 
     /// Baris table tidak mewarisi environment halaman, jadi nilainya dipasang di sini. `id` mencegah state view
     /// terbawa saat sel dipakai ulang untuk pesan lain.
-    private func listRow(_ item: ChatListItem) -> some View {
-        ChatListRow(
-            item: item, welcome: welcome, content: content, onSelectShortcut: select,
-            onSelectFollowUp: selectFollowUp, onOpenLink: onOpenLink
-        )
-        .id(item.id)
-        .designColors(colors)
-        .environment(\.locale, locale)
+    private func listRow(_ item: ChatListItem, actions: ChatRowActions) -> some View {
+        ChatListRow(item: item, welcome: welcome, content: content, actions: actions)
+            .id(item.id)
+            .designColors(colors)
+            .environment(\.locale, locale)
     }
 
     /// Hanya saat pertama dibuka; menyambung ulang tidak menutupi pesan yang sudah tampil. Gagal permanen
@@ -108,6 +105,10 @@ public struct ChatScreen<Content: View>: View {
 
 private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
+
+    var rowActions: ChatRowActions {
+        ChatRowActions(onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp)
+    }
 
     var tableState: ChatTableState {
         ChatTableState(

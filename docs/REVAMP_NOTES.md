@@ -63,8 +63,11 @@ Hal yang harus dijaga, semuanya pernah menjadi bug nyata saat migrasi:
    dijalankan, acuan lama mengembalikan daftar dan bagian bawah tertutup setinggi keyboard.
 10. **Sel yang tampil tidak mengikuti update SwiftUI.** Mengganti `makeCell` hanya menjangkau sel berikutnya.
     Nilai yang dibaca baris harus masuk `ChatListItem` atau `ChatRowInputs`; konten sisipan yang tidak bisa
-    dibandingkan disegarkan lewat `refreshInjectedContent`. Jangan menyegarkan semua sel di tiap update:
-    halaman berubah di tiap token stream. `onOpenLink` masih closure dari saat sel dibuat.
+    dibandingkan disegarkan lewat `refreshInjectedContent`. Aksi dari baris lewat `forwardingActions`, yang
+    selalu memanggil aksi terbaru. Jangan menyegarkan semua sel di tiap update: halaman berubah di tiap token
+    stream.
+11. **`UIHostingConfiguration` punya tinggi minimum sendiri**, dan `.margins` tidak menghapusnya. Tanpa
+    `.minSize(width: .zero, height: .zero)` baris pendek mendapat ruang di luar ukuran komponennya.
 
 Aturan supaya tetap ringan:
 

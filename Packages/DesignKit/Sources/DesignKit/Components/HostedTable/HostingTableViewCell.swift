@@ -30,7 +30,10 @@ public final class HostingTableViewCell<Content: View>: UITableViewCell, HostedC
             configureLegacy(rootView: rootView, parent: parent)
             return
         }
-        contentConfiguration = UIHostingConfiguration { rootView }.margins(.all, .zero)
+        // Tanpa `minSize`, sistem memberi tinggi minimum dan baris pendek mendapat ruang di luar ukuran komponennya.
+        contentConfiguration = UIHostingConfiguration { rootView }
+            .margins(.all, .zero)
+            .minSize(width: .zero, height: .zero)
     }
 
     override public func prepareForReuse() {

@@ -115,6 +115,7 @@ struct ChatTableFixtureRow: View {
     }
 
     private var height: CGFloat {
+        if case .followUps = item { return .zero }
         guard case .message(let row, _) = item, let index = Int(row.id.dropFirst()) else { return 40 }
         return index.isMultiple(of: 2) ? 44 : CGFloat(200 + index % 7 * 40)
     }

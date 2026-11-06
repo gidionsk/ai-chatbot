@@ -652,3 +652,6 @@ simulator ukuran SE. Tes ini dilewati bila simulator tidak menampilkan keyboard 
 Konten sisipan host: `ChatScreenContentTests` memakai `host.makeView { ... }` asli dan terbukti gagal sebelum perbaikan,
 baik untuk nilai maupun tinggi baris. Halaman yang diam tidak terus membangun ulang konten. Perubahan `welcome`,
 `locale`, dan palette diuji di tingkat controller lewat `ChatRowInputs`, bukan lewat tampilan.
+
+Tinggi baris diukur pada table sungguhan (`aRowIsAsTallAsItsContent`): konten 18 dan 24 gagal sebelum `minSize`, 80 lulus.
+`ChatTableActionsTests` terbukti gagal saat penerus aksi dimatikan, dan memeriksa sel tidak dibangun ulang.

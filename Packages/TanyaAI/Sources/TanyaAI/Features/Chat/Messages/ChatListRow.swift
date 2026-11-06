@@ -15,9 +15,7 @@ struct ChatListRow<Content: View>: View {
     let item: ChatListItem
     let welcome: WelcomeContent?
     let content: Content
-    let onSelectShortcut: (WelcomeShortcut) -> Void
-    let onSelectFollowUp: (String) -> Void
-    let onOpenLink: (URL) -> Void
+    let actions: ChatRowActions
 
     var body: some View {
         rowContent
@@ -34,9 +32,9 @@ struct ChatListRow<Content: View>: View {
         case .date(let day, _):
             dateChip(day)
         case .message(let row, _):
-            MessageRow(row: row, onOpenLink: onOpenLink)
+            MessageRow(row: row, onOpenLink: actions.onOpenLink)
         case .followUps(let questions, let isEnabled):
-            FollowUpsSection(questions: questions, isEnabled: isEnabled, onSelect: onSelectFollowUp)
+            FollowUpsSection(questions: questions, isEnabled: isEnabled, onSelect: actions.onSelectFollowUp)
         case .content:
             VStack(spacing: .zero) { content }
         }
@@ -49,7 +47,7 @@ private extension ChatListRow {
     @ViewBuilder
     func welcomeSection(isEnabled: Bool) -> some View {
         if let welcome {
-            WelcomeSection(content: welcome, isEnabled: isEnabled, onSelect: onSelectShortcut)
+            WelcomeSection(content: welcome, isEnabled: isEnabled, onSelect: actions.onSelectShortcut)
         }
     }
 
