@@ -124,13 +124,10 @@ tersedia pada history/main.
 - Tidak ada alias untuk nilai sistem: `.clear`, bukan `CustomColors.transparent`.
 - TanyaAI dipisah per tanggung jawab (lihat "Struktur TanyaAI"). Folder baru seperti
   `Features/Chat/Messages/` atau `Flows/` dibuat saat file pertamanya ada, bukan lebih awal.
-- Screen standar memakai composition `ScreenContainer` dari DesignKit: header,
-  area scroll, trailing action dan footer. Container memiliki satu `isScrolled`
-  dan ID coordinate space lokal. Jangan membuat inheritance/BaseScreen protocol, ViewModel
-  layout atau navigation container tambahan. Content tidak menambahkan ScrollView
-  vertikal lagi. Footer memiliki margin sesuai komponen caller.
-- Layar dengan pemilik scroll sendiri memakai `ScreenScaffold` (header, footer, latar) dan melaporkan
-  `scrollProgress`; `ChatScreen` memakai ini dengan `ChatTable`. Aturan table ada di `docs/REVAMP_NOTES.md`.
+- Screen standar memakai composition `ScreenScaffold` dari DesignKit: header, trailing action, footer, dan
+  latar. Scroll milik konten, yang melaporkan `scrollProgress`; `ChatScreen` memakai ini dengan `ChatTable`.
+  Aturan table ada di `docs/REVAMP_NOTES.md`. Jangan membuat inheritance/BaseScreen protocol, ViewModel layout
+  atau navigation container tambahan. Footer memiliki margin sesuai komponen caller.
 - `ScreenHeader` tetap komponen standalone untuk layout dengan scroll owner lain
   seperti List. Label/aksi back dan trailing berasal dari caller. Ukuran sama dengan
   navigation bar host: mulai dari tepi atas layar (caller menaruhnya tanpa safe area atas,
