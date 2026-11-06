@@ -659,3 +659,9 @@ Tinggi baris diukur pada table sungguhan (`aRowIsAsTallAsItsContent`): konten 18
 Baris kosong: `hiddenContentLeavesNoEmptySpace` memakai `if` di `host.makeView` dan gagal sebelum perbaikan (52 pt).
 `HostedRowFixture` kini tanpa garis pemisah seperti `ChatTable`; sebelumnya garis itu menambah 1 pt dan tertutup toleransi.
 Tinggi baris diukur pada kedua jalur sel, tetapi jalur iOS 15 berjalan di runtime lebih baru.
+
+## Pembersihan ScreenContainer
+
+`ScreenContainer` dan `.onScrollProgressChange` dihapus karena pemakainya hanya `DetailScreen` di sandbox. Halaman
+itu kini memakai `ScreenScaffold`. Catatan lama di dokumen ini yang menyebut keduanya adalah riwayat. Header chat
+tetap memakai `CGFloat.scrollProgress`, yang diuji di `ScrollProgressTests` DesignKit dan `HeaderUITests`.

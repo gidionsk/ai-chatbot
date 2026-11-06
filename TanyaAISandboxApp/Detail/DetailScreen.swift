@@ -20,16 +20,22 @@ struct DetailScreen: ScreenContent {
     let onOpenTanyaAI: () -> Void
 
     var body: some View {
-        ScreenContainer(
+        ScreenScaffold(
             title: String(SandboxCopy.detailTitle, locale: locale),
             backLabel: String(SandboxCopy.back, locale: locale),
-            onBack: { dismiss() },
-            content: {
-                HostButton(
-                    title: String(SandboxCopy.open, locale: locale),
-                    identifier: SandboxOptions.detailTanyaAIIdentifier, action: onOpenTanyaAI
-                )
-            }
+            scrollProgress: .zero, onBack: { dismiss() },
+            content: { page(headerHeight: $0) }, trailing: { EmptyView() }, footer: { EmptyView() },
+            background: { EmptyView() }
         )
+    }
+
+    private func page(headerHeight: CGFloat) -> some View {
+        HostButton(
+            title: String(SandboxCopy.open, locale: locale),
+            identifier: SandboxOptions.detailTanyaAIIdentifier, action: onOpenTanyaAI
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
+        .padding(.top, headerHeight + FigmaSize.spacingLarge.scaledToArtwork)
     }
 }

@@ -25,8 +25,7 @@ Packages/
 │       │   ├── Color+Hex.swift
 │       │   ├── Image+DesignIcon.swift     # Image/UIImage dari DesignIcon
 │       │   ├── String+Resource.swift      # copy sesuai locale host
-│       │   ├── View+DesignColors.swift    # theme environment + area default
-│       │   └── View+ScrollProgress.swift  # observer umum untuk tahap header
+│       │   └── View+DesignColors.swift    # theme environment + area default
 │       ├── Typography/FontFace.swift + FontLoader.swift
 │       ├── Resources/Fonts/ + Assets.xcassets/
 │       ├── Foundations/Iconography/DesignIcon.swift  # nama ikon = imageset
@@ -35,7 +34,7 @@ Packages/
 │           ├── GrowingTextInput/         # bridge + BoundedTextView
 │           ├── MessageComposer/
 │           ├── ScreenHeader/             # komponen header
-│           └── ScreenContainer/          # header + scroll + footer otomatis
+│           └── ScreenScaffold/           # header + footer + latar, scroll milik konten
 └── TanyaAI/
     └── Sources/TanyaAI/
         ├── Bridging/TanyaAIHost.swift   # API publik: konfigurasi host + makeView()
