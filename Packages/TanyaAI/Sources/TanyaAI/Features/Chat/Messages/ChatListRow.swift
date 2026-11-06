@@ -27,8 +27,8 @@ struct ChatListRow<Content: View>: View {
     @ViewBuilder
     private var rowContent: some View {
         switch item {
-        case .welcome(let isEnabled):
-            welcomeSection(isEnabled: isEnabled)
+        case .welcome(let isEnabled, let isTermsVisible):
+            welcomeSection(isEnabled: isEnabled, isTermsVisible: isTermsVisible)
         case .date(let day, _):
             dateChip(day)
         case .message(let row, _):
@@ -45,9 +45,12 @@ struct ChatListRow<Content: View>: View {
 
 private extension ChatListRow {
     @ViewBuilder
-    func welcomeSection(isEnabled: Bool) -> some View {
+    func welcomeSection(isEnabled: Bool, isTermsVisible: Bool) -> some View {
         if let welcome {
-            WelcomeSection(content: welcome, isEnabled: isEnabled, onSelect: actions.onSelectShortcut)
+            WelcomeSection(
+                content: welcome, isEnabled: isEnabled, isTermsVisible: isTermsVisible,
+                onSelect: actions.onSelectShortcut, onOpenTerms: actions.onOpenTerms
+            )
         }
     }
 

@@ -13,4 +13,5 @@ struct ChatRowActions {
     var onOpenLink: (URL) -> Void = { _ in }
     var onSelectShortcut: (WelcomeShortcut) -> Void = { _ in }
     var onSelectFollowUp: (String) -> Void = { _ in }
+    var onOpenTerms: () -> Void = {}
 }

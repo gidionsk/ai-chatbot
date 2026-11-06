@@ -13,3 +13,4 @@
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "This message failed to send";
 "welcome.shortcutsTitle" = "Start here:";
+"welcome.terms" = "Learn the [Terms & Conditions](terms) for using TANYA AI.";

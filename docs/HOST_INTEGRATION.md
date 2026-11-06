@@ -232,3 +232,14 @@ host.makeView(onBack: pop, onOpenLink: { url in
 ```
 
 Tanpa `onOpenLink`, tap link diabaikan.
+
+## Syarat & ketentuan di sambutan
+
+Kalimat di bawah kartu shortcut memakai copy lokal TanyaAI (`welcome.terms`). Hanya bagian "Syarat & Ketentuan" yang
+bisa diketuk, dan halamannya milik host:
+
+```swift
+host.makeView(onBack: pop, onOpenTerms: { openTermsPage() })
+```
+
+Tanpa `onOpenTerms`, kalimat ini tidak tampil, jadi cukup hapus argumennya bila fitur belum naik.

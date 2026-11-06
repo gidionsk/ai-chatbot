@@ -33,10 +33,16 @@ struct TanyaAIScreen: ScreenContent {
         let host = viewModel.host
         // Sandbox: mode --header-demo mengisi area scroll dengan konten contoh.
         if SandboxOptions.current.isHeaderDemo {
-            host.makeView(onBack: onBack, onOpenLink: openLink) { HeaderDemoContent() }
+            host.makeView(onBack: onBack, onOpenLink: openLink, onOpenTerms: termsHandler) { HeaderDemoContent() }
         } else {
-            host.makeView(onBack: onBack, onOpenLink: openLink)
+            host.makeView(onBack: onBack, onOpenLink: openLink, onOpenTerms: termsHandler)
         }
+    }
+
+    /// Sandbox: alert link menggantikan halaman syarat & ketentuan milik host.
+    private var termsHandler: (() -> Void)? {
+        guard !SandboxOptions.current.isHidingTerms else { return nil }
+        return { openLink(SandboxOptions.termsURL) }
     }
 
     private var isLinkPresented: Binding<Bool> {

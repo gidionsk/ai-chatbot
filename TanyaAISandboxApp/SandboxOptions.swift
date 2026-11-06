@@ -31,6 +31,8 @@ struct SandboxOptions {
     static let brokenIconURL = URL(fileURLWithPath: "/sandbox/missing-icon.png")
     /// Alamat TEST-NET (RFC 5737) yang tidak pernah menjawab: ikon tertahan di state loading sampai timeout.
     static let slowIconURL = URL(string: "https://192.0.2.1/icon.png")
+    /// Pengganti alamat halaman syarat & ketentuan host di alert sandbox.
+    static let termsURL = URL(fileURLWithPath: "/sandbox/terms")
     private static let languageFlag = "--language"
     private static let rejectFlag = "--reject-send"
     private static let holdReplyFlag = "--hold-reply"
@@ -42,6 +44,7 @@ struct SandboxOptions {
     private static let offlineFlag = "--offline"
     private static let brokenIconsFlag = "--broken-icons"
     private static let slowIconsFlag = "--slow-icons"
+    private static let hideTermsFlag = "--hide-terms"
 
     /// Opsi dari argumen peluncuran proses ini.
     static var current: SandboxOptions {
@@ -61,6 +64,8 @@ struct SandboxOptions {
     let isSendingLateMessage: Bool
     /// `--late-question`: pertanyaan nasabah datang dari kanal lain tanpa dikirim dari halaman ini.
     let isSendingLateQuestion: Bool
+    /// `--hide-terms`: host tidak memberi handler syarat & ketentuan, seperti saat fiturnya belum naik.
+    let isHidingTerms: Bool
     let isHeaderDemo: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
@@ -74,6 +79,7 @@ struct SandboxOptions {
         isShowingLongHistory = arguments.contains(Self.longHistoryFlag)
         isSendingLateMessage = arguments.contains(Self.lateMessageFlag)
         isSendingLateQuestion = arguments.contains(Self.lateQuestionFlag)
+        isHidingTerms = arguments.contains(Self.hideTermsFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {

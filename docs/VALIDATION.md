@@ -630,6 +630,14 @@ disamakan; path host menjadi `/v1/chat/*`. Selisih yang belum dikerjakan ada di 
 Fira Sans SemiBold 12 N900, ikon `reply` 24. Jarak antarchip 8 dan jarak dari jawaban 16 diukur dari foto, bukan panel
 Figma. Ikon `reply` masih PDF dummy (TODO aset Figma).
 
+## Syarat & ketentuan di sambutan
+
+Copy lokal `welcome.terms` dengan link Markdown, dirender `LinkedText` (DesignKit): Fira Sans Regular 12, rata tengah,
+teks `colorsTextSecondary`, tautan `colorsTextBrand` bergaris bawah. Warna dan jarak 8 di bawah kartu dibaca dari
+Figma dan screenshot, jadi perlu dikonfirmasi. Hanya tautan yang bisa diketuk (`testTermsLinkIsHandedToTheHost`), dan
+tanpa `onOpenTerms` kalimatnya tidak tampil (`testTermsAreHiddenWithoutAHostHandler`, gagal bila handler selalu diisi).
+Di ukuran SE kalimat ini berada di bawah lipatan sampai digulir.
+
 ## Posisi scroll chat — 5 November 2026
 
 Halaman dibuka di pesan terbaru tanpa terlihat melompat. Pertanyaan yang dikirim (composer, shortcut, saran lanjutan)

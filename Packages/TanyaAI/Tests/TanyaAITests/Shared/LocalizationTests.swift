@@ -41,6 +41,15 @@ struct LocalizationTests {
         #expect(copies == expected)
     }
 
+    /// Tanpa link Markdown, kalimat tampil tetapi tidak bisa diketuk.
+    @Test(arguments: [("en", "Terms & Conditions"), ("id", "Syarat & Ketentuan"), ("zh-Hans", "使用条款")])
+    func termsCopyHasATappablePart(language: String, expected: String) throws {
+        let copy = String(ChatCopy.welcomeTerms, locale: Locale(identifier: language))
+        let text = try AttributedString(markdown: copy)
+        let link = try #require(text.runs.first { $0.link != nil })
+        #expect(String(text[link.range].characters) == expected)
+    }
+
     @Test
     func unsupportedLanguageFallsBackToEnglish() {
         #expect(String(ChatCopy.send, locale: Locale(identifier: "fr_FR")) == "Send message")

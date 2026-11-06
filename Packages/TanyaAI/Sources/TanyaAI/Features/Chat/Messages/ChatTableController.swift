@@ -50,7 +50,8 @@ final class ChatTableController: UIViewController {
         ChatRowActions(
             onOpenLink: { [weak self] in self?.rowActions.onOpenLink($0) },
             onSelectShortcut: { [weak self] in self?.rowActions.onSelectShortcut($0) },
-            onSelectFollowUp: { [weak self] in self?.rowActions.onSelectFollowUp($0) }
+            onSelectFollowUp: { [weak self] in self?.rowActions.onSelectFollowUp($0) },
+            onOpenTerms: { [weak self] in self?.rowActions.onOpenTerms() }
         )
     }
 
