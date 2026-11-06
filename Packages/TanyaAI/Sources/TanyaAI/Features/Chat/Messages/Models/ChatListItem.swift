@@ -10,7 +10,7 @@ import DesignKit
 
 /// Satu baris table percakapan. `isSpaced` memberi jarak dari baris percakapan di atasnya.
 enum ChatListItem: Identifiable, Equatable {
-    case welcome(isEnabled: Bool, isTermsVisible: Bool)
+    case welcome(isEnabled: Bool)
     case date(ChatDayID, isSpaced: Bool)
     case message(ChatRow, isSpaced: Bool)
     case followUps([String], isEnabled: Bool)

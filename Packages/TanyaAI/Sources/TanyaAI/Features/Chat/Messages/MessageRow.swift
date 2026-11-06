@@ -14,7 +14,7 @@ import SwiftUI
 struct MessageRow: View {
     @Environment(\.locale) private var locale
     let row: ChatRow
-    let onOpenLink: (URL) -> Void
+    let onOpenLink: (String) -> Void
 
     var body: some View {
         bubble(for: row)

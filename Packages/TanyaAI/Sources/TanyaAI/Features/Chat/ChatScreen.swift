@@ -27,21 +27,19 @@ public struct ChatScreen<Content: View>: View {
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
-    private let onOpenLink: (URL) -> Void
-    private let onOpenTerms: (() -> Void)?
+    private let onOpenLink: (String) -> Void
     private let content: Content
 
     public init(
         isEnabled: Bool = true, welcome: WelcomeContent? = nil, bridge: TanyaAIBridge,
-        onBack: (() -> Void)? = nil, onOpenLink: @escaping (URL) -> Void = { _ in },
-        onOpenTerms: (() -> Void)? = nil, @ViewBuilder content: () -> Content
+        onBack: (() -> Void)? = nil, onOpenLink: @escaping (String) -> Void = { _ in },
+        @ViewBuilder content: () -> Content
     ) {
         _bridge = ObservedObject(wrappedValue: bridge)
         self.isEnabled = isEnabled
         self.welcome = welcome
         self.onBack = onBack
         self.onOpenLink = onOpenLink
-        self.onOpenTerms = onOpenTerms
         self.content = content()
     }
 
@@ -109,10 +107,7 @@ private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
 
     var rowActions: ChatRowActions {
-        ChatRowActions(
-            onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp,
-            onOpenTerms: onOpenTerms ?? {}
-        )
+        ChatRowActions(onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp)
     }
 
     var tableState: ChatTableState {
@@ -126,7 +121,7 @@ private extension ChatScreen {
     var listItems: [ChatListItem] {
         var items = [ChatListItem](rows: bridge.rows)
         if welcome != nil, bridge.isWelcomeVisible {
-            items.insert(.welcome(isEnabled: isEnabled && isSendable, isTermsVisible: onOpenTerms != nil), at: .zero)
+            items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
         }
         if !bridge.followUps.isEmpty {
             items.append(.followUps(bridge.followUps, isEnabled: isEnabled && isSendable))

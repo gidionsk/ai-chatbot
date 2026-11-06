@@ -15,7 +15,7 @@ import UIKit
 @MainActor
 @Suite(.serialized)
 struct ChatTableActionsTests {
-    private let link = URL(fileURLWithPath: "/link")
+    private let link = "/link"
 
     @Test
     func aShownRowCallsTheLatestHandlers() async {
@@ -33,8 +33,6 @@ struct ChatTableActionsTests {
         }
         probe.shownActions?.onSelectFollowUp("Pertanyaan")
         #expect(probe.calls.last == "After")
-        probe.shownActions?.onOpenTerms()
-        #expect(probe.termsCalls == ["After"])
         #expect(probe.rowBuilds == 1)
     }
 }
@@ -47,7 +45,6 @@ private final class ActionModel: ObservableObject {
 private final class ActionProbe {
     var shownActions: ChatRowActions?
     var calls: [String] = []
-    var termsCalls: [String] = []
     var rowBuilds = 0
 }
 
@@ -66,8 +63,7 @@ private struct ActionPage: View {
     private var actions: ChatRowActions {
         ChatRowActions(
             onOpenLink: { [label = model.label, probe] _ in probe.calls.append(label) },
-            onSelectFollowUp: { [label = model.label, probe] _ in probe.calls.append(label) },
-            onOpenTerms: { [label = model.label, probe] in probe.termsCalls.append(label) }
+            onSelectFollowUp: { [label = model.label, probe] _ in probe.calls.append(label) }
         )
     }
 }

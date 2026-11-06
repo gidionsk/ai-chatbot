@@ -31,8 +31,6 @@ struct SandboxOptions {
     static let brokenIconURL = URL(fileURLWithPath: "/sandbox/missing-icon.png")
     /// Alamat TEST-NET (RFC 5737) yang tidak pernah menjawab: ikon tertahan di state loading sampai timeout.
     static let slowIconURL = URL(string: "https://192.0.2.1/icon.png")
-    /// Pengganti alamat halaman syarat & ketentuan host di alert sandbox.
-    static let termsURL = URL(fileURLWithPath: "/sandbox/terms")
     private static let languageFlag = "--language"
     private static let rejectFlag = "--reject-send"
     private static let holdReplyFlag = "--hold-reply"
@@ -64,7 +62,7 @@ struct SandboxOptions {
     let isSendingLateMessage: Bool
     /// `--late-question`: pertanyaan nasabah datang dari kanal lain tanpa dikirim dari halaman ini.
     let isSendingLateQuestion: Bool
-    /// `--hide-terms`: host tidak memberi handler syarat & ketentuan, seperti saat fiturnya belum naik.
+    /// `--hide-terms`: host tidak menampilkan syarat & ketentuan, seperti saat fiturnya belum naik.
     let isHidingTerms: Bool
     let isHeaderDemo: Bool
     let isOffline: Bool

@@ -632,11 +632,12 @@ Figma. Ikon `reply` masih PDF dummy (TODO aset Figma).
 
 ## Syarat & ketentuan di sambutan
 
-Copy lokal `welcome.terms` dengan link Markdown, dirender `LinkedText` (DesignKit): Fira Sans Regular 12, rata tengah,
-teks `colorsTextSecondary`, tautan `colorsTextBrand` bergaris bawah. Warna dan jarak 8 di bawah kartu dibaca dari
-Figma dan screenshot, jadi perlu dikonfirmasi. Hanya tautan yang bisa diketuk (`testTermsLinkIsHandedToTheHost`), dan
-tanpa `onOpenTerms` kalimatnya tidak tampil (`testTermsAreHiddenWithoutAHostHandler`, gagal bila handler selalu diisi).
-Di ukuran SE kalimat ini berada di bawah lipatan sampai digulir.
+Copy lokal `welcome.terms` dengan link Markdown, dirender `MarkdownContent` peran `.caption`: Fira Sans Regular 12,
+rata tengah, teks `colorsTextSecondary`, tautan `colorsTextBrand` bergaris bawah. Warna dan jarak 8 di bawah kartu
+dibaca dari Figma dan screenshot, jadi perlu dikonfirmasi. Keputusan user 6 November 2026: semua link sampai ke host
+sebagai `String` lewat `onOpenLink`, jadi tautan ini sampai sebagai `TanyaAILink.terms`
+(`testTermsLinkIsHandedToTheHost`). Tampil lewat `WelcomeContent.isTermsVisible`
+(`testTermsAreHiddenWhenTheHostTurnsThemOff`). Di ukuran SE kalimat ini di bawah lipatan sampai digulir.
 
 ## Posisi scroll chat — 5 November 2026
 

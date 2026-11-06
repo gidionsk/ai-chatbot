@@ -16,7 +16,7 @@ struct TanyaAIScreen: ScreenContent {
     @ObservedObject
     var viewModel: TanyaAIScreenViewModel
     @State
-    private var openedLink: URL?
+    private var openedLink: String?
     let onBack: () -> Void
 
     var body: some View {
@@ -24,7 +24,7 @@ struct TanyaAIScreen: ScreenContent {
             .alert(
                 String(SandboxCopy.linkTitle, locale: locale), isPresented: isLinkPresented, presenting: openedLink,
                 actions: { _ in Button(String(SandboxCopy.linkClose, locale: locale)) {} },
-                message: { Text($0.absoluteString) }
+                message: { Text($0) }
             )
     }
 
@@ -33,23 +33,17 @@ struct TanyaAIScreen: ScreenContent {
         let host = viewModel.host
         // Sandbox: mode --header-demo mengisi area scroll dengan konten contoh.
         if SandboxOptions.current.isHeaderDemo {
-            host.makeView(onBack: onBack, onOpenLink: openLink, onOpenTerms: termsHandler) { HeaderDemoContent() }
+            host.makeView(onBack: onBack, onOpenLink: openLink) { HeaderDemoContent() }
         } else {
-            host.makeView(onBack: onBack, onOpenLink: openLink, onOpenTerms: termsHandler)
+            host.makeView(onBack: onBack, onOpenLink: openLink)
         }
-    }
-
-    /// Sandbox: alert link menggantikan halaman syarat & ketentuan milik host.
-    private var termsHandler: (() -> Void)? {
-        guard !SandboxOptions.current.isHidingTerms else { return nil }
-        return { openLink(SandboxOptions.termsURL) }
     }
 
     private var isLinkPresented: Binding<Bool> {
         Binding(get: { openedLink != nil }, set: { if !$0 { openedLink = nil } })
     }
 
-    private func openLink(_ url: URL) {
-        openedLink = url
+    private func openLink(_ link: String) {
+        openedLink = link
     }
 }

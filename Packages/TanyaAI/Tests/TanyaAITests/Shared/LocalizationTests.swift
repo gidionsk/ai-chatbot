@@ -48,6 +48,7 @@ struct LocalizationTests {
         let text = try AttributedString(markdown: copy)
         let link = try #require(text.runs.first { $0.link != nil })
         #expect(String(text[link.range].characters) == expected)
+        #expect(link.link?.absoluteString == TanyaAILink.terms)
     }
 
     @Test

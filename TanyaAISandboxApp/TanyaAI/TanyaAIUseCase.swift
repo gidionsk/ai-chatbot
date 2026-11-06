@@ -36,6 +36,9 @@ final class TanyaAIUseCase {
         let shortcuts =
             options.iconOverrideURL.map { iconURL in input.shortcuts.map { $0.replacingIcon(with: iconURL) } }
             ?? input.shortcuts
-        repository.welcome = WelcomeContent(greetings: input.greeting.greeting, shortcuts: shortcuts.map(\.shortcut))
+        repository.welcome = WelcomeContent(
+            greetings: input.greeting.greeting, shortcuts: shortcuts.map(\.shortcut),
+            isTermsVisible: !options.isHidingTerms
+        )
     }
 }

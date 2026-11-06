@@ -9,8 +9,8 @@ import SwiftUI
 
 extension AttributedString {
     /// Mengubah style inline Markdown menjadi atribut SwiftUI: tebal = face bold, miring, coret, kode monospace
-    /// berlatar, dan link berwarna hyperlink bergaris bawah. `isBold` untuk teks yang seluruhnya tebal (heading,
-    /// header tabel). Intent inline dilepas agar SwiftUI tidak menebalkan face bold dua kali.
+    /// berlatar, dan link bergaris bawah; warnanya mengikuti peran di `style`. `isBold` untuk teks yang seluruhnya
+    /// tebal (heading, header tabel). Intent inline dilepas agar SwiftUI tidak menebalkan face bold dua kali.
     func markdownStyled(
         size: CGFloat, isBold: Bool = false, style: MarkdownTextStyle, colors: any FigmaColorProtocol
     ) -> AttributedString {
@@ -22,7 +22,7 @@ extension AttributedString {
                 for: intent, size: size, isBold: isBold, style: style
             )
             container[AttributeScopes.SwiftUIAttributes.ForegroundColorAttribute.self] =
-                run.link == nil ? colors.colorsTextPrimaryDark : colors.colorsTextHyperlink
+                run.link == nil ? style.textColor(in: colors) : style.linkColor(in: colors)
             if intent.contains(.strikethrough) {
                 container[AttributeScopes.SwiftUIAttributes.StrikethroughStyleAttribute.self] = .single
             }
