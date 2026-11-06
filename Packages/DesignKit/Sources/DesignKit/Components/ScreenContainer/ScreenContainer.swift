@@ -13,8 +13,6 @@ import SwiftUI
 /// `background` (misalnya gambar latar) tampil di atas warna surface, di belakang header, konten dan footer.
 @MainActor
 public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Background: View>: View {
-    @Environment(\.designColors)
-    private var colors
     // Keep the coordinate-space ID stable when the parent view updates.
     @State
     private var scrollSpaceID = UUID()
@@ -44,44 +42,25 @@ public struct ScreenContainer<Content: View, Trailing: View, Footer: View, Backg
     }
 
     public var body: some View {
-        // Safe area atas dibaca sekali di root; header dan scroll sendiri mulai dari tepi atas layar.
-        GeometryReader { geometry in
-            VStack(spacing: .zero) {
-                surface(isNotched: ScreenHeader.isNotched(safeAreaTop: geometry.safeAreaInsets.top))
-                footer
-            }
-        }
-        .background(backdrop)
+        ScreenScaffold(
+            title: title, backLabel: backLabel, scrollProgress: scrollProgress, onBack: onBack,
+            content: { scrollArea(headerHeight: $0) }, trailing: { trailing }, footer: { footer },
+            background: { background }
+        )
     }
 
-    private var backdrop: some View {
-        ZStack {
-            colors.colorsSurfacePrimary
-            background
+    private func scrollArea(headerHeight: CGFloat) -> some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: .zero) { content }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
+                .padding(.top, headerHeight + FigmaSize.spacingLarge.scaledToArtwork)
+                .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
+                .onScrollProgressChange(in: scrollSpaceID, distance: headerHeight) {
+                    scrollProgress = $0
+                }
         }
-        .ignoresSafeArea()
-        .accessibilityHidden(true)
-    }
-
-    private func surface(isNotched: Bool) -> some View {
-        ZStack(alignment: .top) {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: .zero) { content }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, FigmaSize.spacingLarge.scaledToArtwork)
-                    .padding(.top, ScreenHeader.height(isNotched: isNotched) + FigmaSize.spacingLarge.scaledToArtwork)
-                    .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
-                    .onScrollProgressChange(in: scrollSpaceID, distance: ScreenHeader.height(isNotched: isNotched)) {
-                        scrollProgress = $0
-                    }
-            }
-            .coordinateSpace(name: scrollSpaceID)
-            ScreenHeader(
-                title: title, backLabel: backLabel, scrollProgress: scrollProgress, isNotched: isNotched,
-                onBack: onBack, trailing: { trailing }
-            )
-        }
-        .ignoresSafeArea(.container, edges: .top)
+        .coordinateSpace(name: scrollSpaceID)
     }
 }
 

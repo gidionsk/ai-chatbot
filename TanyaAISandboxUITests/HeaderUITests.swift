@@ -78,9 +78,9 @@ final class HeaderUITests: XCTestCase {
         XCTAssertFalse(application.buttons["chat.more"].exists)
     }
 
-    /// Scroll konten demo. `scrollViews.firstMatch` bisa menunjuk bar saran keyboard.
+    /// Table percakapan. `scrollViews.firstMatch` bisa menunjuk bar saran keyboard.
     private var contentScroll: XCUIElement {
-        application.scrollViews.containing(.staticText, identifier: "sandbox.demo.start").firstMatch
+        application.tables["chat.messages"]
     }
 
     private func launch(locale: String, extra: [String] = []) {

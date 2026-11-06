@@ -34,6 +34,8 @@ for path in sorted(paths):
         continue
     source = path.read_text()
     text = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.DOTALL)
+    # Versi OS pada pengecekan ketersediaan adalah metadata teknis, bukan nilai desain.
+    text = re.sub(r'#available\([^)]*\)', '', text)
     relative = path.relative_to(ROOT).as_posix()
     def report(message):
         errors.append(f'{relative}: {message}')

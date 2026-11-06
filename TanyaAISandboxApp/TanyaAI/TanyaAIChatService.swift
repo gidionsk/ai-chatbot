@@ -24,7 +24,7 @@ final class TanyaAIChatService {
     init(options: SandboxOptions, onSubmissionFailed: @escaping (Error) -> Void) {
         self.options = options
         self.onSubmissionFailed = onSubmissionFailed
-        frames = SandboxGatewayFrames(seq: options.isShowingHistory ? SandboxGatewayFrames.historyLatestSeq : .zero)
+        frames = SandboxGatewayFrames(seq: Self.latestHistorySeq(options))
     }
 
     func initialize(onSuccess: @escaping (Data) -> Void, onFailed: @escaping (Error) -> Void) {
@@ -37,6 +37,10 @@ final class TanyaAIChatService {
         onSuccess: @escaping (Data) -> Void, onFailed: @escaping (Error) -> Void
     ) {
         DispatchQueue.main.async { [options] in
+            guard !options.isShowingLongHistory else {
+                onSuccess(SandboxGatewayFrames.longHistory)
+                return
+            }
             guard options.isShowingHistory, let url = SandboxFixtureFile.tanyaAIHistoryDummy.url else {
                 onSuccess(SandboxGatewayFrames.emptyHistory)
                 return
@@ -102,6 +106,7 @@ final class TanyaAIChatService {
         DispatchQueue.main.async { [weak self] in
             self?.onLine = onLine
             onLine(SandboxGatewayFrames.connected)
+            self?.scheduleLateMessage()
         }
         return SandboxStreamRequest { [weak self] in
             DispatchQueue.main.async { self?.onLine = nil }
@@ -112,6 +117,21 @@ final class TanyaAIChatService {
 // MARK: - Gateway tiruan
 
 private extension TanyaAIChatService {
+    static func latestHistorySeq(_ options: SandboxOptions) -> Int {
+        if options.isShowingLongHistory { return SandboxGatewayFrames.longHistoryLatestSeq }
+        return options.isShowingHistory ? SandboxGatewayFrames.historyLatestSeq : .zero
+    }
+
+    func scheduleLateMessage() {
+        guard options.isSendingLateMessage || options.isSendingLateQuestion else { return }
+        let isQuestion = options.isSendingLateQuestion
+        schedule(after: SandboxOptions.lateMessageDelay) { service in
+            let text = isQuestion ? SandboxGatewayFrames.lateQuestion : SandboxGatewayFrames.lateMessage
+            let direction = isQuestion ? SandboxWireMessage.user : SandboxWireMessage.assistant
+            service.emit(service.frames.message(direction: direction, text: text))
+        }
+    }
+
     /// Pertanyaan tampil di stream setelah jeda pendek, lalu dijawab setelah jeda berikutnya, seperti gateway asli.
     /// `--hold-reply`: jawaban tidak pernah datang, sehingga stop bisa diuji.
     func accept(_ text: String, clientMessageID: String) -> Data {

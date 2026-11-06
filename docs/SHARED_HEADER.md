@@ -60,7 +60,9 @@ TanyaAISandboxApp/HeaderDemoContent.swift # fixture scroll, bukan UI produksi
 ViewModel, AnyView, atau navigation stack baru. `ChatScreen` cukup memberi judul,
 back callback, content, menu sebagai trailing dan composer sebagai footer. Header,
 inset dan scroll state otomatis ditangani container. Host tetap memiliki navigasi.
-`ScreenHeader` tetap tersedia terpisah jika screen mempunyai List/scroll owner sendiri.
+Screen yang mempunyai scroll owner sendiri (mis. table) memakai `ScreenScaffold`: susunan yang sama tanpa
+ScrollView, dengan `scrollProgress` dari pemilik scroll dan tinggi header untuk inset awalnya. `ScreenHeader`
+tetap tersedia terpisah.
 
 Contoh screen biasa tanpa trailing atau footer:
 

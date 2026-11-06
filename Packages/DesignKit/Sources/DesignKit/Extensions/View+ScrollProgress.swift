@@ -20,10 +20,9 @@ public extension View {
     ) -> some View {
         background {
             GeometryReader { geometry in
-                let offset = -geometry.frame(in: .named(coordinateSpace)).minY
-                // Jarak minimal setengah point agar pembagian aman walau caller memberi nol.
-                let span = max(distance, LayoutTolerance.measurement)
-                let progress = offset < max(.zero, threshold) ? .zero : min(offset, span) / span
+                let progress = CGFloat.scrollProgress(
+                    offset: -geometry.frame(in: .named(coordinateSpace)).minY, distance: distance, threshold: threshold
+                )
                 Color.clear
                     .onAppear { perform(progress) }
                     .onChange(of: progress, perform: perform)

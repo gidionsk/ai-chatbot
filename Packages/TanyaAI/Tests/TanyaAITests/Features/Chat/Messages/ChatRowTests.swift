@@ -19,6 +19,17 @@ struct ChatRowTests {
         #expect(rows.map(\.id) == ["m-1", "m-2", "a", "b", "m-3", "m-4"])
     }
 
+    /// Bubble lokal dan salinannya dari gateway sama-sama pertanyaan, jadi parkir tidak hilang saat barisnya berganti.
+    @Test
+    func bothLocalAndGatewayUserRowsAreQuestions() {
+        let local = ChatRow.local(LocalQuestion(id: "a", text: "baru", afterSeq: nil))
+        let user = ChatRow.message(ChatMessage(id: "m-1", seq: 1, author: .user, text: "tanya", status: .active))
+        let reply = ChatRow.message(ChatMessage(id: "m-2", seq: 2, author: .assistant, text: "jawab", status: .active))
+        #expect(local.isQuestion)
+        #expect(user.isQuestion)
+        #expect(!reply.isQuestion)
+    }
+
     @Test
     func questionsSentBeforeAnyMessageComeFirstOrLast() {
         let first = LocalQuestion(id: "a", text: "pertama", afterSeq: nil)

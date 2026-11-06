@@ -629,3 +629,33 @@ disamakan; path host menjadi `/v1/chat/*`. Selisih yang belum dikerjakan ada di 
 `SuggestionChip` mengikuti Figma `suggestion_set`: tinggi 40, radius 20, padding 8/16/8/8, jarak 4, garis N400, teks
 Fira Sans SemiBold 12 N900, ikon `reply` 24. Jarak antarchip 8 dan jarak dari jawaban 16 diukur dari foto, bukan panel
 Figma. Ikon `reply` masih PDF dummy (TODO aset Figma).
+
+## Posisi scroll chat — 5 November 2026
+
+Halaman dibuka di pesan terbaru tanpa terlihat melompat. Pertanyaan yang dikirim (composer, shortcut, saran lanjutan)
+parkir di bawah header dengan preview 48 dari jawaban sebelumnya, ruang kosong di bawah menyusut saat jawaban datang,
+dan jawaban tidak menggeser pertanyaan. Pesan di luar turn mengikuti ke bawah hanya bila posisi dekat bawah (48).
+`ChatScrollUITests` memakai `--long-history` (30 pesan tinggi berbeda-beda), `--late-message` dan `--late-question`.
+Arrow kembali ke pesan terbaru belum dibuat.
+
+Daftar pesan memakai `ChatTable` (`UITableView` ber-recycle). Probe sementara di simulator Debug, baris Markdown asli,
+`update` pertama: 100 pesan 43 ms, 300 pesan 44 ms, sekitar 10 sel dibuat, tambah satu pesan sekitar 5 ms. Run pertama
+(30 pesan) 150 ms dan kemungkinan masih termasuk pemanasan. Angka ini hanya menunjukkan biaya tidak naik mengikuti
+jumlah pesan, bukan FPS produksi. Jalur iOS 15 (`configureLegacy`) hanya diuji lewat `HostingTableViewCellTests` di
+runtime lebih baru, karena runtime iOS 15 tidak terpasang.
+
+Perubahan tinggi table: `ChatTableFixture.spin` menunggu giliran antrean utama, karena `RunLoop.main.run` di dalam tes
+`@MainActor` tidak menjalankan blok `DispatchQueue.main.async`, jadi penyesuaian sesudah layout sebelumnya tidak ikut
+teruji. `testKeyboardKeepsTheLatestMessageVisible` terbukti gagal tanpa perbaikan dan lulus dengan perbaikan pada
+simulator ukuran SE. Tes ini dilewati bila simulator tidak menampilkan keyboard layar.
+
+Konten sisipan host: `ChatScreenContentTests` memakai `host.makeView { ... }` asli dan terbukti gagal sebelum perbaikan,
+baik untuk nilai maupun tinggi baris. Halaman yang diam tidak terus membangun ulang konten. Perubahan `welcome`,
+`locale`, dan palette diuji di tingkat controller lewat `ChatRowInputs`, bukan lewat tampilan.
+
+Tinggi baris diukur pada table sungguhan (`aRowIsAsTallAsItsContent`): konten 18 dan 24 gagal sebelum `minSize`, 80 lulus.
+`ChatTableActionsTests` terbukti gagal saat penerus aksi dimatikan, dan memeriksa sel tidak dibangun ulang.
+
+Baris kosong: `hiddenContentLeavesNoEmptySpace` memakai `if` di `host.makeView` dan gagal sebelum perbaikan (52 pt).
+`HostedRowFixture` kini tanpa garis pemisah seperti `ChatTable`; sebelumnya garis itu menambah 1 pt dan tertutup toleransi.
+Tinggi baris diukur pada kedua jalur sel, tetapi jalur iOS 15 berjalan di runtime lebih baru.
