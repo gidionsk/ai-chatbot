@@ -55,7 +55,7 @@ private extension ChatListRow {
     }
 
     @ViewBuilder
-    func dateChip(_ day: ChatDayID) -> some View {
+    func dateChip(_ day: ChatDayIdentifier) -> some View {
         if let date = day.date {
             DateChip(text: ChatDateFormat.dayLabel(for: date, locale: locale))
                 .accessibilityIdentifier(ChatElementIdentifier.dateChip)

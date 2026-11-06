@@ -83,11 +83,10 @@ fitur yang memang perlu dimiliki, bukan karena ada sebuah view.
 
 ## Screen berikutnya
 
-Pakai composition `ScreenContainer` agar header, boundary/fade/bayangan, scroll dan footer
-konsisten. Isi `content`, `trailing`, dan `footer`; tidak perlu extend BaseScreen,
-protocol layout atau BaseViewModel. Content tidak membungkus ScrollView vertikal
-lagi. Lihat pemakaian lengkap pada `ChatScreen.swift` dan
-[shared header](SHARED_HEADER.md).
+Pakai composition `ScreenScaffold` agar header, footer, dan latar konsisten. Isi `content`, `trailing`, `footer`,
+dan `background`; scroll milik `content`, yang melaporkan `scrollProgress` dan memakai tinggi header sebagai inset
+awal. Tidak perlu extend BaseScreen, protocol layout atau BaseViewModel. Lihat pemakaian lengkap pada
+`ChatScreen.swift` dan [shared header](SHARED_HEADER.md).
 
 Draft dimiliki section kecil (`ComposerSection`) dengan `@State`; `MessageComposer`
 menerima Binding dan callback. Dengan begitu ketikan hanya me-render composer,

@@ -6,8 +6,8 @@ satu; tidak perlu menyalin seluruh flow chat lama.
 ```text
 DesignKit/Sources/DesignKit/
 ├── Components/ScreenHeader/ScreenHeader.swift
-├── Components/ScreenContainer/ScreenContainer.swift
-├── Extensions/View+ScrollProgress.swift
+├── Components/ScreenScaffold/ScreenScaffold.swift
+├── Extensions/CGFloat+ScrollProgress.swift
 ├── Tokens/CustomSizes.swift              # Header: tinggi dan jumlah baris
 └── Resources/Assets.xcassets/            # ikon dummy; nama di DesignIcon/DesignColorIcon
 
@@ -40,84 +40,34 @@ TanyaAISandboxApp/HeaderDemoContent.swift # fixture scroll, bukan UI produksi
    surface agar bayangan tetap terlihat. Bayangan dan gradient berada di luar frame header: tinggi
    header tetap dan sentuhan tidak tertangkap.
    Tidak memakai material blur, jadi tidak ada cabang khusus Reduce Transparency.
-4. Buat `ScreenContainer` untuk menyusun header sebagai overlay di atas ScrollView. Padding
-   awal konten adalah tinggi header ditambah `spacingLarge`, jadi konten tidak
-   tertutup saat posisi teratas. Konten dapat bergerak di belakang header dan
-   bayangan/gradient ketika digulir. Container membaca safe area atas sekali (GeometryReader di root),
-   lalu header dan ScrollView mengabaikan safe area atas seperti navigation bar host.
-5. `.onScrollProgressChange` memakai GeometryReader di background root konten.
-   Callback memberi nilai awal, lalu `.onChange` mengamati progres 0...1 (offset dibagi
-   `distance`, di bawah toleransi = 0). Tidak diperlukan PreferenceKey bersama antar observer.
-   Progres berhenti di 1, jadi update hanya terjadi selama `distance` pertama; scroll lebih
-   jauh tidak me-render ulang container. Kembali ke atas (termasuk bounce) = 0, surface awal. ID area scroll adalah UUID lokal yang disimpan
-   dengan `@State`, sehingga nilainya tetap saat parent merender ulang.
+4. Buat `ScreenScaffold` untuk menyusun header sebagai overlay di atas konten. `content` menerima tinggi
+   header sebagai inset awal, jadi konten tidak tertutup saat posisi teratas dan dapat bergerak di belakang
+   header dan bayangan/gradient ketika digulir. Scaffold membaca safe area atas sekali (GeometryReader di root),
+   lalu header dan konten mengabaikan safe area atas seperti navigation bar host.
+5. Pemilik scroll melaporkan `scrollProgress` 0...1 lewat `CGFloat.scrollProgress(offset:distance:)`: offset
+   dibagi `distance`, di bawah toleransi = 0, dan berhenti di 1. Kembali ke atas (termasuk bounce) = 0.
 6. Pertahankan composer dan `.tanyaAIHost` existing. Header tidak mengubah font 14,
    batas empat baris, keyboard, callback kirim, atau navigation stack host.
    `TanyaAIHost` menampilkan `ChatScreen` langsung. Hapus file `HostedChatScreen`
    dari salinan lama; jangan ikut memigrasikan NavigationView/toolbar wrapper itu.
 
-`ScreenContainer` adalah reusable layout dengan composition, tanpa inheritance,
-ViewModel, AnyView, atau navigation stack baru. `ChatScreen` cukup memberi judul,
-back callback, content, menu sebagai trailing dan composer sebagai footer. Header,
-inset dan scroll state otomatis ditangani container. Host tetap memiliki navigasi.
-Screen yang mempunyai scroll owner sendiri (mis. table) memakai `ScreenScaffold`: susunan yang sama tanpa
-ScrollView, dengan `scrollProgress` dari pemilik scroll dan tinggi header untuk inset awalnya. `ScreenHeader`
-tetap tersedia terpisah.
+`ScreenScaffold` adalah reusable layout dengan composition, tanpa inheritance, ViewModel, AnyView, atau
+navigation stack baru. `ChatScreen` memberi judul, back callback, content, dan composer sebagai footer; scroll
+milik `ChatTable`, yang melaporkan `scrollProgress` dan memakai tinggi header sebagai inset awal. Host tetap
+memiliki navigasi. `ScreenHeader` tetap tersedia terpisah.
 
-Contoh screen biasa tanpa trailing atau footer:
+Contoh:
 
 ```swift
-ScreenContainer(title: title, backLabel: backLabel, onBack: onBack) {
-    FormContent()
-}
+ScreenScaffold(
+    title: title, backLabel: backLabel, scrollProgress: scrollProgress, onBack: onBack,
+    content: { FormContent(headerHeight: $0) }, trailing: { MenuAction() },
+    footer: { SubmitAction() }, background: { EmptyView() }
+)
 ```
 
-Contoh dengan action kanan dan footer tetap:
-
-```swift
-ScreenContainer(title: title, backLabel: backLabel, onBack: onBack) {
-    FormContent()
-} trailing: {
-    MenuAction()
-} footer: {
-    SubmitAction()
-}
-```
-
-Judul/label berasal dari localization fitur. Contoh view di atas milik screen;
-footer mengatur margin luarnya sendiri. Container memberi margin horizontal 16
-dan inset header sekali untuk seluruh konten, termasuk beberapa child builder.
-Jangan membungkus screen dengan NavigationView baru untuk menggunakan container.
-
-Deteksi boundary juga bisa dipakai sendiri pada scroll view lain:
-
-```swift
-@State private var scrollSpaceID = UUID()
-@State private var scrollProgress: CGFloat = .zero
-
-// Di body:
-ScrollView {
-    FormContent()
-        .onScrollProgressChange(in: scrollSpaceID, distance: fadeDistance) { scrollProgress = $0 }
-}
-.coordinateSpace(name: scrollSpaceID)
-```
-
-Pasang modifier pada satu root konten, setelah padding, bukan pada ScrollView
-yang diam. Untuk beberapa child, bungkus dalam VStack/LazyVStack terlebih dulu.
-Setiap ScrollView memakai ID lokal masing-masing. ID hanya menjadi nama area
-untuk mengukur posisi konten relatif ke ScrollView yang tepat. Simpan UUID pada
-`@State`; jangan membuat `UUID()` baru pada body. Tidak diperlukan `@Namespace`
-untuk kebutuhan ini. Threshold default adalah
-`LayoutTolerance.measurement`; parameter threshold opsional memakai point
-aktual. Observer tidak menambah ukuran atau menangkap sentuhan.
-
-Reusability ini mengikuti [composition SwiftUI](https://developer.apple.com/videos/play/meet-with-apple/269/).
-Observer memakai [onChange(of:perform:)](https://developer.apple.com/documentation/swiftui/view/onchange(of:perform:))
-agar tetap cocok dengan minimum iOS 15. Satu GeometryReader tetap membaca geometri
-saat scroll; yang dibatasi adalah callback dan state update, bukan klaim bahwa
-semua layout/renderer berhenti bekerja. Tes menghitung transisi callback dan
-isolasi nested scroll; pengukuran FPS/Instruments terpisah.
+Judul/label berasal dari localization fitur. Footer mengatur margin luarnya sendiri, dan konten mengatur margin
+horizontal serta inset headernya sendiri. Jangan membungkus screen dengan NavigationView baru untuk memakai scaffold.
 
 ## Slot kanan dan demo
 

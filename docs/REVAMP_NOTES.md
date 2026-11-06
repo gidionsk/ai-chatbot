@@ -20,7 +20,7 @@ ini menjelaskan alasannya.
 
 ## Daftar pesan untuk ratusan chat
 
-`ScreenContainer` cocok untuk halaman form/konten biasa. Daftar pesan memakai `ChatTable`
+Daftar pesan memakai `ChatTable`
 (`UITableView` di dalam `UIViewControllerRepresentable`, baris SwiftUI) di dalam `ScreenScaffold`,
 karena scroll-nya milik table. Pilihan lain pada iOS 15:
 
