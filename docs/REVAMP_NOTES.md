@@ -70,6 +70,9 @@ Hal yang harus dijaga, semuanya pernah menjadi bug nyata saat migrasi:
     `.minSize` baris pendek mendapat ruang di luar ukuran komponennya. Minimumnya 1, bukan 0: table menganggap
     tinggi 0 sebagai belum terukur dan memakai tinggi bawaan, jadi baris kosong menjadi jarak 52 pt. Keberadaan
     baris konten sisipan tidak bisa dibaca dari tipenya (`if` tanpa `else` tetap bukan `EmptyView`).
+12. **Hosting controller child memunculkan lagi navigation bar di iOS 15**, walau host memakai
+    `.navigationBarHidden(true)`, jadi back sistem tampil di samping back header. `EmbeddedHostingController`
+    menyembunyikan `navigationController` darinya. Tidak terlihat di iOS 26.5 walau jalur iOS 15 dipaksa.
 
 Aturan supaya tetap ringan:
 

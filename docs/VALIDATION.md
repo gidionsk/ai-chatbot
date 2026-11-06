@@ -630,6 +630,13 @@ disamakan; path host menjadi `/v1/chat/*`. Selisih yang belum dikerjakan ada di 
 Fira Sans SemiBold 12 N900, ikon `reply` 24. Jarak antarchip 8 dan jarak dari jawaban 16 diukur dari foto, bukan panel
 Figma. Ikon `reply` masih PDF dummy (TODO aset Figma).
 
+## Back sistem di iOS 15 — 6 November 2026
+
+Di simulator iOS 15.2 Byon, back sistem biru tampil di samping back header setelah #49. Tidak terlihat di iOS 26.5
+walau jalur iOS 15 dipaksa. User mengonfirmasi back biru hilang di iOS 15.2 setelah sel memakai
+`EmbeddedHostingController`. `legacyContentCannotReachTheNavigationBarOfTheHost` hanya memeriksa controller tidak
+melihat navigation controller, bukan bug visualnya.
+
 ## Syarat & ketentuan di sambutan
 
 Copy lokal `welcome.terms` dengan link Markdown, dirender `MarkdownContent` peran `.caption`: Fira Sans Regular 12,

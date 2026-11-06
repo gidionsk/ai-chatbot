@@ -28,6 +28,18 @@ struct HostingTableViewCellTests {
         #expect(cell.contentView.subviews.isEmpty)
     }
 
+    /// Di iOS 15 hosting controller child memunculkan lagi navigation bar yang disembunyikan host.
+    @Test
+    func legacyContentCannotReachTheNavigationBarOfTheHost() throws {
+        let parent = UIViewController()
+        let navigation = UINavigationController(rootViewController: parent)
+        let cell = Cell(style: .default, reuseIdentifier: Cell.reuseIdentifier)
+        cell.configureLegacy(rootView: Text(verbatim: "Halo"), parent: parent)
+        let controller = try #require(parent.children.first)
+        #expect(parent.navigationController === navigation)
+        #expect(controller.navigationController == nil)
+    }
+
     @Test
     func legacyContentReusesItsControllerOnReconfigure() {
         let parent = UIViewController()
