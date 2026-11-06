@@ -8,8 +8,8 @@
 import SwiftUI
 
 /// Kerangka halaman: header menimpa area konten, footer di bawahnya, dan latar di belakang semuanya. Scroll milik
-/// konten, jadi layar dengan pemilik scroll sendiri (mis. table) memakai ini langsung dan melaporkan `scrollProgress`;
-/// layar biasa memakai `ScreenContainer`. `content` menerima tinggi header supaya bisa memberi inset awal.
+/// konten, jadi pemilik scroll (mis. table) melaporkan `scrollProgress`. `content` menerima tinggi header supaya
+/// bisa memberi inset awal.
 @MainActor
 public struct ScreenScaffold<Content: View, Trailing: View, Footer: View, Background: View>: View {
     @Environment(\.designColors) private var colors

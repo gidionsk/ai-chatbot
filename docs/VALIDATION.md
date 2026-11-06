@@ -572,8 +572,8 @@ mengikuti Figma node 2553-23910 (`DateChip`: `cardStyle` tanpa bayangan, radius 
 warna teks `colorsTextSecondary` dari screenshot, TODO konfirmasi. Bubble lokal memakai waktu kirim (`LocalQuestion.sentAt`);
 pesan gateway tanpa `created_at` ikut hari sebelumnya. Hari berganti ke dua arah: baris yang harinya mundur (jam perangkat
 berbeda dengan server) membuka kelompok sendiri, jadi setiap baris tampil di bawah tanggalnya dan urutan percakapan
-tetap. Id kelompok (`ChatDayID`) = awal hari + kemunculan ke berapa, jadi tetap unik saat hari muncul lagi dan chip
-tidak dibuat ulang saat bubble lokal diganti salinan stream. Sementara hanya pertanyaan nasabah yang dikelompokkan agar hari berisi pesan bot
+tetap. Id kelompok (`ChatDayIdentifier`) = awal hari + kemunculan ke berapa, jadi tetap unik saat hari muncul lagi dan
+chip tidak dibuat ulang saat bubble lokal diganti salinan stream. Sementara hanya pertanyaan nasabah yang dikelompokkan agar hari berisi pesan bot
 saja tidak memunculkan chip kosong; saat bubble bot tampil, pengelompokan memakai semua baris.
 
 Test: `ChatDayTests` (pemisahan hari, zona perangkat, tanpa tanggal, hari mundur, id hari berulang, waktu kirim lokal, 5.000 baris),
@@ -659,3 +659,9 @@ Tinggi baris diukur pada table sungguhan (`aRowIsAsTallAsItsContent`): konten 18
 Baris kosong: `hiddenContentLeavesNoEmptySpace` memakai `if` di `host.makeView` dan gagal sebelum perbaikan (52 pt).
 `HostedRowFixture` kini tanpa garis pemisah seperti `ChatTable`; sebelumnya garis itu menambah 1 pt dan tertutup toleransi.
 Tinggi baris diukur pada kedua jalur sel, tetapi jalur iOS 15 berjalan di runtime lebih baru.
+
+## Pembersihan ScreenContainer
+
+`ScreenContainer` dan `.onScrollProgressChange` dihapus karena pemakainya hanya `DetailScreen` di sandbox. Halaman
+itu kini memakai `ScreenScaffold`. Catatan lama di dokumen ini yang menyebut keduanya adalah riwayat. Header chat
+tetap memakai `CGFloat.scrollProgress`, yang diuji di `ScrollProgressTests` DesignKit dan `HeaderUITests`.
