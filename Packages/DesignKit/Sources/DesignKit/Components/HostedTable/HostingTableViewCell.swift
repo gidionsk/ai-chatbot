@@ -33,7 +33,7 @@ public final class HostingTableViewCell<Content: View>: UITableViewCell, HostedC
         // Tanpa `minSize`, sistem memberi tinggi minimum dan baris pendek mendapat ruang di luar ukuran komponennya.
         contentConfiguration = UIHostingConfiguration { rootView }
             .margins(.all, .zero)
-            .minSize(width: .zero, height: .zero)
+            .minSize(width: .zero, height: CustomSizes.HostedTable.minimumRowHeight.scaledToArtwork)
     }
 
     override public func prepareForReuse() {
@@ -52,7 +52,10 @@ public final class HostingTableViewCell<Content: View>: UITableViewCell, HostedC
             hostedView.topAnchor.constraint(equalTo: contentView.topAnchor),
             hostedView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             hostedView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            hostedView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+            hostedView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            hostedView.heightAnchor.constraint(
+                greaterThanOrEqualToConstant: CustomSizes.HostedTable.minimumRowHeight.scaledToArtwork
+            )
         ])
         hostingController.didMove(toParent: parent)
     }

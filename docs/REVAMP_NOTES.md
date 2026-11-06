@@ -67,7 +67,9 @@ Hal yang harus dijaga, semuanya pernah menjadi bug nyata saat migrasi:
     selalu memanggil aksi terbaru. Jangan menyegarkan semua sel di tiap update: halaman berubah di tiap token
     stream.
 11. **`UIHostingConfiguration` punya tinggi minimum sendiri**, dan `.margins` tidak menghapusnya. Tanpa
-    `.minSize(width: .zero, height: .zero)` baris pendek mendapat ruang di luar ukuran komponennya.
+    `.minSize` baris pendek mendapat ruang di luar ukuran komponennya. Minimumnya 1, bukan 0: table menganggap
+    tinggi 0 sebagai belum terukur dan memakai tinggi bawaan, jadi baris kosong menjadi jarak 52 pt. Keberadaan
+    baris konten sisipan tidak bisa dibaca dari tipenya (`if` tanpa `else` tetap bukan `EmptyView`).
 
 Aturan supaya tetap ringan:
 

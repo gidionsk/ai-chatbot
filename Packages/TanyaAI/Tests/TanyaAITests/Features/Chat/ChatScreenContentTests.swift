@@ -38,6 +38,22 @@ struct ChatScreenContentTests {
         await waitUntil { probe.frameHeight == ContentModel.tallHeight }
     }
 
+    /// Host menyembunyikan konten lewat `if`: tipe kontennya tetap bukan `EmptyView`, jadi barisnya tetap ada.
+    @Test
+    func hiddenContentLeavesNoEmptySpace() async throws {
+        let model = ContentModel()
+        let probe = ContentProbe()
+        let window = makeWindow(model: model, probe: probe)
+        defer { window.isHidden = true }
+        await waitUntil { probe.frameHeight == ContentModel.shortHeight }
+        let table = try #require(window.nestedTable as UITableView?)
+        model.isVisible = false
+        await waitUntil { table.lastRowHeight != ContentModel.shortHeight }
+        #expect(table.lastRowHeight <= 1)
+        model.isVisible = true
+        await waitUntil { abs(table.lastRowHeight - ContentModel.shortHeight) <= 1 }
+    }
+
     /// Menyegarkan konten terjadi di dalam update halaman, jadi tidak boleh memicu update berikutnya tanpa henti.
     @Test
     func anIdlePageStopsRebuildingTheContent() async throws {
@@ -68,6 +84,7 @@ private final class ContentModel: ObservableObject {
     static let tallHeight: CGFloat = 160
     @Published var label = "Before"
     @Published var height = ContentModel.shortHeight
+    @Published var isVisible = true
 }
 
 private final class ContentProbe {
@@ -82,7 +99,11 @@ private struct ContentPage: View {
     let probe: ContentProbe
 
     var body: some View {
-        host.makeView { ContentSample(label: model.label, height: model.height, probe: probe) }
+        host.makeView {
+            if model.isVisible {
+                ContentSample(label: model.label, height: model.height, probe: probe)
+            }
+        }
     }
 }
 
@@ -102,5 +123,19 @@ private struct ContentSample: View {
                         .onChange(of: geometry.size.height) { probe.frameHeight = $0 }
                 }
             }
+    }
+}
+
+private extension UIView {
+    var nestedTable: UITableView? {
+        (self as? UITableView) ?? subviews.lazy.compactMap(\.nestedTable).first
+    }
+}
+
+private extension UITableView {
+    var lastRowHeight: CGFloat {
+        layoutIfNeeded()
+        let row = numberOfRows(inSection: .zero) - 1
+        return rectForRow(at: IndexPath(row: row, section: .zero)).height
     }
 }

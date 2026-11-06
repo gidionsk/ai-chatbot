@@ -655,3 +655,7 @@ baik untuk nilai maupun tinggi baris. Halaman yang diam tidak terus membangun ul
 
 Tinggi baris diukur pada table sungguhan (`aRowIsAsTallAsItsContent`): konten 18 dan 24 gagal sebelum `minSize`, 80 lulus.
 `ChatTableActionsTests` terbukti gagal saat penerus aksi dimatikan, dan memeriksa sel tidak dibangun ulang.
+
+Baris kosong: `hiddenContentLeavesNoEmptySpace` memakai `if` di `host.makeView` dan gagal sebelum perbaikan (52 pt).
+`HostedRowFixture` kini tanpa garis pemisah seperti `ChatTable`; sebelumnya garis itu menambah 1 pt dan tertutup toleransi.
+Tinggi baris diukur pada kedua jalur sel, tetapi jalur iOS 15 berjalan di runtime lebih baru.
