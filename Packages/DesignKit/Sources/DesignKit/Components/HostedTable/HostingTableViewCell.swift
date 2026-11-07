@@ -13,7 +13,7 @@ import UIKit
 /// jadi nilai environment harus dipasang pada `rootView`.
 public final class HostingTableViewCell<Content: View>: UITableViewCell, HostedContentAttaching {
     public static var reuseIdentifier: String { String(reflecting: Self.self) }
-    private var hostingController: UIHostingController<Content?>?
+    private var hostingController: EmbeddedHostingController<Content?>?
 
     override public init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -74,7 +74,7 @@ public final class HostingTableViewCell<Content: View>: UITableViewCell, HostedC
 extension HostingTableViewCell {
     func configureLegacy(rootView: Content, parent: UIViewController) {
         guard let hostingController else {
-            let controller = UIHostingController(rootView: Optional(rootView))
+            let controller = EmbeddedHostingController(rootView: Optional(rootView))
             controller.view.backgroundColor = .clear
             hostingController = controller
             attachHostedController(to: parent)

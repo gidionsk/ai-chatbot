@@ -13,3 +13,4 @@
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "Pesan ini gagal terkirim";
 "welcome.shortcutsTitle" = "Mulai dari sini:";
+"welcome.terms" = "Pelajari [Syarat & Ketentuan](terms) penggunaan TANYA AI.";

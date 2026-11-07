@@ -13,3 +13,4 @@
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "此消息发送失败";
 "welcome.shortcutsTitle" = "从这里开始：";
+"welcome.terms" = "了解 TANYA AI 的[使用条款](terms)。";

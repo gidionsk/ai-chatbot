@@ -12,9 +12,12 @@ import Foundation
 public struct WelcomeContent: Equatable {
     public let greetings: WelcomeGreeting
     public let shortcuts: [WelcomeShortcut]
+    /// Kalimat syarat & ketentuan di bawah shortcut; tautannya sampai ke host sebagai `TanyaAILink.terms`.
+    public let isTermsVisible: Bool
 
-    public init(greetings: WelcomeGreeting, shortcuts: [WelcomeShortcut]) {
+    public init(greetings: WelcomeGreeting, shortcuts: [WelcomeShortcut], isTermsVisible: Bool = false) {
         self.greetings = greetings
         self.shortcuts = shortcuts
+        self.isTermsVisible = isTermsVisible
     }
 }

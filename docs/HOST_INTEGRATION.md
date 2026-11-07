@@ -223,12 +223,19 @@ menjawab lewat gateway tiruan setelah 1 detik (`--hold-reply` menahan jawaban).
 ## Link di jawaban bot
 
 Jawaban bot berformat Markdown dirender `MarkdownContent` (DesignKit). Link yang diketuk tidak dibuka
-TanyaAI (tanpa Safari fallback), tetapi diteruskan ke host:
+TanyaAI (tanpa Safari fallback), tetapi tujuannya diteruskan ke host sebagai `String`:
 
 ```swift
-host.makeView(onBack: pop, onOpenLink: { url in
-    // web → webview host, deeplink → handler host
+host.makeView(onBack: pop, onOpenLink: { link in
+    // web → webview host, deeplink → handler host, TanyaAILink.terms → halaman S&K host
 })
 ```
 
 Tanpa `onOpenLink`, tap link diabaikan.
+
+## Syarat & ketentuan di sambutan
+
+Kalimat di bawah kartu shortcut memakai copy lokal TanyaAI (`welcome.terms`) dan dirender `MarkdownContent`. Hanya
+bagian "Syarat & Ketentuan" yang bisa diketuk, dan halamannya milik host. Tampil bila host mengisi
+`WelcomeContent(..., isTermsVisible: true)`; default-nya tersembunyi, jadi cukup hapus argumen itu bila fitur belum
+naik. Tap sampai ke `onOpenLink` sebagai `TanyaAILink.terms`.

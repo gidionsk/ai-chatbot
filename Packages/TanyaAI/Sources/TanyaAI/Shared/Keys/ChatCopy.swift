@@ -15,4 +15,6 @@ enum ChatCopy: String, CaseIterable {
     case stop = "chat.stop"
     case sendFailed = "chat.sendFailed"
     case shortcutsTitle = "welcome.shortcutsTitle"
+    /// Bagian yang bisa diketuk ditulis sebagai link Markdown; tujuannya diabaikan.
+    case welcomeTerms = "welcome.terms"
 }

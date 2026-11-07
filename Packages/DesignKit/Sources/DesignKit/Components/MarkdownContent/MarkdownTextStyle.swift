@@ -5,17 +5,24 @@
 //  Created by Wendra on 3/11/26.
 //
 
-import CoreGraphics
+import SwiftUI
 
-/// Font Markdown milik pemakai dan kedalaman list saat ini (penanda bullet berganti per level).
+/// Font dan peran Markdown milik pemakai, serta kedalaman list saat ini (penanda bullet berganti per level).
 struct MarkdownTextStyle {
     let fontFace: FontFace
     let boldFontFace: FontFace
     let italicFontFace: FontFace
     let boldItalicFontFace: FontFace
     var listDepth = Int.zero
+    var role = MarkdownTextRole.body
 
-    var bodySize: CGFloat { FigmaSize.typographySizeDisplaySmall14.scaledToArtwork }
+    var bodySize: CGFloat {
+        guard role == .caption else { return FigmaSize.typographySizeDisplaySmall14.scaledToArtwork }
+        return FigmaSize.typographySizeDisplayTiny12.scaledToArtwork
+    }
+
+    var alignment: Alignment { role == .caption ? .center : .leading }
+    var textAlignment: TextAlignment { role == .caption ? .center : .leading }
     var codeSize: CGFloat { FigmaSize.typographySizeDisplayTiny12.scaledToArtwork }
 
     /// `#` = heading kecil 20, `##` = 16, `###` ke bawah = ukuran isi; semuanya tebal.
@@ -28,6 +35,14 @@ struct MarkdownTextStyle {
         default:
             return bodySize
         }
+    }
+
+    func textColor(in colors: any FigmaColorProtocol) -> Color {
+        role == .caption ? colors.colorsTextSecondary : colors.colorsTextPrimaryDark
+    }
+
+    func linkColor(in colors: any FigmaColorProtocol) -> Color {
+        role == .caption ? colors.colorsTextBrand : colors.colorsTextHyperlink
     }
 
     func face(isStrong: Bool, isItalic: Bool) -> FontFace {

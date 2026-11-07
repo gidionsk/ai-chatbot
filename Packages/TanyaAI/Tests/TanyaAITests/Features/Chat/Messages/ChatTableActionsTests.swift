@@ -15,7 +15,7 @@ import UIKit
 @MainActor
 @Suite(.serialized)
 struct ChatTableActionsTests {
-    private let link = URL(fileURLWithPath: "/link")
+    private let link = "/link"
 
     @Test
     func aShownRowCallsTheLatestHandlers() async {

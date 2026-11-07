@@ -27,12 +27,12 @@ public struct ChatScreen<Content: View>: View {
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
-    private let onOpenLink: (URL) -> Void
+    private let onOpenLink: (String) -> Void
     private let content: Content
 
     public init(
         isEnabled: Bool = true, welcome: WelcomeContent? = nil, bridge: TanyaAIBridge,
-        onBack: (() -> Void)? = nil, onOpenLink: @escaping (URL) -> Void = { _ in },
+        onBack: (() -> Void)? = nil, onOpenLink: @escaping (String) -> Void = { _ in },
         @ViewBuilder content: () -> Content
     ) {
         _bridge = ObservedObject(wrappedValue: bridge)

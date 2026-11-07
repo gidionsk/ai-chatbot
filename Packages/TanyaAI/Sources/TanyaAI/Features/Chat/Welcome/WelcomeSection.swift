@@ -9,7 +9,8 @@ import DesignKit
 import SwiftUI
 
 /// Halaman sambutan: emblem, sapaan dari BE, lalu kartu shortcut. Ikon kartu dari `iconURL` BE,
-/// chevron dan judul daftar milik FE. Kartu nonaktif selama menunggu jawaban.
+/// chevron dan judul daftar milik FE. Kartu nonaktif selama menunggu jawaban. Kalimat syarat & ketentuan mengikuti
+/// `content.isTermsVisible`; tautannya diteruskan ke `onOpenLink`.
 /// TODO: Cocokkan jarak dan role tipografi dengan Figma; sementara estimasi dari screenshot.
 @MainActor
 struct WelcomeSection: View {
@@ -20,11 +21,16 @@ struct WelcomeSection: View {
     private let content: WelcomeContent
     private let isEnabled: Bool
     private let onSelect: (WelcomeShortcut) -> Void
+    private let onOpenLink: (String) -> Void
 
-    init(content: WelcomeContent, isEnabled: Bool, onSelect: @escaping (WelcomeShortcut) -> Void) {
+    init(
+        content: WelcomeContent, isEnabled: Bool, onSelect: @escaping (WelcomeShortcut) -> Void,
+        onOpenLink: @escaping (String) -> Void
+    ) {
         self.content = content
         self.isEnabled = isEnabled
         self.onSelect = onSelect
+        self.onOpenLink = onOpenLink
     }
 
     var body: some View {
@@ -73,6 +79,17 @@ struct WelcomeSection: View {
                 )
                 .accessibilityIdentifier(ChatElementIdentifier.shortcut(index))
             }
+            terms
+        }
+    }
+
+    @ViewBuilder
+    private var terms: some View {
+        if content.isTermsVisible {
+            MarkdownContent(
+                document: MarkdownDocument(String(ChatCopy.welcomeTerms, locale: locale)), role: .caption,
+                onOpenLink: onOpenLink
+            )
         }
     }
 

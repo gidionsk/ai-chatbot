@@ -35,15 +35,16 @@ public struct TanyaAIHost {
     }
 
     /// Halaman Tanya AI. Tanpa `onBack`, tombol kembali memakai `dismiss` SwiftUI (pop pada navigasi host).
-    /// `onOpenLink` menerima link yang diketuk di jawaban bot: host mengarahkan web ke webview-nya dan deeplink
-    /// ke handler-nya. TanyaAI tidak pernah membuka Safari sendiri.
-    public func makeView(onBack: (() -> Void)? = nil, onOpenLink: @escaping (URL) -> Void = { _ in }) -> some View {
+    /// `onOpenLink` menerima tujuan link yang diketuk: dari jawaban bot (host mengarahkan web ke webview-nya dan
+    /// deeplink ke handler-nya) atau `TanyaAILink.terms` dari sambutan. TanyaAI tidak pernah membuka Safari sendiri.
+    public func makeView(onBack: (() -> Void)? = nil, onOpenLink: @escaping (String) -> Void = { _ in }) -> some View {
         makeView(onBack: onBack, onOpenLink: onOpenLink) { EmptyView() }
     }
 
     /// Sama seperti di atas, dengan konten SwiftUI untuk area scroll (fixture UI atau konten fitur).
     public func makeView<Content: View>(
-        onBack: (() -> Void)? = nil, onOpenLink: @escaping (URL) -> Void = { _ in }, @ViewBuilder content: () -> Content
+        onBack: (() -> Void)? = nil, onOpenLink: @escaping (String) -> Void = { _ in },
+        @ViewBuilder content: () -> Content
     ) -> some View {
         ChatScreen(
             isEnabled: isEnabled, welcome: welcome, bridge: bridge, onBack: onBack, onOpenLink: onOpenLink,

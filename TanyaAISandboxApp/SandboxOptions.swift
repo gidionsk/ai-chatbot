@@ -42,6 +42,7 @@ struct SandboxOptions {
     private static let offlineFlag = "--offline"
     private static let brokenIconsFlag = "--broken-icons"
     private static let slowIconsFlag = "--slow-icons"
+    private static let hideTermsFlag = "--hide-terms"
 
     /// Opsi dari argumen peluncuran proses ini.
     static var current: SandboxOptions {
@@ -61,6 +62,8 @@ struct SandboxOptions {
     let isSendingLateMessage: Bool
     /// `--late-question`: pertanyaan nasabah datang dari kanal lain tanpa dikirim dari halaman ini.
     let isSendingLateQuestion: Bool
+    /// `--hide-terms`: host tidak menampilkan syarat & ketentuan, seperti saat fiturnya belum naik.
+    let isHidingTerms: Bool
     let isHeaderDemo: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
@@ -74,6 +77,7 @@ struct SandboxOptions {
         isShowingLongHistory = arguments.contains(Self.longHistoryFlag)
         isSendingLateMessage = arguments.contains(Self.lateMessageFlag)
         isSendingLateQuestion = arguments.contains(Self.lateQuestionFlag)
+        isHidingTerms = arguments.contains(Self.hideTermsFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {

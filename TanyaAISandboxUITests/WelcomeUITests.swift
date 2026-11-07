@@ -110,6 +110,27 @@ final class WelcomeUITests: XCTestCase {
         alert.buttons["Tutup"].tap()
     }
 
+    /// Hanya tautan yang bisa diketuk, dan tujuannya diteruskan ke host sebagai string (sandbox: alert).
+    func testTermsLinkIsHandedToTheHost() {
+        launch(locale: "id")
+        let terms = application.links["Syarat & Ketentuan"]
+        XCTAssertTrue(terms.waitForExistence(timeout: 10))
+        XCTAssertLessThan(application.buttons["welcome.shortcut.2"].frame.maxY, terms.frame.minY)
+        capture("welcome-terms")
+        terms.tap()
+        let alert = application.alerts["Link diteruskan ke host"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        XCTAssertTrue(alert.staticTexts["terms"].exists)
+        alert.buttons["Tutup"].tap()
+    }
+
+    /// Host mematikan `isTermsVisible`: kalimatnya tidak tampil, kartu shortcut tetap ada.
+    func testTermsAreHiddenWhenTheHostTurnsThemOff() {
+        launch(locale: "id", extra: ["--hide-terms"])
+        XCTAssertTrue(application.buttons["welcome.shortcut.2"].waitForExistence(timeout: 10))
+        XCTAssertFalse(application.links["Syarat & Ketentuan"].exists)
+    }
+
     /// Ikon gagal diunduh: kartu tetap tampil dengan ikon fallback FE dan tetap bisa diketuk.
     func testBrokenIconsKeepShortcutsTappable() {
         launch(locale: "id", extra: ["--broken-icons", "--hold-reply"])

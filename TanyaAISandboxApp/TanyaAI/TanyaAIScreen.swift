@@ -16,7 +16,7 @@ struct TanyaAIScreen: ScreenContent {
     @ObservedObject
     var viewModel: TanyaAIScreenViewModel
     @State
-    private var openedLink: URL?
+    private var openedLink: String?
     let onBack: () -> Void
 
     var body: some View {
@@ -24,7 +24,7 @@ struct TanyaAIScreen: ScreenContent {
             .alert(
                 String(SandboxCopy.linkTitle, locale: locale), isPresented: isLinkPresented, presenting: openedLink,
                 actions: { _ in Button(String(SandboxCopy.linkClose, locale: locale)) {} },
-                message: { Text($0.absoluteString) }
+                message: { Text($0) }
             )
     }
 
@@ -43,7 +43,7 @@ struct TanyaAIScreen: ScreenContent {
         Binding(get: { openedLink != nil }, set: { if !$0 { openedLink = nil } })
     }
 
-    private func openLink(_ url: URL) {
-        openedLink = url
+    private func openLink(_ link: String) {
+        openedLink = link
     }
 }

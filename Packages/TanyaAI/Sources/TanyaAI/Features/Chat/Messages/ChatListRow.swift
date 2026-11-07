@@ -47,7 +47,10 @@ private extension ChatListRow {
     @ViewBuilder
     func welcomeSection(isEnabled: Bool) -> some View {
         if let welcome {
-            WelcomeSection(content: welcome, isEnabled: isEnabled, onSelect: actions.onSelectShortcut)
+            WelcomeSection(
+                content: welcome, isEnabled: isEnabled, onSelect: actions.onSelectShortcut,
+                onOpenLink: actions.onOpenLink
+            )
         }
     }
 
