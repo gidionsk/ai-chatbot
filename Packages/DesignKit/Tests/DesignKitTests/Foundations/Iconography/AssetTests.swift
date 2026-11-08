@@ -42,8 +42,7 @@ struct AssetTests {
 private extension AssetTests {
     /// Asset catalog sumber; dibaca dari repo karena `.car` hasil compile tidak bisa didaftar namanya.
     static var catalogSourcePath: String {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("Sources/DesignKit/Resources/Assets.xcassets").path
+        let packageRoot = #filePath.components(separatedBy: "/Tests/").first ?? String()
+        return packageRoot + "/Sources/DesignKit/Resources/Assets.xcassets"
     }
 }

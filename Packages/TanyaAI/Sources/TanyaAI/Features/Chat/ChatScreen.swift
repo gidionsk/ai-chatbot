@@ -101,7 +101,7 @@ public struct ChatScreen<Content: View>: View {
     }
 }
 
-// MARK: - Actions
+// MARK: - Helpers
 
 private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
@@ -131,7 +131,11 @@ private extension ChatScreen {
         }
         return items
     }
+}
 
+// MARK: - Actions
+
+private extension ChatScreen {
     func close() {
         if let onBack { onBack() } else { dismiss() }
     }

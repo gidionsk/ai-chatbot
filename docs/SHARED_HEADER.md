@@ -5,8 +5,8 @@ satu; tidak perlu menyalin seluruh flow chat lama.
 
 ```text
 DesignKit/Sources/DesignKit/
-├── Components/ScreenHeader/ScreenHeader.swift
-├── Components/ScreenScaffold/ScreenScaffold.swift
+├── Components/Screen/ScreenHeader.swift
+├── Components/Screen/ScreenScaffold.swift
 ├── Extensions/CGFloat+ScrollProgress.swift
 ├── Tokens/CustomSizes.swift              # Header: tinggi dan jumlah baris
 └── Resources/Assets.xcassets/            # ikon dummy; nama di DesignIcon/DesignColorIcon
@@ -14,7 +14,7 @@ DesignKit/Sources/DesignKit/
 TanyaAI/Sources/TanyaAI/
 ├── Bridging/TanyaAIHost.swift                    # konfigurasi + pembuat halaman untuk host
 ├── Features/Chat/ChatScreen.swift                # content/menu/composer; layout dari container
-├── Shared/Keys/ChatElementIdentifier.swift       # technical identifier, bukan pemetaan copy
+├── Features/Chat/Keys/ChatElementIdentifier.swift       # technical identifier, bukan pemetaan copy
 └── Resources/{en,id,zh-Hans}.lproj/
 
 TanyaAISandboxApp/HeaderDemoContent.swift # fixture scroll, bukan UI produksi
@@ -46,10 +46,10 @@ TanyaAISandboxApp/HeaderDemoContent.swift # fixture scroll, bukan UI produksi
    lalu header dan konten mengabaikan safe area atas seperti navigation bar host.
 5. Pemilik scroll melaporkan `scrollProgress` 0...1 lewat `CGFloat.scrollProgress(offset:distance:)`: offset
    dibagi `distance`, di bawah toleransi = 0, dan berhenti di 1. Kembali ke atas (termasuk bounce) = 0.
-6. Pertahankan composer dan `.tanyaAIHost` existing. Header tidak mengubah font 14,
+6. Pertahankan composer dan integrasi `TanyaAIHost.makeView()` existing. Header tidak mengubah font 14,
    batas empat baris, keyboard, callback kirim, atau navigation stack host.
-   `TanyaAIHost` menampilkan `ChatScreen` langsung. Hapus file `HostedChatScreen`
-   dari salinan lama; jangan ikut memigrasikan NavigationView/toolbar wrapper itu.
+   `TanyaAIHost` menampilkan `ChatScreen` langsung. Wrapper `HostedChatScreen` lama
+   bukan bagian struktur saat ini. Setiap penghapusan salinan lama memerlukan konfirmasi pemilik.
 
 `ScreenScaffold` adalah reusable layout dengan composition, tanpa inheritance, ViewModel, AnyView, atau
 navigation stack baru. `ChatScreen` memberi judul, back callback, content, dan composer sebagai footer; scroll
@@ -92,6 +92,9 @@ Localization dan nama asset dibaca melalui `ChatCopy`/`DesignIcon`; lihat
 - Tutup/buka feature tidak menambah navigation stack host; konten/draft lama dilepas.
 
 ## Tahap berikutnya, tetap bertahap
+
+Daftar berikut adalah rencana awal tahap header. Arah intent terbaru mengikuti
+[pola ReferenceLetter](PACKAGE_STRUCTURE.md#pola-intent-berikutnya).
 
 1. Susun model intent dan step untuk satu contoh BI-FAST, lalu review kontraknya.
 2. Buat dummy bubble nominal, rekening tujuan, summary dan receipt. Step yang

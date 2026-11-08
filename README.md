@@ -1,8 +1,9 @@
 # Tanya AI — starting point
 
-Baseline minimal untuk belajar dan migrasi bertahap, iOS 15. Menampilkan halaman
-kosong, shared header, dan composer yang tumbuh sampai empat baris. Tujuh font Fira Sans/Open Sans dari package;
-copy tersedia dalam English, Bahasa Indonesia, dan 简体中文.
+Package UI iOS 15 untuk migrasi bertahap. DesignKit menyediakan komponen umum;
+TanyaAI menyusun welcome, chat, header, dan composer satu sampai empat baris.
+Transport HTTP/SSE diimplementasi host; package mengatur sesi chat-gateway dan render pesan Markdown.
+Font Fira Sans/Open Sans dan copy English, Bahasa Indonesia, serta 简体中文 tersedia dalam package.
 
 ```sh
 ./Scripts/run_sandbox.sh --language id
@@ -12,9 +13,8 @@ copy tersedia dalam English, Bahasa Indonesia, dan 简体中文.
 ./Scripts/run_sandbox.sh --language id --offline
 ```
 
-Tombol kirim memanggil callback host. Sandbox menerima draft dan membersihkannya;
-belum ada network atau bubble pesan. `--reject-send` mendemonstrasikan draft yang
-harus dipertahankan saat host menolak submission.
+Sandbox menyediakan transport dummy untuk init, history, kirim, dan SSE.
+Integrasi layanan host dijelaskan pada [kontrak gateway](docs/CHAT_GATEWAY.md).
 
 Sandbox meniru host SwiftUI: `RootScreen` dengan prelogin dan main coordinator, base
 `Screen` per halaman, dan coordinator + destination untuk membuka Tanya AI dari beranda
@@ -22,8 +22,9 @@ atau halaman detail.
 Tombol kembali atau swipe dari tepi kiri menutup feature dan mengembalikan layar host.
 `--offline` menampilkan blocker host di atas Tanya AI saat mengirim.
 Mode `--header-demo` menyisipkan teks dummy untuk mengecek separator dan blur
-saat scroll. Integrasi biasa tetap membuka area percakapan kosong.
+saat scroll. Percakapan kosong menampilkan welcome bila host memberikannya.
 
+- [Struktur package dan pola intent berikutnya](docs/PACKAGE_STRUCTURE.md)
 - [Urutan belajar dan tree](docs/STARTING_POINT.md)
 - [Tahap header dan checkpoint migrasi berikutnya](docs/SHARED_HEADER.md)
 - [Membuka screen dari host app](docs/HOST_INTEGRATION.md)

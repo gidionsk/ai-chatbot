@@ -22,7 +22,7 @@ perhitungan dan aksi pendukung. Gunakan `// MARK: - Helpers` dan
 `// MARK: - Actions` agar pembagian terlihat di source dan navigator Xcode.
 Contoh pada `MessageComposer`: `field`, `actionButton`, dan `surface` tetap di
 struct utama; `inputFont`, `singleLineRowHeight`, `lineSpacing`, dan
-`isSendEnabled` berada di private extension. `ChatScreen.close/submit` berada di
+`isSendEnabled` berada di private extension. `ChatScreen.close/send` berada di
 extension Actions.
 
 Stored properties, `@State`, `@Binding`, `@Environment`, dan input callback tetap
@@ -103,8 +103,9 @@ private let onBack: () -> Void
 private let onSend: (String) async -> Bool
 ```
 
-Nama menyatakan aksi. Kontrak hasil wajib jelas: `onSend` mengembalikan `true` setelah gateway
-menerima pesan (ack) sehingga draft boleh dibersihkan; `false` mempertahankan draft.
+Nama menyatakan aksi. Kontrak hasil wajib jelas: `onSend` composer mengembalikan `true`
+ketika bridge menerima pertanyaan lokal sehingga draft boleh dibersihkan; `false`
+mempertahankan draft. Ack gateway datang setelah itu; kegagalan menjadi bubble gagal.
 
 Tidak perlu satu file `TypeAliases.swift` untuk `Action`, `VoidCallback`, dan
 alias callback lain yang sudah mudah dibaca. Gunakan typealias ketika signature
@@ -118,15 +119,21 @@ Tidak perlu menambahkan weak capture pada setiap closure SwiftUI secara otomatis
 
 ## Kapan dipindahkan menjadi komponen bersama
 
+Lihat [tree dan pola intent](PACKAGE_STRUCTURE.md) untuk struktur lengkap.
+
 | Tanggung jawab | Tempat |
 | --- | --- |
-| Header, container, composer, editor umum | `DesignKit/Components` |
+| Header/container | `DesignKit/Components/Screen` |
+| Composer/editor umum | `DesignKit/Components/Inputs` |
 | Scroll boundary, sizing, locale resource | `DesignKit/Extensions` |
 | Token custom per jenis | `DesignKit/Tokens` |
-| Font file dan registrasi | `DesignKit/Typography` |
+| Font file dan registrasi | `DesignKit/Foundations/Typography` |
 | Identifier UI test komponen | `DesignKit/Foundations/Accessibility` |
 | Draft, menu sesi, aturan menerima submission | Screen/fitur pemilik (`TanyaAI/Features/Chat`) |
 | API host: konfigurasi, locale/theme, pembuat halaman | `TanyaAI/Bridging` |
+| Sesi chat, retry, turn | `TanyaAI/Features/Chat/Session` |
+| Format data gateway | `TanyaAI/Features/Chat/Gateway` |
+| Penyusunan daftar dan scroll | `TanyaAI/Features/Chat/ConversationList` |
 | Navigasi, animasi push, swipe-back | Host (coordinator + destination, atau navigasi aplikasi revamp) |
 
 Komponen umum yang sudah dibutuhkan beberapa caller dibuat reusable. Potongan
@@ -180,8 +187,8 @@ PromoBanner()
 ```
 
 Tanpa `.designColors`, nilainya `DefaultColorConstants`. `TanyaAIHost.colors` dan
-`TanyaAIHost.locale` dipasang ke seluruh screen fitur, termasuk perubahan saat fitur
-terbuka. Warna di luar palette
+`TanyaAIHost.locale` dipasang ke seluruh screen fitur saat halaman dibuat, mengikuti
+snapshot konfigurasi host. Warna di luar palette
 generated tetap memakai `CustomColors` dan tidak ikut theme.
 
 ## Localization otomatis
@@ -260,7 +267,7 @@ composer tetap memakai `spacingLarge` di semua sisi; ukuran interaksi mengikuti
 desain UI/UX.
 
 Body tidak melakukan registrasi font, network, parsing berat, atau penyimpanan.
-State scroll hanya Boolean saat boundary berubah. Potongan view private membuat
+Perubahan scroll ditangani table; header menerima progress sesuai pola scroll yang ada. Potongan view private membuat
 kode terbaca; pemisahan tersebut sendiri bukan jaminan performa. Ukur ketika
 ada workload yang nyata, dan jalankan pemeriksaan layout/lifecycle existing
 sebelum mengubah ownership atau layout bersama.

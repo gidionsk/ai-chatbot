@@ -67,7 +67,11 @@ public final class TanyaAIBridge: ObservableObject {
         self.onConnectionFailed = onConnectionFailed
         self.sleep = sleep
     }
+}
 
+// MARK: - State
+
+extension TanyaAIBridge {
     /// Sejak kirim sampai `turn_end` pertanyaan itu; kirim dan shortcut nonaktif.
     var isAwaitingReply: Bool { turn.isAwaiting }
 
@@ -103,7 +107,11 @@ public final class TanyaAIBridge: ObservableObject {
     var isReady: Bool {
         conversationID != nil && connection != .closed && connection != .expired
     }
+}
 
+// MARK: - Actions
+
+extension TanyaAIBridge {
     /// 401 = sesi habis; 404/410 = percakapan hilang, sama dengan gagal permanen saat menyambung.
     /// Gagal kirim lain cukup menjadi bubble gagal. TODO: Gagal stop lain (tanpa koneksi, 429) belum punya
     /// tampilan; sementara stop bisa ditekan lagi.
