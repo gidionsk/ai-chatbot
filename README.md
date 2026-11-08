@@ -24,7 +24,6 @@ Tombol kembali atau swipe dari tepi kiri menutup feature dan mengembalikan layar
 Mode `--header-demo` menyisipkan teks dummy untuk mengecek separator dan blur
 saat scroll. Percakapan kosong menampilkan welcome bila host memberikannya.
 
-- [Tree lengkap semua file DesignKit dan TanyaAI](docs/PACKAGE_TREE.md)
 - [Aturan penempatan file dan pola intent berikutnya](docs/PACKAGE_STRUCTURE.md)
 - [Urutan belajar dan tree](docs/STARTING_POINT.md)
 - [Tahap header dan checkpoint migrasi berikutnya](docs/SHARED_HEADER.md)

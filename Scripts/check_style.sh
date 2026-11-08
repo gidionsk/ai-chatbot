@@ -12,7 +12,6 @@ PROJECT_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 MAXIMUM_LINES=250
 
 python3 "$PROJECT_ROOT/Scripts/check_design_system.py"
-python3 "$PROJECT_ROOT/Scripts/package_tree.py" --check
 
 # SwiftLint loads sourcekitd out of the toolchain, so it needs a real Xcode
 # even when xcode-select still points at the Command Line Tools. verify.sh

@@ -1,9 +1,6 @@
 # Penempatan file DesignKit dan TanyaAI
 
 Pola repository adalah **fungsi/pemilik → jenis file → implementasi**.
-Lihat [tree lengkap semua file](PACKAGE_TREE.md) untuk struktur yang benar-benar ada,
-termasuk tests, resources, manifest, dan shared scheme Xcode. Diagram itu dihasilkan dari
-inventori Git dan diperiksa oleh `Scripts/check_style.sh`; bukan contoh sebagian file.
 
 ## Aturan penempatan
 
@@ -101,7 +98,8 @@ PR #52 di basis `startingpoint`; keduanya dipertahankan pada struktur ini.
 
 ## Pola intent berikutnya
 
-Berikut rancangan untuk flow pertama, belum implementasi atau folder kosong dalam package:
+**Rancangan, belum keputusan.** Struktur dan pembagian state di bawah dikonfirmasi ulang saat Figma dan
+contract flow pertama tersedia. Belum ada implementasi atau folder kosong dalam package:
 
 ```text
 TanyaAI/Features/Chat/Intents/ReferenceLetter/
@@ -141,8 +139,8 @@ Tidak perlu BaseIntent, generic flow engine, atau ViewModel untuk setiap kompone
 5. Tests mengikuti pemilik dan jenis perilaku yang diuji. Test yang meliputi beberapa
    jenis file, seperti registrasi dan pemakaian font, tetap di root fungsi tersebut.
    Helper test lintas suite di `Tests/<Package>Tests/Support`.
-6. Jalankan `python3 Scripts/package_tree.py` setelah menambah/memindahkan file, lalu
-   `Scripts/check_style.sh` dan test yang sesuai. Pastikan resource dan test tetap ditemukan.
+6. Setelah menambah/memindahkan file, jalankan `Scripts/check_style.sh` dan test yang sesuai.
+   Pastikan resource dan test tetap ditemukan.
 
 Pengelompokan folder tidak menambah object, subscription, dependency, atau layer
 runtime. Parsing tetap saat data masuk, draft tetap lokal di composer, dan table

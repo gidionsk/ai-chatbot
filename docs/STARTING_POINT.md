@@ -6,7 +6,7 @@ Kode package sekarang juga memiliki welcome dan percakapan; lihat [integrasi hos
 
 ## Tree untuk tahap awal
 
-Tree lengkap kode saat ini ada di [inventori semua file](PACKAGE_TREE.md).
+Aturan penempatan file saat ini ada di [PACKAGE_STRUCTURE.md](PACKAGE_STRUCTURE.md).
 Untuk belajar composer dahulu, fokus pada subset berikut; folder yang lain
 sudah menangani welcome, sesi gateway, Markdown, dan daftar percakapan.
 

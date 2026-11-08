@@ -31,9 +31,11 @@ struct ChatImageTests {
 private extension ChatImageTests {
     /// Asset catalog sumber; dibaca dari repo karena `.car` hasil compile tidak bisa didaftar namanya.
     static var catalogSourcePath: String {
-        // Root package = bagian sebelum `/Tests/`, jadi tetap benar walau file test dipindah folder.
-        let path = URL(fileURLWithPath: #filePath).path
-        let packageRoot = path.components(separatedBy: "/Tests/").first ?? path
+        // Root package = bagian sebelum `/Tests/` terakhir: tetap benar walau file test dipindah folder atau
+        // repo di-clone di dalam folder bernama `Tests`.
+        let path = #filePath
+        let testsRange = path.range(of: "/Tests/", options: .backwards)
+        let packageRoot = testsRange.map { String(path[..<$0.lowerBound]) } ?? path
         return packageRoot + "/Sources/TanyaAI/Resources/Assets.xcassets"
     }
 }

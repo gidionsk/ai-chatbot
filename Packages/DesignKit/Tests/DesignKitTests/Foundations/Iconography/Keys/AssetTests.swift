@@ -42,7 +42,11 @@ struct AssetTests {
 private extension AssetTests {
     /// Asset catalog sumber; dibaca dari repo karena `.car` hasil compile tidak bisa didaftar namanya.
     static var catalogSourcePath: String {
-        let packageRoot = #filePath.components(separatedBy: "/Tests/").first ?? String()
+        // Root package = bagian sebelum `/Tests/` terakhir: tetap benar walau file test dipindah folder atau
+        // repo di-clone di dalam folder bernama `Tests`.
+        let path = #filePath
+        let testsRange = path.range(of: "/Tests/", options: .backwards)
+        let packageRoot = testsRange.map { String(path[..<$0.lowerBound]) } ?? path
         return packageRoot + "/Sources/DesignKit/Resources/Assets.xcassets"
     }
 }

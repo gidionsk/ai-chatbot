@@ -68,7 +68,6 @@ tersedia pada history/main.
 ## Struktur TanyaAI
 
 - Struktur dan aturan penempatan: [docs/PACKAGE_STRUCTURE.md](docs/PACKAGE_STRUCTURE.md).
-  Inventori lengkap semua file: [docs/PACKAGE_TREE.md](docs/PACKAGE_TREE.md).
   Pola: fungsi/pemilik → jenis file (`Models`, `Views`, `Controllers`, `Extensions`) → implementasi.
 - `Bridging/`: konfigurasi host (`TanyaAIHost`) dan kontrak transport/error yang diimplementasi host.
 - `Features/<Fitur>/`: screen di root fitur (`ChatScreen.swift`); bagian screen tetap di bawahnya:
@@ -82,8 +81,8 @@ tersedia pada history/main.
   `Chat/Gateway`: format respons, decoding, history, dan framing SSE; HTTP tetap milik host.
 - `Chat/Keys`: `ChatCopy`, `ChatImage`, `ChatElementIdentifier` serta accessor terkait. Jangan membuat
   `Shared` sebelum ada beberapa fitur yang benar-benar memakai fungsi yang sama.
-- Intent kelak di `Chat/Intents/<NamaIntent>`: view dan model presentasi. State flow bisnis, service,
-  dan PIN tetap host. Buat saat implementasi flow pertama; jangan menambah folder kosong atau BaseIntent.
+- Intent belum diputuskan. Rancangannya ada di `docs/PACKAGE_STRUCTURE.md` dan dikonfirmasi ke user saat Figma
+  dan contract flow pertama ada. Jangan menambah folder kosong atau BaseIntent sebelum itu.
 - `Resources/`: aset dan lokalisasi saja, tanpa file Swift. Tests mencerminkan folder Sources;
   helper test di `Support/`.
 
@@ -252,8 +251,6 @@ tersedia pada history/main.
 
 ## Validasi
 
-- Setelah memindahkan/menambah file: `python3 Scripts/package_tree.py`.
-  `Scripts/check_style.sh` memeriksa diagram dengan `--check`; semua file package harus tercantum.
 - Format: `python3 Scripts/format_changed.py --base startingpoint`.
 - Style: `Scripts/check_style.sh`; semua checks: `Scripts/verify.sh`.
 - Regenerate project lewat `ruby Scripts/generate_project.rb`; jangan edit pbxproj.

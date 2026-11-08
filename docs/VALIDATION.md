@@ -7,14 +7,13 @@ Struktur aktif mengikuti [PACKAGE_STRUCTURE.md](PACKAGE_STRUCTURE.md). Catatan b
 Basis terbaru `startingpoint` commit `0f27ad9`, termasuk PR #52. Branch
 `refactor/package-functional-structure` menerapkan fungsi/pemilik → jenis file.
 
-- [PACKAGE_TREE.md](PACKAGE_TREE.md) memuat seluruh 223 file package: 122 DesignKit dan 101 TanyaAI.
-  Manifest, shared scheme Xcode, source, tests, token, font/lisensi, xcassets, dan localization ikut dicatat.
-- Inventori Git, rencana pemindahan, dan 223 file pada diagram dicocokkan satu per satu; semuanya sama.
 - Total terhadap basis PR: 148 rename, tanpa file package dihapus atau ditambahkan. Hanya tiga file
   package memiliki perubahan isi: pembagian extension ChatScreen/TanyaAIBridge dan pencarian root
   package pada AssetTests. API publik, manifest/dependency, token, dan resources tidak berubah.
-- `Scripts/package_tree.py --check` lolos. Uji diagram sengaja dibuat berbeda menghasilkan exit 1
-  tanpa menulis ulang dokumen; sesudah dipulihkan, pemeriksaan lolos. Guard ini ikut `check_style.sh`.
+- `Scripts/package_tree.py` dan `PACKAGE_TREE.md` dihapus (keputusan user 9 November 2026): struktur
+  cukup dijelaskan di `PACKAGE_STRUCTURE.md`, tanpa inventori yang harus dijaga per PR.
+- Pencarian root package di `AssetTests` dan `ChatImageTests` memakai `/Tests/` terakhir, sehingga tetap
+  benar bila repo berada di dalam folder bernama `Tests` (dibuktikan dengan path contoh).
 - Style: 0 pelanggaran pada 240 Swift file. Tiga file dengan perubahan isi juga lolos
   `swift-format lint --strict`; link dokumentasi lokal dan `git diff --check` lolos.
 
