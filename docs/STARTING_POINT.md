@@ -6,7 +6,7 @@ Kode package sekarang juga memiliki welcome dan percakapan; lihat [integrasi hos
 
 ## Tree untuk tahap awal
 
-Tree lengkap kode saat ini ada di [struktur package](PACKAGE_STRUCTURE.md).
+Tree lengkap kode saat ini ada di [inventori semua file](PACKAGE_TREE.md).
 Untuk belajar composer dahulu, fokus pada subset berikut; folder yang lain
 sudah menangani welcome, sesi gateway, Markdown, dan daftar percakapan.
 
@@ -15,13 +15,13 @@ DesignKit/Sources/DesignKit/
 ├── Tokens/Generated/ + token custom
 ├── Extensions/CGFloat+Artwork.swift + Color+Hex.swift
 ├── Foundations/
-│   ├── Typography/                  # FontFace + FontLoader + accessor SwiftUI
+│   ├── Typography/                  # Models/FontFace + FontLoader + Extensions/
 │   ├── Iconography/                 # key ikon + accessor Image/UIImage
 │   ├── Appearance/                  # palette, card, shadow
 │   └── Accessibility/               # ComponentIdentifier
 ├── Components/
-│   ├── Inputs/GrowingTextInput/      # bridge + BoundedTextView
-│   ├── Inputs/MessageComposer/
+│   ├── Inputs/GrowingTextInput/      # Views/: bridge + BoundedTextView
+│   ├── Inputs/MessageComposer/       # Models/ + Views/ + Extensions/
 │   └── Screen/                      # ScreenHeader + ScreenScaffold
 └── Resources/Fonts/ + Assets.xcassets/
 
@@ -30,7 +30,7 @@ TanyaAI/Sources/TanyaAI/
 ├── Features/Chat/
 │   ├── ChatScreen.swift
 │   ├── Composer/                    # draft lokal
-│   ├── Welcome/                     # bagian Chat, bukan screen sendiri
+│   ├── Welcome/                     # Models/ + Views/; bagian Chat
 │   ├── Session/TanyaAIBridge.swift   # sesi memakai transport host
 │   └── Keys/                        # ChatCopy, ChatImage, identifier, accessor
 └── Resources/                       # Assets.xcassets + en/id/zh-Hans.lproj

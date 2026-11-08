@@ -32,11 +32,14 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge), dan daftar
   Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.
-- Struktur berdasarkan fungsi: [docs/PACKAGE_STRUCTURE.md](docs/PACKAGE_STRUCTURE.md).
+- Struktur fungsi → jenis file: [docs/PACKAGE_STRUCTURE.md](docs/PACKAGE_STRUCTURE.md).
+  Tree seluruh file ada di [docs/PACKAGE_TREE.md](docs/PACKAGE_TREE.md); regenerate dengan
+  `python3 Scripts/package_tree.py` setelah pemindahan/penambahan file.
   TanyaAI: `Bridging/` untuk konfigurasi/kontrak host; `Features/Chat/` berisi screen dan bagian-bagiannya.
   `Messages` mengurus nilai/bubble, `ConversationList` daftar/scroll, `Session` bridge/state,
   `Gateway` decode/protokol, `Keys` accessor fitur. Welcome tetap bagian Chat.
   DesignKit: `Components/<Fungsi>`, `Foundations`, `Extensions`, `Tokens`, `Resources`.
+  Kelompok beberapa file memakai Models/Views/Controllers/Extensions sesuai peran di dalam pemiliknya.
   Tests mencerminkan Sources. Intent belum diimplementasi; ikuti pola di dokumen saat flow pertama dimulai.
 - Unit test memakai Swift Testing (`@Test`, `#expect`, `#require`); UI test tetap
   XCTest. Suite yang memakai window di sandbox masuk `HostWindowTests` (berurutan).

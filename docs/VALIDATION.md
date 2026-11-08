@@ -2,6 +2,38 @@
 
 Struktur aktif mengikuti [PACKAGE_STRUCTURE.md](PACKAGE_STRUCTURE.md). Catatan bertanggal di bawah menyimpan kondisi saat validasi masing-masing dilakukan.
 
+## Tree lengkap dan pengelompokan jenis file — 8 November 2026
+
+Basis terbaru `startingpoint` commit `0f27ad9`, termasuk PR #52. Branch
+`refactor/package-functional-structure` menerapkan fungsi/pemilik → jenis file.
+
+- [PACKAGE_TREE.md](PACKAGE_TREE.md) memuat seluruh 223 file package: 122 DesignKit dan 101 TanyaAI.
+  Manifest, shared scheme Xcode, source, tests, token, font/lisensi, xcassets, dan localization ikut dicatat.
+- Inventori Git, rencana pemindahan, dan 223 file pada diagram dicocokkan satu per satu; semuanya sama.
+- Total terhadap basis PR: 148 rename, tanpa file package dihapus atau ditambahkan. Hanya tiga file
+  package memiliki perubahan isi: pembagian extension ChatScreen/TanyaAIBridge dan pencarian root
+  package pada AssetTests. API publik, manifest/dependency, token, dan resources tidak berubah.
+- `Scripts/package_tree.py --check` lolos. Uji diagram sengaja dibuat berbeda menghasilkan exit 1
+  tanpa menulis ulang dokumen; sesudah dipulihkan, pemeriksaan lolos. Guard ini ikut `check_style.sh`.
+- Style: 0 pelanggaran pada 240 Swift file. Tiga file dengan perubahan isi juga lolos
+  `swift-format lint --strict`; link dokumentasi lokal dan `git diff --check` lolos.
+
+Xcode 27.2 (27B52), simulator iOS 26.5:
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| DesignKit, iPhone 17 Pro | 69 test / 21 suite lulus |
+| TanyaAI, iPhone 17 Pro | 122 test / 24 suite lulus |
+| Host sandbox, iPhone 17 Pro | Build dan 32 test / 13 suite lulus |
+| UI sandbox, iPhone 17 Pro | 32 lulus, 1 dilewati karena keyboard layar tidak tampil, 0 gagal |
+| Kasus keyboard tersebut, simulator SE | Lulus, 0 dilewati |
+
+Total 223 test unit dan 33 kasus UI terverifikasi. Termasuk composer empat baris,
+caret, ukuran font tetap, tiga bahasa, padding, scroll, navigasi host, welcome,
+tautan syarat, serta callback kirim/stop/link. Tidak ada pengujian FPS/memori baru
+karena perubahan hanya organisasi source. Runtime iOS 15 belum tersedia; deployment
+target tetap iOS 15 dan test jalur legacy existing tetap dijalankan di runtime yang tersedia.
+
 ## Perapian struktur berdasarkan fungsi — 7 November 2026
 
 Basis `startingpoint` commit `439d23c`; branch `refactor/package-functional-structure`.

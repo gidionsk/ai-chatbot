@@ -67,13 +67,17 @@ tersedia pada history/main.
 
 ## Struktur TanyaAI
 
-- Struktur aktual dan pola intent: [docs/PACKAGE_STRUCTURE.md](docs/PACKAGE_STRUCTURE.md).
+- Struktur dan aturan penempatan: [docs/PACKAGE_STRUCTURE.md](docs/PACKAGE_STRUCTURE.md).
+  Inventori lengkap semua file: [docs/PACKAGE_TREE.md](docs/PACKAGE_TREE.md).
+  Pola: fungsi/pemilik → jenis file (`Models`, `Views`, `Controllers`, `Extensions`) → implementasi.
 - `Bridging/`: konfigurasi host (`TanyaAIHost`) dan kontrak transport/error yang diimplementasi host.
 - `Features/<Fitur>/`: screen di root fitur (`ChatScreen.swift`); bagian screen tetap di bawahnya:
-  `Welcome/`, `Composer/`, `FollowUps/`. Model diletakkan dekat pemakainya, tanpa folder `Models/`
-  atau `Views/` umum. `Welcome` bukan fitur tersendiri.
+  `Welcome/`, `Composer/`, `FollowUps/`. Welcome memiliki `Models/` dan `Views/` sendiri.
+  Model dekat pemakainya; tidak ada folder Models/Views global untuk seluruh package.
+  Bagian satu file seperti Composer/FollowUps tetap sederhana. `Welcome` bukan fitur tersendiri.
 - `Chat/Messages`: nilai/merge pesan dan tampilan bubble. `Chat/ConversationList`: penyusunan baris,
-  dates, hosting table, dan scroll. Jangan menaruh seluruh logic daftar di `Messages`.
+  tanggal, hosting table, dan scroll. Di dalamnya: `Models`, `Views`, `Controllers`, `Extensions`, `Formatting`.
+  Jangan menaruh seluruh logic daftar di `Messages`.
 - `Chat/Session`: `TanyaAIBridge` dan state/connection/turn. Bridge tetap public dan dibuat sekali oleh host.
   `Chat/Gateway`: format respons, decoding, history, dan framing SSE; HTTP tetap milik host.
 - `Chat/Keys`: `ChatCopy`, `ChatImage`, `ChatElementIdentifier` serta accessor terkait. Jangan membuat
@@ -123,10 +127,13 @@ tersedia pada history/main.
 
 - DesignKit `Components/<Fungsi>`: `Actions`, `Images`, `Inputs`, `Lists`, `Markdown`, `Messages`, `Screen`.
   Komponen beberapa file memakai subfolder sendiri; satu file langsung di kelompok fungsinya.
-  Helper/model/extension khusus komponen tinggal bersama pemilik, seperti `Markdown/Rendering`.
+  Bagian beberapa file dikelompokkan ke `Models`, `Views`, `Controllers`, `Protocols`, `Extensions` sesuai peran.
+  Helper/model/extension khusus komponen tetap dalam pemilik itu, seperti `Markdown/Models` dan `Markdown/Views`.
   `Foundations` berisi `Typography`, `Iconography`, `Appearance`, `Accessibility`.
   `Extensions/<Type>+<Responsibility>.swift` hanya untuk utilitas lintas komponen. Modifier card/shadow
-  dan palette environment berada di `Foundations/Appearance`.
+  dan palette environment berada di `Foundations/Appearance/ViewModifiers` dan `Extensions`.
+  Extension implementasi satu tipe tetap bersamanya (parser di Parsing, controller di Controllers);
+  extension accessor/transform seperti Array+ChatMessage masuk Extensions. Jangan membuat folder jenis yang kosong.
   Nama DesignKit umum, tanpa prefix fitur. Jangan membuat ViewModel per komponen.
 - Identifier UI test dikelompokkan per komponen (`ComponentIdentifier.Header.title`,
   `ComponentIdentifier.Composer.send`). String identifier adalah kontrak UI test.
@@ -245,6 +252,8 @@ tersedia pada history/main.
 
 ## Validasi
 
+- Setelah memindahkan/menambah file: `python3 Scripts/package_tree.py`.
+  `Scripts/check_style.sh` memeriksa diagram dengan `--check`; semua file package harus tercantum.
 - Format: `python3 Scripts/format_changed.py --base startingpoint`.
 - Style: `Scripts/check_style.sh`; semua checks: `Scripts/verify.sh`.
 - Regenerate project lewat `ruby Scripts/generate_project.rb`; jangan edit pbxproj.

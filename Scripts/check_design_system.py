@@ -15,15 +15,15 @@ ROOT = Path(__file__).resolve().parent.parent
 errors = []
 # These files own technical metadata or format/transform arithmetic, not user-facing copy.
 METADATA = {
-    'Foundations/Typography/FontFace.swift', 'Extensions/Color+Hex.swift', 'Extensions/String+Resource.swift',
-    'Foundations/Accessibility/ComponentIdentifier.swift', 'Foundations/Iconography/DesignColorIcon.swift',
+    'Foundations/Typography/Models/FontFace.swift', 'Extensions/Color+Hex.swift', 'Extensions/String+Resource.swift',
+    'Foundations/Accessibility/ComponentIdentifier.swift', 'Foundations/Iconography/Keys/DesignColorIcon.swift',
     'Features/Chat/Keys/ChatElementIdentifier.swift', 'Features/Chat/Keys/ChatCopy.swift',
     'Features/Chat/Keys/TanyaAILink.swift',
     'Features/Chat/Gateway/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
-    'Features/Chat/Session/ConversationState.swift', 'Features/Chat/Gateway/Responses/WireError.swift',
-    'Features/Chat/Gateway/Responses/WireCancel.swift',
-    'Features/Chat/ConversationList/Dates/ChatDateFormat.swift',
-    'Features/Chat/ConversationList/Dates/ChatDayIdentifier.swift',
+    'Features/Chat/Gateway/Models/ConversationState.swift', 'Features/Chat/Gateway/Models/WireError.swift',
+    'Features/Chat/Gateway/Models/WireCancel.swift',
+    'Features/Chat/ConversationList/Formatting/ChatDateFormat.swift',
+    'Features/Chat/ConversationList/Models/ChatDayIdentifier.swift',
     'Components/Markdown/Parsing/MarkdownSyntax.swift',
     'TanyaAISandboxApp/SandboxOptions.swift', 'TanyaAISandboxApp/SandboxCopy.swift',
     'TanyaAISandboxApp/SandboxFixtureFile.swift', 'TanyaAISandboxApp/TanyaAI/SandboxGatewayFrames.swift',
@@ -65,7 +65,7 @@ for path in sorted(paths):
         report('Use FigmaSize, CustomSizes, CustomTextLines or the type value (.zero) instead of literals.')
     if re.search(r'\.(?:foregroundColor|background|fill|strokeBorder)\(\s*\.(?:red|white|black|gray|blue)', text):
         report('Use generated colors or CustomColors.')
-    if (not relative.endswith('Foundations/Appearance/View+DesignColors.swift')
+    if (not relative.endswith('Foundations/Appearance/Extensions/View+DesignColors.swift')
             and re.search(r'\b\w+ColorConstants\(\)', text)):
         report('Read @Environment(\\.designColors); choose a palette with .designColors(_:) at the root.')
 

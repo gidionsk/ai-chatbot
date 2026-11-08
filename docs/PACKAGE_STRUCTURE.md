@@ -1,199 +1,151 @@
-# Struktur package berdasarkan fungsi
+# Penempatan file DesignKit dan TanyaAI
 
-Struktur ini berlaku untuk kode yang ada sekarang. Folder memisahkan tanggung jawab,
-bukan menambah layer runtime atau target SPM. `import DesignKit`, `import TanyaAI`,
-dan API host tetap sama. Token generated, font, aset, dan lokalisasi tetap di tempatnya.
+Pola repository adalah **fungsi/pemilik → jenis file → implementasi**.
+Lihat [tree lengkap semua file](PACKAGE_TREE.md) untuk struktur yang benar-benar ada,
+termasuk tests, resources, manifest, dan shared scheme Xcode. Diagram itu dihasilkan dari
+inventori Git dan diperiksa oleh `Scripts/check_style.sh`; bukan contoh sebagian file.
+
+## Aturan penempatan
+
+| Jenis | Tempat dan batas tanggung jawab |
+| --- | --- |
+| Tampilan | `Views/`: SwiftUI View, UIView, cell, Shape, ButtonStyle, dan adapter representable. Menerima data/binding/callback. |
+| Data | `Models/`: nilai pesan, konfigurasi, payload, enum, dan state. Model boleh memiliki initializer/mapping data. |
+| Controller UIKit | `Controllers/`: lifecycle UIViewController, table, atau hosting controller. |
+| Protocol internal komponen | `Protocols/`: kontrak perilaku milik komponen, seperti `HostedContentAttaching`. |
+| Extension bantu | `Extensions/`: accessor atau transform pada tipe yang sudah ada, misalnya `Array+ChatMessage`. |
+| Modifier tampilan bersama | `ViewModifiers/` dalam pemiliknya, seperti `Foundations/Appearance`. |
+| Key resource | `Keys/`: nama copy, ikon, identifier, dan tautan. Tidak dikategorikan sebagai model bisnis. |
+| Parsing/decoding/formatting | Folder tugas tersebut, seperti `Markdown/Parsing` dan `ConversationList/Formatting`. |
+| Nilai desain | `Tokens/`; `Tokens/Generated` tetap dimiliki export engine. |
+| File resource | `Resources/`: font, lisensi, xcassets, dan localization; tidak berisi source Swift. |
+
+Nama folder menjelaskan tugas, bukan hanya bentuk Swift-nya. Tidak semua `struct` masuk
+`Models`: `TanyaAIHost` adalah pintu konfigurasi host dan tetap di `Bridging`.
+`TanyaAIBridge` adalah pemilik sesi sehingga tetap di root `Session`, bersama extension
+implementasi connection/turn. `FontLoader` juga tetap di root fungsi `Typography`.
+
+Extension yang membagi implementasi satu tipe tetap bersama tipe tersebut:
+`ChatTableController+Scroll` ada di `Controllers`, dan `MarkdownParser+Inline` di
+`Parsing`. Extension accessor/transform yang dipakai caller masuk `Extensions`.
+Helper private kecil tetap di file pemilik dengan MARK Helpers/Actions; jangan
+membuat satu file atau folder untuk setiap computed property.
+
+Komponen mandiri satu file, seperti `ActionCard`, `RemoteImage`, atau `DateChip`,
+tetap langsung di kelompok fungsinya. `ComposerSection` dan `FollowUpsSection` juga
+cukup satu file dalam bagian Chat masing-masing. Folder jenis file dipakai pada
+pemilik yang memiliki beberapa bagian; tidak perlu membuat folder kosong agar seragam.
 
 ## DesignKit
 
-```text
-Sources/DesignKit/
-├── Components/
-│   ├── Actions/                     # ActionCard, SuggestionChip
-│   ├── Images/                      # RemoteImage; satu pintu Kingfisher
-│   ├── Inputs/
-│   │   ├── GrowingTextInput/         # editor UIKit + bridge SwiftUI
-│   │   └── MessageComposer/          # field, action kirim/stop, button style
-│   ├── Lists/HostedTable/            # hosting cell + pengukuran layout table
-│   ├── Markdown/
-│   │   ├── MarkdownContent.swift     # view publik
-│   │   ├── MarkdownDocument.swift    # dokumen yang sudah di-parse
-│   │   ├── Parsing/                 # parser, pohon sementara, aturan sintaks
-│   │   ├── Blocks/                  # hasil parse: paragraf, list, tabel, dst.
-│   │   └── Rendering/               # view blok dan styling teks inline
-│   ├── Messages/                    # DateChip + MessageBubble/shape
-│   └── Screen/                      # ScreenHeader + ScreenScaffold
-├── Foundations/
-│   ├── Accessibility/               # ComponentIdentifier
-│   ├── Appearance/                  # palette environment, card, shadow
-│   ├── Iconography/                 # key ikon + Image/UIImage accessor
-│   └── Typography/                  # FontFace, FontLoader, SwiftUI accessor
-├── Extensions/                      # artwork, hex, resource locale, scroll progress
-├── Tokens/
-│   ├── Generated/                   # tetap milik export engine
-│   └── ...                          # ukuran/warna/batas baris custom
-└── Resources/                       # Fonts + Assets.xcassets
-```
+`Components` dibagi berdasarkan fungsi UI: `Actions`, `Images`, `Inputs`, `Lists`,
+`Markdown`, `Messages`, dan `Screen`. Komponen beberapa file memiliki folder pemilik,
+kemudian `Models`, `Views`, atau jenis lain yang memang dipakai.
 
-Komponen satu file langsung berada dalam kelompok fungsinya. Folder komponen dibuat
-bila implementasinya terdiri dari beberapa file, seperti `GrowingTextInput`.
-Model, helper, dan extension khusus komponen tinggal bersamanya. Contoh:
-`AttributedString+MarkdownStyle` berada di `Markdown/Rendering`, karena bukan
-extension string untuk seluruh aplikasi.
+Contoh penempatan yang sudah diterapkan:
 
-`Foundations` berisi dukungan lintas komponen: font, ikon, palette, dan surface.
-`Extensions` hanya untuk fungsi kecil yang memang lintas komponen. Jangan menaruh
-flow transfer, validasi rekening, atau model service host di DesignKit.
+- `Components/Inputs/MessageComposer/Views/MessageComposer.swift`: susunan composer.
+- `Components/Inputs/MessageComposer/Models/MessageComposerAction.swift`: jenis aksi.
+- `Components/Inputs/MessageComposer/Extensions/MessageComposerAction+Icon.swift`: pemetaan ikon aksi.
+- `Components/Lists/HostedTable/Views/HostingTableViewCell.swift`: cell berisi view SwiftUI.
+- `Components/Lists/HostedTable/Controllers/EmbeddedHostingController.swift`: controller khusus containment.
+- `Components/Markdown/Models/MarkdownDocument.swift`: Markdown yang sudah di-parse.
+- `Components/Markdown/Parsing/MarkdownParser.swift`: parsing dokumen.
+- `Components/Markdown/Views/MarkdownContent.swift`: rendering dokumen.
+
+`Foundations` berisi dukungan lintas komponen: `Typography`, `Iconography`,
+`Appearance`, dan `Accessibility`. `Extensions` pada root DesignKit hanya untuk
+fungsi kecil lintas komponen: artwork scaling, hex color, locale resource, dan
+scroll progress. Service bisnis, validasi rekening, serta flow transfer milik host.
 
 ## TanyaAI
 
-```text
-Sources/TanyaAI/
-├── Bridging/
-│   ├── TanyaAIHost.swift             # konfigurasi + makeView()
-│   ├── TanyaAIChatTransport.swift    # kontrak HTTP/SSE yang diimplementasi host
-│   └── TanyaAITransportError.swift
-├── Features/Chat/
-│   ├── ChatScreen.swift             # menyusun header, daftar, footer
-│   ├── Welcome/                     # section + data sambutan dari host
-│   ├── Composer/                    # draft lokal dan aksi kirim/stop
-│   ├── FollowUps/                   # saran pertanyaan berikutnya
-│   ├── Messages/                    # nilai pesan, merge, local question, MessageRow
-│   ├── ConversationList/
-│   │   ├── ChatTable.swift          # SwiftUI ↔ UIKit
-│   │   ├── ChatTableController.swift # snapshot dan lifecycle table
-│   │   ├── ChatTableState.swift     # input update table
-│   │   ├── Rows/                    # item, ID, input/action, penyusunan view baris
-│   │   ├── Dates/                   # pengelompokan hari dan label tanggal
-│   │   └── Scrolling/               # parkir pertanyaan, anchor, follow latest
-│   ├── Session/
-│   │   ├── TanyaAIBridge.swift      # pemilik state sesi; tetap public
-│   │   ├── TanyaAIBridge+Connection.swift
-│   │   ├── TanyaAIBridge+Turn.swift
-│   │   └── ...                      # connection, backoff, turn, history phase
-│   ├── Gateway/
-│   │   ├── ChatWire.swift           # metadata protokol
-│   │   ├── ChatHistoryPage.swift    # decode halaman history di background
-│   │   ├── Responses/              # WireInit, WireMessage, ack/error, dst.
-│   │   ├── Decoding/               # konfigurasi JSONDecoder dan tanggal wire
-│   │   └── Streaming/              # framing SSE → ChatEvent
-│   └── Keys/                       # ChatCopy, ChatImage, ID, accessor-nya
-└── Resources/                      # Assets.xcassets + en/id/zh-Hans.lproj
-```
+| Pemilik | Isi |
+| --- | --- |
+| `Bridging` | `TanyaAIHost`, kontrak transport host, serta error transport. |
+| `Features/Chat/ChatScreen` | Menyusun header, daftar, composer, dan lifecycle halaman. |
+| `Chat/Welcome` | `Models` untuk data sambutan; `Views` untuk section welcome. Welcome tetap bagian Chat. |
+| `Chat/Composer` | Draft lokal dan callback kirim/stop. |
+| `Chat/FollowUps` | Saran pertanyaan berikutnya. |
+| `Chat/Messages` | `Models` nilai pesan, `Views` bubble, `Extensions` merge pesan. |
+| `Chat/ConversationList` | `Models` item/state/action/input/hari; `Views` baris dan table adapter; `Controllers` table/scroll; `Formatting` tanggal; `Extensions` penyusunan baris. |
+| `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi. |
+| `Chat/Gateway` | `Models` kontrak respons/event/history, `Decoding`, `Streaming`, serta metadata protokol. HTTP tetap host. |
+| `Chat/Keys` | Key copy, image, identifier, tautan, dan `Extensions` accessor-nya. |
 
-`Welcome` adalah bagian Chat, bukan feature atau screen tersendiri.
-`Messages` mengurus isi pesan; `ConversationList` mengurus bagaimana seluruh
-percakapan disusun dan digulir, termasuk welcome, tanggal, serta follow-up.
-`Gateway` memahami format data server; `Session` memahami kapan menyambung,
-menggabungkan pesan, dan membuka kembali tombol kirim.
+Saat bagian berbeda membutuhkan model yang sama, letakkan pada pemilik bersama
+terdekat. Model khusus Welcome tetap di `Welcome/Models`; model yang benar-benar
+lintas bagian Chat boleh di `Chat/Models` saat kebutuhan itu ada. Jangan membuat
+satu folder `Models` atau `Views` besar untuk seluruh package.
 
-`TanyaAIBridge` tetap dibuat sekali oleh host dan diberikan ke `TanyaAIHost`.
-Lokasi source-nya mengikuti pemilik fungsi, yaitu sesi Chat. Memindahkan folder
-tidak mengubah akses public atau cara host memanggilnya.
-
-Key Chat dipindahkan dari `Shared` ke Chat karena saat ini hanya fitur itu yang
-memakainya. Naikkan ke lokasi bersama ketika ada pengguna lain yang nyata.
-Tests mengikuti jalur fungsi Sources; helper test tetap di `Tests/.../Support`.
-
-## Alur yang berjalan sekarang
+Urutan kerja saat ini:
 
 ```text
 Host membuat transport + TanyaAIBridge + TanyaAIHost
     → ChatScreen menjalankan lifecycle sesi
     → Session memanggil transport host: init → history → SSE
-    → Gateway decode; Messages menyiapkan nilai pesan/Markdown
+    → Gateway decode; Messages menyiapkan nilai pesan dan Markdown
     → ConversationList memperbarui baris berdasarkan ID
     → MessageRow merender dengan komponen DesignKit
 
-Composer/Welcome/FollowUps
+Composer / Welcome / FollowUps
     → aksi ke TanyaAIBridge
     → transport host
     → ack/event kembali melalui Session
 ```
 
-HTTP, autentikasi, PIN, dan navigasi tetap milik host. `TanyaAIBridge` menangani
-sesi chat-gateway, bukan orkestrasi seluruh transaksi bisnis.
+Host membuat bridge sekali selama halaman terbuka. Folder bukan batas module Swift;
+`import DesignKit`, `import TanyaAI`, dan API publik tidak berubah karena pemindahan.
+Perubahan `onOpenLink` menjadi `String` dan perbaikan back iOS 15 sudah berasal dari
+PR #52 di basis `startingpoint`; keduanya dipertahankan pada struktur ini.
 
 ## Pola intent berikutnya
 
-Berikut rencana untuk intent pertama, belum folder atau implementasi tambahan.
-Buat satu flow `ReferenceLetter` sampai selesai sebelum mengekstrak kebutuhan bersama.
+Berikut rancangan untuk flow pertama, belum implementasi atau folder kosong dalam package:
 
 ```text
 TanyaAI/Features/Chat/Intents/ReferenceLetter/
-├── ReferenceLetterView.swift         # memilih form/loading/summary sesuai state
-├── ReferenceLetterFormView.swift     # input + aksi; tidak hit service
-├── ReferenceLetterSummaryView.swift  # hasil read-only
-├── ReferenceLetterState.swift        # kondisi UI flow ini
-├── ReferenceLetterDraft.swift        # nilai form
-└── ReferenceLetterSummary.swift      # data hasil untuk ditampilkan
-
-HostApp/Features/TanyaAI/Intents/
-├── ChatIntentHandler.swift           # arahkan jenis intent ke flow host
-├── ChatIntentContent.swift           # pasang view sesuai instance intent
-└── ReferenceLetter/
-    ├── ReferenceLetterContent.swift   # hubungkan view dengan view model host
-    └── ReferenceLetterViewModel.swift # draft/state + aksi flow
-
-HostApp/Features/ReferenceLetter/      # pakai logic bisnis existing host
-└── ...                              # use case/service + rute PIN/receipt
+├── Models/
+│   ├── ReferenceLetterState.swift
+│   ├── ReferenceLetterDraft.swift
+│   └── ReferenceLetterSummary.swift
+└── Views/
+    ├── ReferenceLetterView.swift
+    ├── ReferenceLetterFormView.swift
+    └── ReferenceLetterSummaryView.swift
 ```
 
-Nama dan jumlah file disesuaikan dengan kebutuhan nyata. View kecil boleh satu file;
-model satu pemakai tetap dekat view pemilik. Tidak perlu ViewModel di setiap view,
-repository baru bila service existing sudah mencukupi, atau `BaseIntent`.
+Host memiliki view model per instance intent yang memegang draft/state dan memakai
+use case/service serta coordinator PIN existing. Form mengirim aksi ke host;
+hasil final mengubah state instance yang sama menjadi summary. ID baris tetap.
+Jenis intent (`referenceLetter`) berbeda dari instance ID karena nasabah dapat
+menjalankan jenis flow yang sama beberapa kali.
 
-Untuk contoh surat referensi:
+State hidup bersama owner host, bukan sel table yang dapat di-recycle. Respons
+terlambat dicocokkan ke instance/request aktif. Double submit, pembatalan PIN, dan
+retry mengikuti use case host. PIN tidak masuk payload TanyaAI atau history.
+Riwayat selesai menyimpan snapshot read-only dan tidak menjalankan ulang service.
 
-1. Host menerima jenis intent dan membuat **instance ID** untuk kemunculan flow itu.
-2. View model host memanggil validasi existing. Hasilnya mengisi state form.
-3. Form mengubah draft melalui binding; tombol Kirim menyampaikan aksi ke host.
-4. Host submit dan membuka PIN melalui coordinator existing. Data PIN tidak masuk
-   model TanyaAI atau payload history.
-5. Host menerima hasil final service, lalu mengubah state instance yang sama menjadi
-   summary. **ID baris tetap**, sehingga form berubah di tempat.
+Slot `makeView { content }` saat ini hanya satu baris sisipan di akhir daftar,
+belum penyedia view per intent. Ketika flow pertama dibuat, kontrak item intent
+ber-ID stabil dan callback host dirancang bersama kebutuhan flow tersebut.
+Tidak perlu BaseIntent, generic flow engine, atau ViewModel untuk setiap komponen.
 
-Jenis intent (`referenceLetter`) berbeda dari instance ID: nasabah dapat membuat
-surat referensi lebih dari sekali dalam percakapan yang sama. State dimiliki host
-selama flow hidup, bukan sel table, sehingga tidak hilang saat sel di-recycle.
-Riwayat selesai berupa snapshot read-only; membuka history tidak memanggil ulang
-service. Hasil terlambat harus dicocokkan ke instance/request yang masih aktif;
-double submit, pembatalan PIN, dan retry mengikuti aturan use case host.
+## Panduan developer berikutnya
 
-Slot `makeView { content }` sekarang hanya satu baris sisipan di akhir daftar.
-Itu belum API untuk banyak intent. Saat implementasi intent pertama, tambahkan
-item intent ber-ID stabil dan penyedia view per item. Detail kontraknya diputuskan
-bersama flow pertama, tanpa mengubah slot existing diam-diam pada perapian ini.
+1. Tentukan pemilik fungsi: komponen generik DesignKit, bagian Chat, atau bisnis host.
+2. Tentukan jenis file dengan tabel di atas. Gunakan folder yang sudah ada bila sesuai.
+3. Letakkan data dan helper dekat pemilik; naikkan cakupan hanya bila ada pemakai nyata lain.
+4. Ikuti [pola view](VIEW_TEMPLATE.md): input/state, initializer, body, bagian visual,
+   kemudian extension Helpers dan Actions. Nama callback menyatakan aksinya.
+5. Tests mengikuti pemilik dan jenis perilaku yang diuji. Test yang meliputi beberapa
+   jenis file, seperti registrasi dan pemakaian font, tetap di root fungsi tersebut.
+   Helper test lintas suite di `Tests/<Package>Tests/Support`.
+6. Jalankan `python3 Scripts/package_tree.py` setelah menambah/memindahkan file, lalu
+   `Scripts/check_style.sh` dan test yang sesuai. Pastikan resource dan test tetap ditemukan.
 
-## Aturan menambah kode
-
-| Yang ditambahkan | Pemilik |
-| --- | --- |
-| Field, picker, tombol, kartu generik | DesignKit, kelompok fungsi yang sesuai |
-| Layout/form/summary khusus intent | TanyaAI `Chat/Intents/<NamaIntent>` |
-| Draft dan urutan aksi transaksi aktif | View model host per instance intent |
-| Service, eligibility bisnis, PIN, receipt resmi | Use case/service/coordinator existing host |
-| Format respons chat-gateway | TanyaAI `Chat/Gateway` |
-| Penyambungan, retry, turn chat | TanyaAI `Chat/Session` |
-| Penyusunan baris atau aturan scroll | TanyaAI `Chat/ConversationList` |
-| Font, palette, ikon generik | DesignKit `Foundations` |
-
-Ikuti [pola view](VIEW_TEMPLATE.md): input/state, initializer, body, bagian visual,
-kemudian extension Helpers dan Actions. Jangan membuat folder `Models`/`Views`
-global, catalog callback, generic flow engine, atau kelas dasar agar semua file
-terlihat seragam. Kesamaan pola adalah kesamaan tanggung jawab.
-
-## Batas perubahan dan performa
-
-Perapian ini memindahkan source dan tests, membedakan blok Helpers/Actions, serta
-memperbarui jalur pemeriksaan. Tidak menambah dependency, object, subscription,
-parsing di `body`, atau state baru. Nilai token/resource dan algoritma scroll,
-measurement editor, penggabungan pesan, serta parsing Markdown tetap sama.
-
-Ini bukan klaim bebas bug atau peningkatan FPS. Checkpoint-nya adalah build package
-dan host, tes package, serta UI/lifecycle existing. Ketika intent dibuat, ketikan
-form harus diamati di row pemilik, bukan memicu pembangunan ulang seluruh chat;
-service tidak dimulai dari `body`/`onAppear` sel. Ukur lagi dengan flow tersebut.
-
-Package tetap dua target saat ini. Pemisahan ke banyak package/target baru belum
-diperlukan hanya untuk mengelompokkan file.
+Pengelompokan folder tidak menambah object, subscription, dependency, atau layer
+runtime. Parsing tetap saat data masuk, draft tetap lokal di composer, dan table
+memakai ID stabil. Ini bukan benchmark performa; ukur lagi ketika flow baru
+memperkenalkan state/proses. Service tidak dimulai dari body/onAppear sel, dan
+ketikan form intent harus diamati oleh row pemiliknya.

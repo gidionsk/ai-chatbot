@@ -119,7 +119,10 @@ Tidak perlu menambahkan weak capture pada setiap closure SwiftUI secara otomatis
 
 ## Kapan dipindahkan menjadi komponen bersama
 
-Lihat [tree dan pola intent](PACKAGE_STRUCTURE.md) untuk struktur lengkap.
+Lihat [tree seluruh file](PACKAGE_TREE.md) dan [aturan penempatan](PACKAGE_STRUCTURE.md).
+Pola folder: fungsi/pemilik → jenis file. View masuk Views, data/config/state masuk Models,
+controller UIKit masuk Controllers, accessor/transform masuk Extensions. Folder tersebut berada
+pada pemiliknya, bukan satu catalog global. Komponen satu file tidak perlu lapisan folder tambahan.
 
 | Tanggung jawab | Tempat |
 | --- | --- |
