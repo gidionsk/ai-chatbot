@@ -28,7 +28,7 @@ Extension yang membagi implementasi satu tipe tetap bersama tipe tersebut:
 Helper private kecil tetap di file pemilik dengan MARK Helpers/Actions; jangan
 membuat satu file atau folder untuk setiap computed property.
 
-Komponen mandiri satu file, seperti `ActionCard`, `RemoteImage`, atau `DateChip`,
+Komponen mandiri satu file, seperti `ActionCard`, `RemoteImage`, atau `TextChip`,
 tetap langsung di kelompok fungsinya. `ComposerSection` dan `FollowUpsSection` juga
 cukup satu file dalam bagian Chat masing-masing. Folder jenis file dipakai pada
 pemilik yang memiliki beberapa bagian; tidak perlu membuat folder kosong agar seragam.

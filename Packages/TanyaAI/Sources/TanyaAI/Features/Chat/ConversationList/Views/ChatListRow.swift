@@ -57,7 +57,9 @@ private extension ChatListRow {
     @ViewBuilder
     func dateChip(_ day: ChatDayIdentifier) -> some View {
         if let date = day.date {
-            DateChip(text: ChatDateFormat.dayLabel(for: date, locale: locale))
+            // Chip tanggal menjadi judul kelompok hari untuk VoiceOver; posisinya di tengah dari frame baris.
+            TextChip(text: ChatDateFormat.dayLabel(for: date, locale: locale))
+                .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier(ChatElementIdentifier.dateChip)
         }
     }

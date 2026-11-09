@@ -1,5 +1,5 @@
 //
-//  DateChip.swift
+//  TextChip.swift
 //  DesignKit
 //
 //  Created by Wendra on 3/11/26.
@@ -7,12 +7,11 @@
 
 import SwiftUI
 
-/// Label tanggal di tengah daftar pesan, di atas pesan pertama setiap hari. Teks sudah diformat caller.
-/// Permukaan kartu tanpa bayangan. TODO: Konfirmasi warna teks dengan Figma; sementara dari screenshot.
+/// Chip teks tanpa aksi, satu baris, di atas permukaan kartu tanpa bayangan. Teks sudah diformat pemakai; posisi dan
+/// peran aksesibilitas (mis. judul kelompok) juga milik pemakai. TODO: Konfirmasi warna teks dengan Figma.
 @MainActor
-public struct DateChip: View {
-    @Environment(\.designColors)
-    private var colors
+public struct TextChip: View {
+    @Environment(\.designColors) private var colors
     private let text: String
     private let fontFace: FontFace
 
@@ -25,11 +24,9 @@ public struct DateChip: View {
         Text(text)
             .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
             .foregroundColor(colors.colorsTextSecondary)
-            .lineLimit(CustomTextLines.dateChip)
+            .lineLimit(CustomTextLines.textChip)
             .padding(.horizontal, FigmaSize.spacingMedium.scaledToArtwork)
             .padding(.vertical, FigmaSize.spacingSmall.scaledToArtwork)
             .cardStyle(isElevated: false, cornerRadius: CustomSizes.Chip.cornerRadius.scaledToArtwork)
-            .frame(maxWidth: .infinity)
-            .accessibilityAddTraits(.isHeader)
     }
 }
