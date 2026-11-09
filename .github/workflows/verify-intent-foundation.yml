@@ -2,6 +2,9 @@ name: Verify TanyaAI Intent Foundation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/intent-foundation
   pull_request:
     branches:
       - startingpoint
