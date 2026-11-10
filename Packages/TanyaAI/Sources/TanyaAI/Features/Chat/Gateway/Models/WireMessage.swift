@@ -19,9 +19,11 @@ struct WireMessage: Decodable {
     let clientMsgId: String?
     /// Nil bila server tidak memberi saran (contract: `null`, bukan `[]`).
     let followUpQuestions: [String]?
+    /// Nil bila `intent` kosong; nilai yang belum dikenal menjadi `unknown`.
+    let intent: ChatIntent?
 
     private enum CodingKeys: CodingKey {
-        case messageId, seq, direction, payload, status, createdAt, clientMsgId, followUpQuestions
+        case messageId, seq, direction, payload, status, createdAt, clientMsgId, followUpQuestions, intent
     }
 
     init(from decoder: Decoder) throws {
@@ -34,5 +36,6 @@ struct WireMessage: Decodable {
         createdAt = try? container.decodeIfPresent(String.self, forKey: .createdAt)
         clientMsgId = try? container.decodeIfPresent(String.self, forKey: .clientMsgId)
         followUpQuestions = try? container.decodeIfPresent([String].self, forKey: .followUpQuestions)
+        intent = ChatIntent(wire: try? container.decodeIfPresent(String.self, forKey: .intent))
     }
 }

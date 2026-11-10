@@ -21,7 +21,7 @@ METADATA = {
     'Features/Chat/Keys/TanyaAILink.swift',
     'Features/Chat/Gateway/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
     'Features/Chat/Gateway/Models/ConversationState.swift', 'Features/Chat/Gateway/Models/WireError.swift',
-    'Features/Chat/Gateway/Models/WireCancel.swift',
+    'Features/Chat/Gateway/Models/WireCancel.swift', 'Features/Chat/Gateway/Models/ChatIntent.swift',
     'Features/Chat/ConversationList/Formatting/ChatDateFormat.swift',
     'Features/Chat/ConversationList/Models/ChatDayIdentifier.swift',
     'Components/Markdown/Parsing/MarkdownSyntax.swift',

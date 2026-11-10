@@ -35,6 +35,9 @@ Typing, limits, list conversations, close, leave-agent, dan `success-id` belum d
 - `type` tidak dibaca. Jawaban `assistant` selalu diproses sebagai Markdown (keputusan user 4 November 2026):
   teks biasa adalah Markdown yang valid. `html` tampil sebagai teks, karena tidak ada HTML renderer.
   Payload objek (`interaction`, `json`) belum punya tampilan dan disembunyikan.
+- `intent` dibaca ke `ChatMessage.intent` (`ChatIntent`, di `Gateway/Models`): `handover-to-agent` =
+  `handoverToAgent`, kosong atau tidak ada = nil, nilai lain = `unknown`. Belum ada tampilan yang membacanya;
+  intent baru ditambah sebagai case saat ada fitur yang memakainya.
 
 ## Saran lanjutan
 

@@ -49,13 +49,13 @@ enum WireFixture {
     /// Objek `Message` lengkap; `direction` assistant untuk seq genap, user untuk ganjil kecuali ditentukan.
     static func message(
         seq: Int, direction: String? = nil, payload: String? = nil, status: String = "active",
-        clientMessageID: String? = nil, followUps: String = "null"
+        clientMessageID: String? = nil, followUps: String = "null", intent: String = ""
     ) -> String {
         let author = direction ?? (seq.isMultiple(of: 2) ? "assistant" : "user")
         let clientID = clientMessageID.map { "\"\($0)\"" } ?? "null"
         return #"""
             {"message_id":"m-\#(seq)","seq":"\#(seq)","direction":"\#(author)","type":"text",\#
-            "payload":"\#(payload ?? "pesan \(seq)")","intent":"","action":"","source":"","params":{},\#
+            "payload":"\#(payload ?? "pesan \(seq)")","intent":"\#(intent)","action":"","source":"","params":{},\#
             "success_id":null,"success_at":null,"follow_up_questions":\#(followUps),"interaction":null,\#
             "client_msg_id":\#(clientID),"status":"\#(status)",\#
             "created_at":"2026-10-23T15:00:00+07:00"}

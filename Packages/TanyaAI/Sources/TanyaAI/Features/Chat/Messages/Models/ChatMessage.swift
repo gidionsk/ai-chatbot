@@ -24,6 +24,8 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
     let document: MarkdownDocument?
     /// Saran pertanyaan lanjutan dari `follow_up_questions`; yang tampil hanya milik jawaban terakhir.
     let followUps: [String]
+    /// Intent router dari gateway; disiapkan untuk intent berikutnya, belum ada tampilan yang membacanya.
+    let intent: ChatIntent?
 
     /// Nil bila `seq` bukan angka desimal: pesan tanpa urutan tidak bisa digabung dengan aman.
     init?(wire: WireMessage) {
@@ -31,13 +33,13 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
         self.init(
             id: wire.messageId, seq: seq, author: wire.direction, text: wire.payload, status: wire.status,
             createdAt: wire.createdAt.flatMap(Date.init(wire:)), clientMessageID: wire.clientMsgId,
-            followUps: wire.followUpQuestions ?? []
+            followUps: wire.followUpQuestions ?? [], intent: wire.intent
         )
     }
 
     init(
         id: String, seq: Int, author: ChatAuthor, text: String?, status: ChatMessageStatus, createdAt: Date? = nil,
-        clientMessageID: String? = nil, followUps: [String] = []
+        clientMessageID: String? = nil, followUps: [String] = [], intent: ChatIntent? = nil
     ) {
         self.id = id
         self.seq = seq
@@ -47,6 +49,7 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
         self.createdAt = createdAt
         self.clientMessageID = clientMessageID
         self.followUps = followUps
+        self.intent = intent
         document = author == .assistant ? text.map(MarkdownDocument.init) : nil
     }
 }
