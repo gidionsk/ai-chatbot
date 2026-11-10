@@ -32,9 +32,13 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge), dan daftar
   Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.
-- Folder TanyaAI: `Bridging/` (API host), `Features/<Fitur>/` (screen di root, tiap bagian
-  `Welcome/`, `Composer/` berisi view + modelnya), `Shared/Keys|Extensions`, `Resources/`.
-  Tests mencerminkan Sources. Detail di AGENTS.md.
+- Struktur fungsi → jenis file: [docs/PACKAGE_STRUCTURE.md](docs/PACKAGE_STRUCTURE.md).
+  TanyaAI: `Bridging/` untuk konfigurasi/kontrak host; `Features/Chat/` berisi screen dan bagian-bagiannya.
+  `Messages` mengurus nilai/bubble, `ConversationList` daftar/scroll, `Session` bridge/state,
+  `Gateway` decode/protokol, `Keys` accessor fitur. Welcome tetap bagian Chat.
+  DesignKit: `Components/<Fungsi>`, `Foundations`, `Extensions`, `Tokens`, `Resources`.
+  Kelompok beberapa file memakai Models/Views/Controllers/Extensions sesuai peran di dalam pemiliknya.
+  Tests mencerminkan Sources. Intent belum diputuskan; rancangan di dokumen dikonfirmasi saat flow pertama dimulai.
 - Unit test memakai Swift Testing (`@Test`, `#expect`, `#require`); UI test tetap
   XCTest. Suite yang memakai window di sandbox masuk `HostWindowTests` (berurutan).
 - Sandbox meniru host Byon: coordinator menulis Input UseCase, UseCase mengolah ke Repository, view model

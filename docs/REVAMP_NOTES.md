@@ -1,5 +1,7 @@
 # Keputusan revamp dan tahap berikutnya
 
+Struktur aktif mengikuti [PACKAGE_STRUCTURE.md](PACKAGE_STRUCTURE.md). Catatan bertanggal di bawah menyimpan kondisi saat validasi masing-masing dilakukan.
+
 Ringkasan keputusan yang sudah diambil untuk starter ini, ditambah saran untuk
 tahap yang belum dikerjakan. Dokumen lain menjelaskan cara memakai API; dokumen
 ini menjelaskan alasannya.

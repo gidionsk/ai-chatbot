@@ -1,5 +1,71 @@
 # Validasi starter
 
+Struktur aktif mengikuti [PACKAGE_STRUCTURE.md](PACKAGE_STRUCTURE.md). Catatan bertanggal di bawah menyimpan kondisi saat validasi masing-masing dilakukan.
+
+## Tree lengkap dan pengelompokan jenis file — 8 November 2026
+
+Basis terbaru `startingpoint` commit `0f27ad9`, termasuk PR #52. Branch
+`refactor/package-functional-structure` menerapkan fungsi/pemilik → jenis file.
+
+- Total terhadap basis PR: 148 rename, tanpa file package dihapus atau ditambahkan. Hanya tiga file
+  package memiliki perubahan isi: pembagian extension ChatScreen/TanyaAIBridge dan pencarian root
+  package pada AssetTests. API publik, manifest/dependency, token, dan resources tidak berubah.
+- `Scripts/package_tree.py` dan `PACKAGE_TREE.md` dihapus (keputusan user 9 November 2026): struktur
+  cukup dijelaskan di `PACKAGE_STRUCTURE.md`, tanpa inventori yang harus dijaga per PR.
+- Pencarian root package di `AssetTests` dan `ChatImageTests` memakai `/Tests/` terakhir, sehingga tetap
+  benar bila repo berada di dalam folder bernama `Tests` (dibuktikan dengan path contoh).
+- Style: 0 pelanggaran pada 240 Swift file. Tiga file dengan perubahan isi juga lolos
+  `swift-format lint --strict`; link dokumentasi lokal dan `git diff --check` lolos.
+
+Xcode 27.2 (27B52), simulator iOS 26.5:
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| DesignKit, iPhone 17 Pro | 69 test / 21 suite lulus |
+| TanyaAI, iPhone 17 Pro | 122 test / 24 suite lulus |
+| Host sandbox, iPhone 17 Pro | Build dan 32 test / 13 suite lulus |
+| UI sandbox, iPhone 17 Pro | 32 lulus, 1 dilewati karena keyboard layar tidak tampil, 0 gagal |
+| Kasus keyboard tersebut, simulator SE | Lulus, 0 dilewati |
+
+Total 223 test unit dan 33 kasus UI terverifikasi. Termasuk composer empat baris,
+caret, ukuran font tetap, tiga bahasa, padding, scroll, navigasi host, welcome,
+tautan syarat, serta callback kirim/stop/link. Tidak ada pengujian FPS/memori baru
+karena perubahan hanya organisasi source. Runtime iOS 15 belum tersedia; deployment
+target tetap iOS 15 dan test jalur legacy existing tetap dijalankan di runtime yang tersedia.
+
+## Perapian struktur berdasarkan fungsi — 7 November 2026
+
+Basis `startingpoint` commit `439d23c`; branch `refactor/package-functional-structure`.
+Perubahan PR #52 belum termasuk. Scope: penempatan source/test dan dokumentasi pola berikutnya.
+
+- 124 file dipindahkan, 122 tetap identik byte-per-byte. Dua file yang ikut diedit:
+  `TanyaAIBridge` dipisahkan menjadi blok State/Actions pada file yang sama;
+  `AssetTests` menemukan root package tanpa bergantung pada kedalaman folder.
+- `ChatScreen` membedakan extension Helpers dan Actions. Tidak ada perubahan algoritma atau API publik.
+- Tidak ada file dihapus. Token, font, aset, lokalisasi, dependency, dan manifest package tidak berubah.
+- Guard desain disesuaikan ke path baru dengan pengecualian metadata yang sama; pemeriksaan tetap aktif.
+- `Scripts/check_style.sh`: lulus, 0 pelanggaran pada 236 file. Tiga Swift file dengan perubahan isi
+  juga diperiksa langsung dengan `swift-format lint --strict`, termasuk file rename.
+- `git diff --check` dan pemeriksaan link dokumentasi lokal: lulus.
+
+Xcode 27.2 (27B52), iPhone 17 Pro simulator iOS 26.5:
+
+| Pemeriksaan | Hasil |
+| --- | --- |
+| DesignKit | 66 test / 20 suite lulus |
+| TanyaAI | 121 test / 24 suite lulus |
+| Host sandbox | Build dan 32 test / 13 suite lulus |
+| UI sandbox | 30 lulus, 1 dilewati karena keyboard layar tidak tampil, 0 gagal |
+| Kasus keyboard yang dilewati, dijalankan di simulator SE iOS 26.5 | Lulus |
+
+Total 219 test unit dan 31 kasus UI terverifikasi. UI mencakup parkir pertanyaan, follow-up,
+pesan masuk saat membaca history, header, navigasi host, caret, input empat baris, ukuran font tetap,
+padding tombol, tiga bahasa, welcome, serta callback link/stop.
+
+Ini verifikasi regresi setelah pemindahan, bukan benchmark FPS/memori atau audit semua bug existing.
+Build masih mengeluarkan warning actor isolation existing pada `MarkdownImageView` (isi file tidak berubah).
+Deployment target tetap iOS 15; runtime iOS 15 tidak tersedia di mesin ini sehingga belum diuji langsung.
+
 ## Perbaikan review bridging lanjutan — 29 Oktober 2026
 
 - Sesi habis final: `expireSession()` membatalkan task sambungan, jadi stream yang sedang terbuka ikut

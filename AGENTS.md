@@ -67,14 +67,22 @@ tersedia pada history/main.
 
 ## Struktur TanyaAI
 
-- `Bridging/`: API publik untuk host (`TanyaAIHost`). Satu-satunya pintu masuk host.
-- `Features/<Fitur>/`: satu fitur = satu screen/alur yang bisa dinavigasi (kini `Chat`). Screen di
-  root fitur (`ChatScreen.swift`); tiap bagian screen punya folder sendiri berisi view dan model
-  yang hanya dipakai bagian itu: `Welcome/` (section + `WelcomeContent/Greeting/Shortcut`),
-  `Composer/`, nanti `Messages/`. Bagian bukan fitur sendiri. Model diletakkan dekat pemakainya,
-  tanpa folder `Models/` atau `Views/` umum. Model yang dipakai beberapa bagian naik ke root fitur.
-- `Shared/Keys`: enum key resource lintas fitur (`ChatCopy`, `ChatImage`,
-  `ChatElementIdentifier`); `Shared/Extensions`: `Tipe+Key.swift` (satu extension per file).
+- Struktur dan aturan penempatan: [docs/PACKAGE_STRUCTURE.md](docs/PACKAGE_STRUCTURE.md).
+  Pola: fungsi/pemilik → jenis file (`Models`, `Views`, `Controllers`, `Extensions`) → implementasi.
+- `Bridging/`: konfigurasi host (`TanyaAIHost`) dan kontrak transport/error yang diimplementasi host.
+- `Features/<Fitur>/`: screen di root fitur (`ChatScreen.swift`); bagian screen tetap di bawahnya:
+  `Welcome/`, `Composer/`, `FollowUps/`. Welcome memiliki `Models/` dan `Views/` sendiri.
+  Model dekat pemakainya; tidak ada folder Models/Views global untuk seluruh package.
+  Bagian satu file seperti Composer/FollowUps tetap sederhana. `Welcome` bukan fitur tersendiri.
+- `Chat/Messages`: nilai/merge pesan dan tampilan bubble. `Chat/ConversationList`: penyusunan baris,
+  tanggal, hosting table, dan scroll. Di dalamnya: `Models`, `Views`, `Controllers`, `Extensions`, `Formatting`.
+  Jangan menaruh seluruh logic daftar di `Messages`.
+- `Chat/Session`: `TanyaAIBridge` dan state/connection/turn. Bridge tetap public dan dibuat sekali oleh host.
+  `Chat/Gateway`: format respons, decoding, history, dan framing SSE; HTTP tetap milik host.
+- `Chat/Keys`: `ChatCopy`, `ChatImage`, `ChatElementIdentifier` serta accessor terkait. Jangan membuat
+  `Shared` sebelum ada beberapa fitur yang benar-benar memakai fungsi yang sama.
+- Intent belum diputuskan. Rancangannya ada di `docs/PACKAGE_STRUCTURE.md` dan dikonfirmasi ke user saat Figma
+  dan contract flow pertama ada. Jangan menambah folder kosong atau BaseIntent sebelum itu.
 - `Resources/`: aset dan lokalisasi saja, tanpa file Swift. Tests mencerminkan folder Sources;
   helper test di `Support/`.
 
@@ -116,14 +124,21 @@ tersedia pada history/main.
 
 ## Komponen dan ownership
 
-- Struktur `Components/<NamaKomponen>`, `Extensions/<Type>+<Responsibility>.swift`,
-  `ViewModifier` bersama di `ViewModifiers/<Nama>.swift`.
+- DesignKit `Components/<Fungsi>`: `Actions`, `Images`, `Inputs`, `Lists`, `Markdown`, `Messages`, `Screen`.
+  Komponen beberapa file memakai subfolder sendiri; satu file langsung di kelompok fungsinya.
+  Bagian beberapa file dikelompokkan ke `Models`, `Views`, `Controllers`, `Protocols`, `Extensions` sesuai peran.
+  Helper/model/extension khusus komponen tetap dalam pemilik itu, seperti `Markdown/Models` dan `Markdown/Views`.
+  `Foundations` berisi `Typography`, `Iconography`, `Appearance`, `Accessibility`.
+  `Extensions/<Type>+<Responsibility>.swift` hanya untuk utilitas lintas komponen. Modifier card/shadow
+  dan palette environment berada di `Foundations/Appearance/ViewModifiers` dan `Extensions`.
+  Extension implementasi satu tipe tetap bersamanya (parser di Parsing, controller di Controllers);
+  extension accessor/transform seperti Array+ChatMessage masuk Extensions. Jangan membuat folder jenis yang kosong.
   Nama DesignKit umum, tanpa prefix fitur. Jangan membuat ViewModel per komponen.
 - Identifier UI test dikelompokkan per komponen (`ComponentIdentifier.Header.title`,
   `ComponentIdentifier.Composer.send`). String identifier adalah kontrak UI test.
 - Tidak ada alias untuk nilai sistem: `.clear`, bukan `CustomColors.transparent`.
-- TanyaAI dipisah per tanggung jawab (lihat "Struktur TanyaAI"). Folder baru seperti
-  `Features/Chat/Messages/` atau `Flows/` dibuat saat file pertamanya ada, bukan lebih awal.
+- TanyaAI dipisah per tanggung jawab (lihat "Struktur TanyaAI"). Folder intent baru dibuat saat file
+  pertamanya ada, bukan lebih awal.
 - Screen standar memakai composition `ScreenScaffold` dari DesignKit: header, trailing action, footer, dan
   latar. Scroll milik konten, yang melaporkan `scrollProgress`; `ChatScreen` memakai ini dengan `ChatTable`.
   Aturan table ada di `docs/REVAMP_NOTES.md`. Jangan membuat inheritance/BaseScreen protocol, ViewModel layout
@@ -148,8 +163,8 @@ tersedia pada history/main.
 - Welcome berasal dari BE, tapi decode milik host: `WelcomeContent`/`WelcomeGreeting`/`WelcomeShortcut`
   (folder `Features/Chat/Welcome/`) adalah struct biasa tanpa `Decodable`. Host memetakan model
   inquiry init miliknya ke tipe ini; `iconURL` nil memakai ikon fallback. Contract chat-gateway ICT
-  (init chat, history, SSE) di-decode TanyaAI (`Features/Chat/Session/Wire*`). Shortcut dikirim lewat bridge.
-- `TanyaAIBridge` (Bridging/) dipegang host selama halaman terbuka bersama `TanyaAIChatTransport`
+  (init chat, history, SSE) di-decode TanyaAI (`Features/Chat/Gateway`). Shortcut dikirim lewat bridge.
+- `TanyaAIBridge` (`Features/Chat/Session`) dipegang host selama halaman terbuka bersama `TanyaAIChatTransport`
   (per endpoint, body mentah, non-2xx = `TanyaAITransportError.response`). Bridge menjalankan
   init → history → SSE lewat `.task`, backoff 1–30 detik tanpa batas, merge history berdasarkan
   `message_id`, dan `Last-Event-ID` = seq terbesar. Pesan hanya tampil dari stream; `isAwaitingReply`
