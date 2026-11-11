@@ -92,9 +92,24 @@ extension ChatTableController: UITableViewDelegate {
         DispatchQueue.main.async { [weak self] in self?.publishScrollProgress() }
     }
 
+    /// Sama seperti progress header: dikirim pada putaran berikutnya. Yang dikirim nilai saat itu, jadi posisi
+    /// sementara di tengah update (mis. sebelum history parkir di bawah) tidak pernah sampai ke halaman.
+    func reportLatestVisibility() {
+        guard isNearBottom != isNearBottomReported, !isVisibilityPending else { return }
+        isVisibilityPending = true
+        DispatchQueue.main.async { [weak self] in self?.publishLatestVisibility() }
+    }
+
     private func recordHeight(of cell: UITableViewCell, at indexPath: IndexPath) {
         guard state.items.indices.contains(indexPath.row) else { return }
         measuredHeights[state.items[indexPath.row].id] = cell.bounds.height
+    }
+
+    private func publishLatestVisibility() {
+        isVisibilityPending = false
+        guard isNearBottom != isNearBottomReported else { return }
+        isNearBottomReported = isNearBottom
+        onLatestVisibilityChange(isNearBottom)
     }
 
     private func publishScrollProgress() {

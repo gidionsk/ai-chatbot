@@ -24,6 +24,8 @@ public struct ChatScreen<Content: View>: View {
     @ObservedObject
     private var bridge: TanyaAIBridge
     @State private var scrollProgress = CGFloat.zero
+    @State private var isLatestVisible = true
+    @State private var latestJumpID: UUID?
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
@@ -60,8 +62,23 @@ public struct ChatScreen<Content: View>: View {
     private func conversation(headerHeight: CGFloat) -> some View {
         ChatTable(
             state: tableState, headerHeight: headerHeight, actions: rowActions,
-            onScrollProgress: { scrollProgress = $0 }, row: listRow
+            onScrollProgress: { scrollProgress = $0 }, onLatestVisibilityChange: { isLatestVisible = $0 },
+            row: listRow
         )
+        .overlay(alignment: .bottom) { latestButton }
+    }
+
+    /// Mengambang di tengah, tepat di atas composer, selama ujung daftar di luar layar.
+    /// TODO: Konfirmasi jarak ke composer dengan Figma; sementara perkiraan dari foto.
+    @ViewBuilder
+    private var latestButton: some View {
+        if !isLatestVisible {
+            FloatingIconButton(
+                icon: .arrowDown, label: String(ChatCopy.scrollToLatest, locale: locale), onTap: showLatest
+            )
+            .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
+            .accessibilityIdentifier(ChatElementIdentifier.scrollToLatest)
+        }
     }
 
     /// Baris table tidak mewarisi environment halaman, jadi nilainya dipasang di sini. `id` mencegah state view
@@ -117,7 +134,8 @@ private extension ChatScreen {
     var tableState: ChatTableState {
         ChatTableState(
             items: listItems, sentQuestionID: bridge.latestSentQuestionID,
-            incomingMessageID: bridge.latestIncomingContentID, historyPhase: bridge.historyPhase,
+            incomingMessageID: bridge.latestIncomingContentID, latestJumpID: latestJumpID,
+            historyPhase: bridge.historyPhase,
             rowInputs: ChatRowInputs(welcome: welcome, locale: locale, colors: colors)
         )
     }
@@ -156,6 +174,11 @@ private extension ChatScreen {
     /// Menghentikan jawaban yang sedang berjalan; kunci dibuka oleh `turn_end` dari stream.
     func stop() {
         Task { [bridge] in await bridge.cancelTurn() }
+    }
+
+    /// Tombol panah: kembali ke pesan terbaru yang sebenarnya, juga saat pertanyaan sedang parkir.
+    func showLatest() {
+        latestJumpID = UUID()
     }
 
     /// Saran lanjutan dikirim sebagai chat, sama seperti shortcut.

@@ -57,6 +57,12 @@ final class ChatTableFixture {
         controller.update(state)
     }
 
+    /// Seperti tombol ke pesan terbaru ditekan.
+    func jumpToLatest() {
+        state.latestJumpID = UUID()
+        controller.update(state)
+    }
+
     func update(rowInputs: ChatRowInputs) {
         state.rowInputs = rowInputs
         controller.update(state)

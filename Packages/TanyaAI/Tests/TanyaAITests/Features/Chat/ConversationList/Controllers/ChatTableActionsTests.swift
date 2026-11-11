@@ -55,7 +55,7 @@ private struct ActionPage: View {
     var body: some View {
         ChatTable(
             state: ChatTableState(items: ChatTableFixture.history(count: 1), historyPhase: .empty),
-            headerHeight: .zero, actions: actions, onScrollProgress: { _ in },
+            headerHeight: .zero, actions: actions, onScrollProgress: { _ in }, onLatestVisibilityChange: { _ in },
             row: { _, actions in ActionRow(actions: actions, probe: probe) }
         )
     }

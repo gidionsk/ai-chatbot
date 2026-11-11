@@ -10,6 +10,7 @@ enum ChatElementIdentifier {
     static let welcome = "chat.welcome"
     static let loading = "chat.loading"
     static let messages = "chat.messages"
+    static let scrollToLatest = "chat.scrollToLatest"
     static let question = "chat.question"
     static let failedQuestion = "chat.question.failed"
     static let dateChip = "chat.date"

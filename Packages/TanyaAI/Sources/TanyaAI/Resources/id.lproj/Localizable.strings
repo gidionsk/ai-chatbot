@@ -12,6 +12,7 @@
 "chat.stop" = "Hentikan jawaban";
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "Pesan ini gagal terkirim";
+"chat.scrollToLatest" = "Ke pesan terbaru";
 "welcome.shortcutsTitle" = "Mulai dari sini:";
 "welcome.terms" = "Pelajari [Syarat & Ketentuan](terms) penggunaan TANYA AI.";
 /* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */

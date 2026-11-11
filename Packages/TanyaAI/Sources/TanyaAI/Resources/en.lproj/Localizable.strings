@@ -12,6 +12,7 @@
 "chat.stop" = "Stop response";
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "This message failed to send";
+"chat.scrollToLatest" = "Go to latest message";
 "welcome.shortcutsTitle" = "Start here:";
 "welcome.terms" = "Learn the [Terms & Conditions](terms) for using TANYA AI.";
 /* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */

@@ -91,6 +91,26 @@ final class ChatScrollUITests: XCTestCase {
         XCTAssertFalse(isOnScreen(text(lateMessage)))
     }
 
+    /// Tombol panah hanya ada selama pesan terbaru di luar layar, dan membawa kembali ke sana.
+    func testArrowReturnsToTheLatestMessage() {
+        launch(extra: ["--long-history"])
+        let answer = text(lastAnswer)
+        let arrow = application.buttons["chat.scrollToLatest"]
+        XCTAssertTrue(answer.waitForExistence(timeout: 10))
+        settle()
+        XCTAssertFalse(arrow.exists)
+        application.tables["chat.messages"].swipeDown()
+        XCTAssertTrue(arrow.waitForExistence(timeout: 5))
+        capture("chat-arrow-shown")
+        let composerTop = application.buttons["composer.send"].frame.minY
+        XCTAssertLessThan(arrow.frame.maxY, composerTop)
+        XCTAssertEqual(arrow.frame.midX, application.windows.firstMatch.frame.midX, accuracy: 1)
+        arrow.tap()
+        settle()
+        XCTAssertTrue(isOnScreen(answer))
+        XCTAssertFalse(arrow.exists)
+    }
+
     /// Simulator dengan keyboard fisik tidak menampilkan keyboard layar; table tidak mengecil, jadi tes ini dilewati.
     func testKeyboardKeepsTheLatestMessageVisible() throws {
         launch(extra: ["--long-history"])

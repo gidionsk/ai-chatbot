@@ -13,6 +13,8 @@ import UIKit
 final class ChatTableController: UIViewController {
     let tableView = LayoutTrackingTableView(frame: .zero, style: .plain)
     var onScrollProgress: (CGFloat) -> Void = { _ in }
+    /// False saat ujung daftar di luar layar; halaman menampilkan tombol ke pesan terbaru.
+    var onLatestVisibilityChange: (Bool) -> Void = { _ in }
     var makeCell: ((UITableView, IndexPath, ChatListItem) -> UITableViewCell)?
     /// Aksi terbaru dari halaman; baris memanggilnya lewat `forwardingActions`.
     var rowActions = ChatRowActions()
@@ -32,6 +34,9 @@ final class ChatTableController: UIViewController {
     var isFollowingLatest = false
     var isOpened = false
     var isNearBottom = true
+    /// Nilai `isNearBottom` yang terakhir dikirim ke halaman.
+    var isNearBottomReported = true
+    var isVisibilityPending = false
     var isStickingToBottom = false
     var isAdjustmentPending = false
     var isProgressPending = false
@@ -170,6 +175,11 @@ private extension ChatTableController {
     func moveToNewContent(after previous: ChatTableState, isReaderAtBottom: Bool) {
         if state.sentQuestionID != nil, state.sentQuestionID != previous.sentQuestionID {
             parkLatestQuestion()
+            return
+        }
+        // Tombol ke pesan terbaru: ke ujung yang sebenarnya, apa pun posisi dan parkirnya.
+        if state.latestJumpID != previous.latestJumpID {
+            followLatest()
             return
         }
         if state.incomingMessageID != previous.incomingMessageID, isReaderAtBottom {

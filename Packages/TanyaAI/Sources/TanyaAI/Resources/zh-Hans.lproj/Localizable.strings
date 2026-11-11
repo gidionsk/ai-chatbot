@@ -12,6 +12,7 @@
 "chat.stop" = "停止回答";
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "此消息发送失败";
+"chat.scrollToLatest" = "回到最新消息";
 "welcome.shortcutsTitle" = "从这里开始：";
 "welcome.terms" = "了解 TANYA AI 的[使用条款](terms)。";
 /* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */

@@ -109,6 +109,7 @@ extension ChatTableController {
         let visibleBottom = tableView.contentOffset.y + tableView.bounds.height
         let contentEnd = tableView.contentSize.height + baseBottomInset
         isNearBottom = contentEnd - visibleBottom <= FigmaSize.spacingDoubleExtraLarge.scaledToArtwork
+        reportLatestVisibility()
     }
 }
 

@@ -718,7 +718,7 @@ Halaman dibuka di pesan terbaru tanpa terlihat melompat. Pertanyaan yang dikirim
 parkir di bawah header dengan preview 48 dari jawaban sebelumnya, ruang kosong di bawah menyusut saat jawaban datang,
 dan jawaban tidak menggeser pertanyaan. Pesan di luar turn mengikuti ke bawah hanya bila posisi dekat bawah (48).
 `ChatScrollUITests` memakai `--long-history` (30 pesan tinggi berbeda-beda), `--late-message` dan `--late-question`.
-Arrow kembali ke pesan terbaru belum dibuat.
+Tombol panah ke pesan terbaru: lihat bagian 11 November 2026 di bawah.
 
 Daftar pesan memakai `ChatTable` (`UITableView` ber-recycle). Probe sementara di simulator Debug, baris Markdown asli,
 `update` pertama: 100 pesan 43 ms, 300 pesan 44 ms, sekitar 10 sel dibuat, tambah satu pesan sekitar 5 ms. Run pertama
@@ -776,3 +776,15 @@ antre sempat terpotong composer karena kartu antre baru tampil saat event `state
 sementara pemicu ikut ke bawah hanya berubah oleh event `system`. Kini pemicunya kartu yang tampil;
 `followTriggerChangesWhenTheQueueCardAppears` dan UI test (tombol batal di atas garis composer) gagal pada mutasi
 pemicu lama. `MessageComposerTests` memeriksa tombol lampiran tidak menambah tinggi composer.
+
+## Tombol ke pesan terbaru — 11 November 2026
+
+`FloatingIconButton` (Figma `auto_scroll`: sisi 36, bayangan x 0, y 2, blur 8, `#BEC3D0` 80%) tampil di tengah, di
+atas composer, selama ujung daftar di luar layar (jarak lebih dari 48, batas yang sama dengan aturan ikut ke bawah).
+Diketuk = ke pesan terbaru yang sebenarnya; pertanyaan yang parkir dilepas. Warna isi (`colorsSurfacePrimary`), warna
+ikon (`colorsIconColored`), sisi ikon 24, jarak 16 ke composer, dan ikon `arrowDown` (PDF dummy) masih perkiraan dari
+foto Figma. `ChatTableLatestTests`: menggulir ke atas melaporkan tersembunyi dan tombol mengembalikannya, membuka
+history tidak pernah melaporkan tersembunyi, jawaban pendek di bawah pertanyaan parkir tidak memunculkan tombol,
+dan jawaban yang melewati layar memunculkannya. Mutasi tanpa aksi lompat dan tanpa laporan gagal.
+`FloatingIconButtonTests` memeriksa sisi 36. `ChatScrollUITests.testArrowReturnsToTheLatestMessage` memeriksa tombol
+tidak ada saat dibuka, muncul di tengah di atas composer setelah digulir, dan hilang setelah diketuk.
