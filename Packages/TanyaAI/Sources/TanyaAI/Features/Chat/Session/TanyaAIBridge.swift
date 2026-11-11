@@ -26,8 +26,11 @@ public final class TanyaAIBridge: ObservableObject {
     /// bubble gagal yang tersisa tidak dianggap kiriman baru.
     @Published var latestSentQuestionID: String?
     /// Pesan terlihat terbaru yang datang di luar turn nasabah, termasuk pertanyaan dari kanal lain. Jawaban turn
-    /// sendiri tidak dihitung, karena pertanyaannya tetap parkir.
+    /// sendiri dan salinan pertanyaan dari halaman ini tidak dihitung, karena pertanyaannya tetap parkir.
     @Published private(set) var latestIncomingMessageID: String?
+    /// ID pesan gateway yang merupakan salinan pertanyaan dari halaman ini. Selama antre atau dengan agen tidak ada
+    /// turn, jadi hanya ini yang membedakan salinan kiriman sendiri dari pesan masuk.
+    var sentMessageIDs: Set<String> = []
     /// True setelah history pertama selesai; sebelum itu halaman menampilkan loading, bukan sambutan.
     @Published
     private(set) var isHistoryLoaded = false
@@ -202,6 +205,7 @@ extension TanyaAIBridge {
         guard self.conversationID == nil || self.conversationID == conversationID else {
             messages = history.merging([])
             localQuestions = []
+            sentMessageIDs = []
             liveAgentNotices = []
             showAgentTyping(false)
             resetUserTyping()
@@ -221,7 +225,9 @@ extension TanyaAIBridge {
     }
 
     private func updateLatestIncomingMessage() {
-        guard !isAwaitingReply, let message = messages.last(where: { ChatRow.message($0).isVisible }) else { return }
+        guard !isAwaitingReply, let message = messages.last(where: { ChatRow.message($0).isVisible }),
+            !sentMessageIDs.contains(message.id)
+        else { return }
         latestIncomingMessageID = message.id
     }
 }

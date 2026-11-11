@@ -60,6 +60,64 @@ struct TanyaAIBridgeScrollTests {
         #expect(bridge.latestIncomingMessageID == "m-5")
     }
 
+    /// Selama antre atau dengan agen tidak ada turn. Dulu salinan pertanyaan sendiri dari stream dihitung pesan
+    /// masuk, jadi daftar ditarik ke bawah sebelum agen membalas.
+    @Test
+    func theCopyOfASentQuestionIsNotIncomingWhileWithAnAgent() async {
+        let transport = FakeChatTransport()
+        transport.initResults = [.success(WireFixture.initialize(state: "AGENT_ACTIVE"))]
+        transport.sendResult = .success(WireFixture.ack(seq: 1))
+        let bridge = makeBridge(transport)
+        let task = Task { await bridge.run() }
+        defer { task.cancel() }
+        await waitUntil { bridge.connection == .live }
+
+        await bridge.send("halo")?.value
+        transport.emit(
+            WireFixture.messageFrame(seq: 1, direction: "user", clientMessageID: bridge.latestSentQuestionID)
+        )
+        await waitUntil { bridge.messages.count == 1 }
+        #expect(bridge.localQuestions.isEmpty)
+        #expect(bridge.latestIncomingMessageID == nil)
+
+        transport.emit(WireFixture.messageFrame(seq: 2, direction: "agent"))
+        await waitUntil { bridge.messages.count == 2 }
+        #expect(bridge.latestIncomingMessageID == "m-2")
+    }
+
+    /// Salinan tanpa `client_msg_id` dicocokkan lewat seq dari ack, dan tetap bukan pesan masuk.
+    @Test
+    func aCopyMatchedByItsSeqIsNotIncomingEither() async {
+        let transport = FakeChatTransport()
+        transport.initResults = [.success(WireFixture.initialize(state: "AGENT_QUEUED"))]
+        transport.sendResult = .success(WireFixture.ack(seq: 1))
+        let bridge = makeBridge(transport)
+        let task = Task { await bridge.run() }
+        defer { task.cancel() }
+        await waitUntil { bridge.connection == .live }
+
+        await bridge.send("halo")?.value
+        transport.emit(WireFixture.messageFrame(seq: 1, direction: "user"))
+        await waitUntil { bridge.messages.count == 1 }
+        #expect(bridge.localQuestions.isEmpty)
+        #expect(bridge.latestIncomingMessageID == nil)
+    }
+
+    /// Pertanyaan dari kanal lain bukan salinan kiriman halaman ini, jadi tetap diikuti.
+    @Test
+    func aQuestionFromAnotherChannelIsStillIncomingWhileWithAnAgent() async {
+        let transport = FakeChatTransport()
+        transport.initResults = [.success(WireFixture.initialize(state: "AGENT_ACTIVE"))]
+        let bridge = makeBridge(transport)
+        let task = Task { await bridge.run() }
+        defer { task.cancel() }
+        await waitUntil { bridge.connection == .live }
+
+        transport.emit(WireFixture.messageFrame(seq: 1, direction: "user", clientMessageID: "kanal-lain"))
+        await waitUntil { bridge.messages.count == 1 }
+        #expect(bridge.latestIncomingMessageID == "m-1")
+    }
+
     /// Daftar hanya dibuka di pesan terbaru bila history berisi pesan.
     @Test
     func historyPhaseFollowsWhatTheFirstLoadReturned() async {

@@ -39,8 +39,11 @@ extension TanyaAIBridge {
 
     /// Salinan dari stream atau history sudah ada: bubble lokal dilepas. Daftar hanya diubah bila memang
     /// berubah, supaya pesan lain tidak memicu render ulang.
+    /// ID salinannya dicatat: salinan kiriman sendiri bukan pesan masuk (lihat `sentMessageIDs`).
     func removeDeliveredQuestions() {
-        guard localQuestions.contains(where: { $0.isDelivered(in: messages) }) else { return }
+        let copies = localQuestions.compactMap { $0.copy(in: messages)?.id }
+        guard !copies.isEmpty else { return }
+        sentMessageIDs.formUnion(copies)
         localQuestions.removeAll { $0.isDelivered(in: messages) }
     }
 }

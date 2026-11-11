@@ -748,6 +748,15 @@ Tinggi baris diukur pada kedua jalur sel, tetapi jalur iOS 15 berjalan di runtim
 itu kini memakai `ScreenScaffold`. Catatan lama di dokumen ini yang menyebut keduanya adalah riwayat. Header chat
 tetap memakai `CGFloat.scrollProgress`, yang diuji di `ScrollProgressTests` DesignKit dan `HeaderUITests`.
 
+## Salinan pertanyaan sendiri bukan pesan masuk — 11 November 2026
+
+Selama antre atau dengan agen tidak ada turn, jadi salinan pertanyaan dari stream lolos dari `!isAwaitingReply` dan
+dihitung pesan masuk: pertanyaan parkir di atas, lalu daftar ditarik ke bawah sebelum agen membalas. Kini ID salinan
+yang menggantikan bubble lokal dicatat di `sentMessageIDs` dan tidak mengubah `latestIncomingMessageID`.
+`TanyaAIBridgeScrollTests`: salinan lewat `client_msg_id`, salinan lewat seq ack, dan pertanyaan dari kanal lain yang
+tetap dihitung; dua yang pertama gagal di kode sebelumnya. Batas: salinan tanpa `client_msg_id` yang tiba sebelum ack
+kirim belum bisa dikenali saat itu. Balasan agen tetap menarik daftar ke bawah bila posisi dekat bawah.
+
 ## Live agent: state dan keluar antrean — 10 November 2026
 
 Init dan event `state` mengisi `conversationState`. `TanyaAIBridgeLiveAgentTests` memeriksa kirim tanpa

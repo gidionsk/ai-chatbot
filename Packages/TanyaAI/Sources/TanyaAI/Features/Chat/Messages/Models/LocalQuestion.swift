@@ -24,8 +24,13 @@ struct LocalQuestion: Identifiable, Equatable {
 
     /// True bila salinannya dari stream atau history sudah ada di `messages` (urut `seq` naik).
     func isDelivered(in messages: [ChatMessage]) -> Bool {
+        copy(in: messages) != nil
+    }
+
+    /// Salinan pertanyaan ini dari stream atau history; nil selama belum datang.
+    func copy(in messages: [ChatMessage]) -> ChatMessage? {
         let floor = afterSeq ?? .min
-        return messages.reversed().prefix { $0.seq > floor }.contains { message in
+        return messages.reversed().prefix { $0.seq > floor }.first { message in
             message.author == .user && (message.clientMessageID == id || (seq != nil && message.seq == seq))
         }
     }
