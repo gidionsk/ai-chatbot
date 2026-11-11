@@ -56,12 +56,36 @@ struct ArrayLiveAgentNoticeTests {
             messages.endedAgentSessions(isOngoing: false, closedBy: [LiveAgentNotice(kind: .canceled, seq: 5)])
                 == [LiveAgentNotice(kind: .ended, seq: 7)])
     }
+
+    /// Kartu dari history memakai `seq` pesan yang ditutupnya dan tampil tepat setelah pesan itu, bukan sebelumnya.
+    @Test
+    func historyNoticeFollowsTheMessageItCloses() {
+        let items: [ChatListItem] = [3, 4, 5].map { .message(.message(message(seq: $0)), isSpaced: false) }
+        let ids = items.inserting([LiveAgentNotice(kind: .ended, seq: 4)], isLeaveEnabled: true).map(\.id)
+        #expect(ids == [.message("m-3"), .message("m-4"), .liveAgentNotice(4), .message("m-5")])
+    }
+
+    /// Serah terima tanpa pesan agen sampai bot menjawab lagi, atau sampai akhir daftar bila sudah selesai.
+    /// Serah terima yang diikuti pesan agen memakai kartu selesai, bukan kartu ini.
+    @Test
+    func handoverWithoutAnAgentIsNotContinued() {
+        let messages = [
+            message(seq: 1, author: .user), message(seq: 2, intent: .liveAgent), message(seq: 4, author: .user),
+            message(seq: 5), message(seq: 6, intent: .liveAgent), message(seq: 7, author: .agent),
+            message(seq: 8, intent: .liveAgent)
+        ]
+        let notContinued = { LiveAgentNotice(kind: .notContinued, seq: $0) }
+        #expect(messages.unfinishedHandovers(isSettled: true, closedBy: []) == [notContinued(2), notContinued(8)])
+        #expect(messages.unfinishedHandovers(isSettled: false, closedBy: []) == [notContinued(2)])
+        let canceled = LiveAgentNotice(kind: .canceled, seq: 3)
+        #expect(messages.unfinishedHandovers(isSettled: true, closedBy: [canceled]) == [notContinued(8)])
+    }
 }
 
 // MARK: - Helpers
 
 private extension ArrayLiveAgentNoticeTests {
-    func message(seq: Int, author: ChatAuthor = .assistant) -> ChatMessage {
-        ChatMessage(id: "m-\(seq)", seq: seq, author: author, text: "pesan \(seq)", status: .active)
+    func message(seq: Int, author: ChatAuthor = .assistant, intent: ChatIntent? = nil) -> ChatMessage {
+        ChatMessage(id: "m-\(seq)", seq: seq, author: author, text: "pesan \(seq)", status: .active, intent: intent)
     }
 }

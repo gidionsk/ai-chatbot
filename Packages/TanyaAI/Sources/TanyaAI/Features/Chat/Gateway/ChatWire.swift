@@ -21,6 +21,11 @@ enum ChatWire {
     static let historyPageSize = 30
     /// Batas tampil indikator mengetik bila `ttl_s` tidak ada (contoh contract: 10).
     static let typingLifetime: TimeInterval = 10
+    /// Jeda minimal kirim ulang `typing:true` selama nasabah terus mengetik, di bawah ttl server 10 detik
+    /// (contract §7.7 meminta klien membatasi frekuensinya).
+    static let typingRefresh: TimeInterval = 5
+    /// Tanpa ketikan selama ini, nasabah dianggap berhenti mengetik (`typing:false`).
+    static let typingIdle: TimeInterval = 3
 
     enum Event {
         /// Nama default event SSE bila baris `event:` tidak ada.

@@ -27,7 +27,7 @@ di-decode TanyaAI karena khusus Tanya AI dan sama di semua host.
 | `leaveAgent(conversationID:)` | `POST /v1/chat/conversations/{id}/leave-agent`, tanpa body → 200 `{left}`, 409 bila agen sudah bergabung |
 | `events(conversationID:lastEventID:)` | `GET /v1/chat/conversations/{id}/events`, `Accept: text/event-stream`, `Last-Event-ID` bila ada |
 
-Typing, limits, list conversations, close, dan `success-id` belum dipakai.
+Limits, list conversations, close, dan `success-id` belum dipakai.
 
 ## Nilai contract yang dipakai iOS
 
@@ -36,6 +36,9 @@ Typing, limits, list conversations, close, dan `success-id` belum dipakai.
 - `type` tidak dibaca. Jawaban `assistant` selalu diproses sebagai Markdown (keputusan user 4 November 2026):
   teks biasa adalah Markdown yang valid. `html` tampil sebagai teks, karena tidak ada HTML renderer.
   Payload objek (`interaction`, `json`) belum punya tampilan dan disembunyikan.
+- `intent` dibaca ke `ChatMessage.intent` (`ChatIntent`, daftar intent di `Intents/Models`): `handover-to-agent` =
+  `liveAgent`, kosong atau tidak ada = nil, nilai lain = `unknown`. Belum ada tampilan yang membacanya;
+  intent baru ditambah sebagai case saat ada fitur yang memakainya.
 
 ## Saran lanjutan
 
@@ -49,8 +52,9 @@ State percakapan diambil dari init lalu diperbarui event `state`. Selama `AGENT_
 kirim tidak memakai turn lock karena `turn_end` tidak datang (contract §7.5): nasabah boleh kirim beberapa
 pesan dan tombol tidak menjadi stop. Turn bot yang menyerahkan ke agen tetap ditutup `turn_end`-nya sendiri.
 Pesan bot di turn itu ("Baik, kami akan menghubungkan...") adalah `Message` assistant biasa dengan
-`intent: "handover-to-agent"` dan `source: ""`; teksnya dari bot dan ikut history. Aplikasi tidak membaca
-intent ini: antre/agen ditentukan event `state` dan `system`. Antre lewat init `mode:"agent"` tidak punya pesan ini.
+`intent: "handover-to-agent"` (`ChatIntent.liveAgent`) dan `source: ""`; teksnya dari bot dan ikut history.
+Aplikasi tidak memakai intent ini: antre/agen ditentukan event `state` dan `system`. Antre lewat init
+`mode:"agent"` tidak punya pesan ini.
 
 Event `system` yang menjadi kartu: `agent_connecting` (antre), `agent_ended`, `agent_idle_timeout`,
 `queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` tidak menjadi kartu (agen menyapa
@@ -70,7 +74,24 @@ dan label statis "Live Agent OCBC Nyala", teks polos). Kartu antre di posisi eve
 dibuka lagi saat masih antre tanpa event yang ikut replay. Kartu selesai dari history ditaruh setelah pesan agen
 terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau di akhir bila agen tidak sedang melayani), kecuali
 stream sudah memberi kartu penutup untuk sesi itu. Waktu antre habis dan agen tidak tersedia memakai kartu yang sama.
+Kartu dari history memakai `seq` pesan yang ditutupnya dan disisipkan dengan `<=`, jadi tepat setelah pesan itu.
+
+Pesan bot ber-intent `handover-to-agent` yang tidak diikuti pesan agen (sampai bot menjawab lagi, atau sampai akhir
+daftar bila sudah tidak antre/dilayani dan turn-nya selesai) diberi kartu "tidak dilanjutkan" tepat setelahnya.
+History tidak membawa event `system`, jadi penyebabnya (batal, antre habis, agen tidak tersedia) tidak diketahui
+dan copy-nya netral. Rentang yang sudah punya kartu dari stream (termasuk kartu antre) tidak diberi kartu ini.
+Serah terima dari kanal lain yang tiba di luar turn halaman ini bisa menampilkan kartu sekejap sebelum event
+antre-nya tiba.
 Tombol batal berwarna #567180 (`CustomColors.Button.muted`).
+
+Nasabah mengetik (§7.7) dikirim lewat `TanyaAIChatTransport.sendTyping` hanya selama `AGENT_ACTIVE`. Composer
+mengabarkan draft berisi/kosong; draft tetap lokal. `typing:true` dikirim saat mulai dan diulang paling cepat
+tiap 5 detik selama terus mengetik (ttl server 10 detik). `typing:false` dikirim setelah 3 detik tanpa ketikan,
+saat draft kosong (termasuk setelah terkirim), atau saat composer hilang. Satu pengirim berurutan; sinyal yang
+menunggu digabung menjadi yang terbaru dan dicek ulang sebelum dikirim. Saat state meninggalkan agen (lewat init
+maupun stream), percakapan berganti, atau sesi berakhir, status dilupakan tanpa kiriman, dan indikator agen
+mengetik ikut dihapus. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan ke agen memakai `sendMessage`
+yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
 
 Selama `AGENT_ACTIVE` composer menampilkan tombol lampiran (PDF/gambar) di luar kartu sebelah kiri, sejajar
 dengan tombol kirim. Contract v1.5.0 belum punya endpoint upload, jadi ketukannya belum melakukan apa pun. Bila
@@ -102,8 +123,10 @@ mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
 3. Berhenti: halaman ditutup (task dibatalkan), init mengembalikan `CLOSED` (history tetap tampil; sejak
    contract 1.4 init resume membuka lagi percakapan `CLOSED`, jadi ini hanya pengaman),
    401 (`onSessionExpired`, sekali), atau error lain dengan `retryable:false` (`onConnectionFailed`, sekali,
-   dengan `TanyaAITransportError`). Loading awal ikut berhenti. 401 dari jalur mana pun (termasuk kirim)
-   menutup stream yang sedang terbuka dan bersifat final: tidak menyambung ulang.
+   dengan `TanyaAITransportError`). Loading awal ikut berhenti. 401 dan gagal permanen dari jalur mana pun
+   (termasuk kirim) menutup stream yang sedang terbuka dan bersifat final selama bridge hidup: halaman yang
+   tampil lagi (`.task` jalan ulang) tidak menyambung ulang; host membuka halaman baru untuk mencoba lagi.
+   Halaman yang hanya tertutup halaman lain lalu tampil lagi tetap menyambung ulang.
 4. Kirim (keputusan user 2 November 2026): bubble pertanyaan tampil saat itu juga (`LocalQuestion`) dan
    draft dikosongkan; ack 202 memberi `seq` pertanyaan. Salinan dari stream atau history (dicocokkan lewat
    `client_msg_id`, atau seq ack bila kosong) menggantikan bubble lokal tanpa jeda. Hanya `turn_end` dengan
@@ -112,7 +135,8 @@ mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
    retry, dan kunci dibuka; bubble gagal tetap di posisinya selama halaman hidup. 401 saat kirim tetap
    `onSessionExpired` dan 404/410 (percakapan hilang) tetap `onConnectionFailed`, sama seperti saat sambung.
    Respons kirim dicocokkan lewat `client_msg_id`: respons yang datang terlambat untuk pertanyaan lama
-   (mis. setelah percakapan berganti) tidak mengubah pertanyaan yang sedang ditunggu.
+   (mis. setelah percakapan berganti) tidak mengubah pertanyaan yang sedang ditunggu. 404/410 dari kirim, stop,
+   atau `leave-agent` milik percakapan yang sudah diganti init juga tidak menutup percakapan yang baru.
 5. Fase composer: tidak ada titik bergerak. Sejak kirim tombol menjadi stop; nasabah boleh mengetik
    pertanyaan berikutnya tetapi harus menekan stop (atau menunggu `turn_end`) untuk mengirimnya.
 6. Stop: `POST .../cancel`; ditekan sebelum ack = cancel dikirim saat ack tiba (tidak dikirim bila

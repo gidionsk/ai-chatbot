@@ -123,6 +123,27 @@ struct TanyaAIBridgeLiveAgentTests {
         #expect(bridge.connection == .expired)
     }
 
+    /// Respons keluar antrean milik percakapan yang sudah diganti init tidak mengubah percakapan baru.
+    @Test(arguments: [
+        Result<Data, Error>.success(WireFixture.leave(isLeft: true)),
+        .failure(TanyaAITransportError.response(statusCode: 404, body: WireFixture.error(isRetryable: false)))
+    ])
+    func leaveResponseForAReplacedConversationIsIgnored(result: Result<Data, Error>) async {
+        let (transport, bridge) = await connectedBridge(state: "AGENT_QUEUED")
+        defer { bridge.connectionTask?.cancel() }
+        transport.initResults = [.success(WireFixture.initialize(conversationID: "lain", state: "AGENT_QUEUED"))]
+        transport.leaveResult = result
+        transport.isHoldingLeave = true
+        let leave = Task { await bridge.leaveAgentQueue() }
+        await waitUntil { transport.isAckHeld }
+        transport.drop()
+        await waitUntil { bridge.conversationID == "lain" && bridge.connection == .live }
+        transport.releaseAck()
+        await leave.value
+        #expect(bridge.conversationState == .agentQueued)
+        #expect(bridge.connection == .live)
+    }
+
     @Test(arguments: ["ASSISTANT_ACTIVE", "AGENT_ACTIVE"])
     func leaveOutsideTheQueueIsNotSent(state: String) async {
         let (transport, bridge) = await connectedBridge(state: state)

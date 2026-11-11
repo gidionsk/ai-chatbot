@@ -33,4 +33,7 @@ enum ChatCopy: String, CaseIterable {
     case agentCanceledMessage = "liveAgent.canceled.message"
     case agentUnavailableTitle = "liveAgent.unavailable.title"
     case agentUnavailableMessage = "liveAgent.unavailable.message"
+    /// TODO: Copy sementara dari tim iOS; ganti dengan copy final UI/UX.
+    case agentNotContinuedTitle = "liveAgent.notContinued.title"
+    case agentNotContinuedMessage = "liveAgent.notContinued.message"
 }

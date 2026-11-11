@@ -29,3 +29,5 @@
 "liveAgent.canceled.message" = "Anda telah membatalkan permintaan untuk terhubung dengan Customer Assistant. Tanya AI siap membantu Anda kembali.";
 "liveAgent.unavailable.title" = "Agent Belum Tersedia";
 "liveAgent.unavailable.message" = "Customer Assistant belum dapat melayani Anda saat ini. Silakan coba lagi nanti; Tanya AI siap membantu Anda kembali.";
+"liveAgent.notContinued.title" = "Permintaan Agent Tidak Dilanjutkan";
+"liveAgent.notContinued.message" = "Anda telah meminta untuk terhubung dengan Customer Assistant, tetapi percakapan tidak dilanjutkan. Tanya AI siap membantu Anda kembali.";

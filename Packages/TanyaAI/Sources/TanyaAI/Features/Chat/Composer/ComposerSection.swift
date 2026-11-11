@@ -22,19 +22,22 @@ struct ComposerSection: View {
     private let onSend: (String) -> Bool
     private let onStop: () -> Void
     private let onAttach: (() -> Void)?
+    private let onTyping: ((Bool) -> Void)?
 
     /// `onSend` true = bubble pertanyaan tampil, draft langsung dikosongkan. Selama menunggu jawaban nasabah boleh
     /// mengetik pertanyaan berikutnya, tetapi harus menekan stop (atau menunggu jawaban selesai) untuk mengirimnya.
-    /// `onAttach` nil = tombol lampiran tidak tampil.
+    /// `onAttach` nil = tombol lampiran tidak tampil. `onTyping` dipanggil setiap draft berubah: true = draft berisi,
+    /// false = kosong atau composer hilang; draft sendiri tetap lokal.
     init(
         isEnabled: Bool, phase: ChatTurnPhase, onSend: @escaping (String) -> Bool,
-        onStop: @escaping () -> Void, onAttach: (() -> Void)? = nil
+        onStop: @escaping () -> Void, onAttach: (() -> Void)? = nil, onTyping: ((Bool) -> Void)? = nil
     ) {
         self.isEnabled = isEnabled
         self.phase = phase
         self.onSend = onSend
         self.onStop = onStop
         self.onAttach = onAttach
+        self.onTyping = onTyping
     }
 
     var body: some View {
@@ -47,6 +50,8 @@ struct ComposerSection: View {
             )
             .padding(FigmaSize.spacingLarge.scaledToArtwork)
         }
+        .onChange(of: draft) { onTyping?(!$0.isEmpty) }
+        .onDisappear { onTyping?(false) }
     }
 
     /// Garis selebar layar di atas composer (Figma), memisahkan area chat dari input.

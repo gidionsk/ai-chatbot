@@ -88,7 +88,7 @@ public struct ChatScreen<Content: View>: View {
     private var composer: some View {
         ComposerSection(
             isEnabled: isEnabled && bridge.isReady, phase: bridge.turnPhase, onSend: send, onStop: stop,
-            onAttach: attachAction
+            onAttach: attachAction, onTyping: typingChanged
         )
     }
 
@@ -161,6 +161,11 @@ private extension ChatScreen {
     /// Saran lanjutan dikirim sebagai chat, sama seperti shortcut.
     func selectFollowUp(_ question: String) {
         bridge.send(question)
+    }
+
+    /// Draft composer berisi atau kosong; diteruskan ke agen sebagai sinyal mengetik.
+    func typingChanged(_ isTyping: Bool) {
+        bridge.userTypingChanged(isTyping)
     }
 
     /// "Batalkan proses ini" di bawah kartu antre.

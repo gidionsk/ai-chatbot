@@ -23,8 +23,10 @@ extension Array where Element == ChatListItem {
 // MARK: - Helpers
 
 private extension Array where Element == ChatListItem {
+    /// `<=`: kartu dari history memakai `seq` pesan yang ditutupnya, jadi tampil tepat setelah pesan itu. Kartu dari
+    /// stream tidak pernah sama dengan `seq` pesan karena berbagi satu urutan.
     func anchorIndex(for notice: LiveAgentNotice) -> Int? {
-        lastIndex { $0.messageSeq.map { $0 < notice.seq } ?? false }
+        lastIndex { $0.messageSeq.map { $0 <= notice.seq } ?? false }
     }
 
     func noticeItems(_ notices: [LiveAgentNotice], isLeaveEnabled: Bool) -> [ChatListItem] {

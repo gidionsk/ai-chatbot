@@ -19,12 +19,17 @@ final class FakeChatTransport: TanyaAIChatTransport {
     var sendResult: Result<Data, Error> = .success(WireFixture.ack())
     var cancelResult: Result<Data, Error> = .success(WireFixture.cancel(isCanceled: true))
     var leaveResult: Result<Data, Error> = .success(WireFixture.leave(isLeft: true))
+    var typingError: Error?
     /// `client_msg_id` kirim terakhir, untuk memancarkan pertanyaan yang sama dari stream.
     private(set) var lastClientMessageID: String?
     /// Dijalankan sebelum ack dikembalikan, mis. stream lebih cepat dari respons HTTP.
     var beforeAck: (() -> Void)?
     /// True = respons kirim berikutnya ditahan sampai `releaseAck()` (respons yang datang terlambat).
     var isHoldingAck = false
+    /// True = respons `typing`/`leave-agent`/`cancel` berikutnya ditahan sampai `releaseAck()`.
+    var isHoldingTyping = false
+    var isHoldingCancel = false
+    var isHoldingLeave = false
     private(set) var calls: [String] = []
     /// Jumlah stream yang sudah ditutup (putus, selesai, atau dibatalkan pemakai).
     private(set) var closedStreams = 0
@@ -32,6 +37,7 @@ final class FakeChatTransport: TanyaAIChatTransport {
     private var heldAck: CheckedContinuation<Void, Never>?
 
     var isAckHeld: Bool { heldAck != nil }
+    var typingCalls: [String] { calls.filter { $0.hasPrefix("typing:") } }
 
     func initialize() async throws -> Data {
         calls.append("init")
@@ -57,14 +63,36 @@ final class FakeChatTransport: TanyaAIChatTransport {
 
     func cancelTurn(conversationID: String) async throws -> Data {
         calls.append("cancel")
-        return try cancelResult.get()
+        let result = cancelResult
+        if isHoldingCancel {
+            isHoldingCancel = false
+            await withCheckedContinuation { heldAck = $0 }
+        }
+        return try result.get()
     }
 
     func leaveAgent(conversationID: String) async throws -> Data {
         calls.append("leave")
-        return try leaveResult.get()
+        let result = leaveResult
+        if isHoldingLeave {
+            isHoldingLeave = false
+            await withCheckedContinuation { heldAck = $0 }
+        }
+        return try result.get()
     }
 
+    func sendTyping(conversationID: String, isTyping: Bool) async throws {
+        calls.append("typing:\(isTyping)")
+        if isHoldingTyping {
+            isHoldingTyping = false
+            await withCheckedContinuation { heldAck = $0 }
+        }
+        if let typingError {
+            throw typingError
+        }
+    }
+
+    /// Melepas respons yang ditahan: kirim, stop, `typing`, atau `leave-agent`.
     func releaseAck() {
         heldAck?.resume()
         heldAck = nil

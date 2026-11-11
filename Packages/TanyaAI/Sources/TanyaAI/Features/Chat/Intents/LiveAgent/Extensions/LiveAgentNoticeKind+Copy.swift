@@ -14,6 +14,7 @@ extension LiveAgentNoticeKind {
         case .idleTimeout: return .agentIdleTitle
         case .canceled: return .agentCanceledTitle
         case .queueTimeout, .unavailable: return .agentUnavailableTitle
+        case .notContinued: return .agentNotContinuedTitle
         }
     }
 
@@ -24,6 +25,7 @@ extension LiveAgentNoticeKind {
         case .idleTimeout: return .agentIdleMessage
         case .canceled: return .agentCanceledMessage
         case .queueTimeout, .unavailable: return .agentUnavailableMessage
+        case .notContinued: return .agentNotContinuedMessage
         }
     }
 }

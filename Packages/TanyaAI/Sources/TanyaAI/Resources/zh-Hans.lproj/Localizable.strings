@@ -29,3 +29,5 @@
 "liveAgent.canceled.message" = "您已取消连接客服的请求。Tanya AI 随时为您服务。";
 "liveAgent.unavailable.title" = "暂无可用客服";
 "liveAgent.unavailable.message" = "客服目前无法为您服务，请稍后再试。Tanya AI 随时为您服务。";
+"liveAgent.notContinued.title" = "客服请求未继续";
+"liveAgent.notContinued.message" = "您曾请求连接客服，但对话未继续。Tanya AI 随时为您服务。";
