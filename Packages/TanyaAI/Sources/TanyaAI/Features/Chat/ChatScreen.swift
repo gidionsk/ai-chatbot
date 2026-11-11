@@ -87,7 +87,8 @@ public struct ChatScreen<Content: View>: View {
 
     private var composer: some View {
         ComposerSection(
-            isEnabled: isEnabled && bridge.isReady, phase: bridge.turnPhase, onSend: send, onStop: stop
+            isEnabled: isEnabled && bridge.isReady, phase: bridge.turnPhase, onSend: send, onStop: stop,
+            onAttach: attachAction
         )
     }
 
@@ -107,21 +108,28 @@ private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
 
     var rowActions: ChatRowActions {
-        ChatRowActions(onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp)
+        ChatRowActions(
+            onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp,
+            onLeaveAgentQueue: leaveAgentQueue
+        )
     }
 
     var tableState: ChatTableState {
         ChatTableState(
             items: listItems, sentQuestionID: bridge.latestSentQuestionID,
-            incomingMessageID: bridge.latestIncomingMessageID, historyPhase: bridge.historyPhase,
+            incomingMessageID: bridge.latestIncomingContentID, historyPhase: bridge.historyPhase,
             rowInputs: ChatRowInputs(welcome: welcome, locale: locale, colors: colors)
         )
     }
 
     var listItems: [ChatListItem] {
         var items = [ChatListItem](rows: bridge.rows)
+            .inserting(bridge.visibleLiveAgentNotices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgentQueue)
         if welcome != nil, bridge.isWelcomeVisible {
             items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
+        }
+        if bridge.isAgentTyping {
+            items.append(.agentTyping)
         }
         if !bridge.followUps.isEmpty {
             items.append(.followUps(bridge.followUps, isEnabled: isEnabled && isSendable))
@@ -153,6 +161,18 @@ private extension ChatScreen {
     /// Saran lanjutan dikirim sebagai chat, sama seperti shortcut.
     func selectFollowUp(_ question: String) {
         bridge.send(question)
+    }
+
+    /// "Batalkan proses ini" di bawah kartu antre.
+    func leaveAgentQueue() {
+        Task { [bridge] in await bridge.leaveAgentQueue() }
+    }
+
+    /// Lampiran (PDF/gambar) hanya saat dilayani agen; nil = tombol tidak tampil.
+    /// TODO: Picker dan upload lewat transport setelah endpoint upload ada di contract gateway.
+    var attachAction: (() -> Void)? {
+        guard bridge.conversationState == .agentActive else { return nil }
+        return {}
     }
 
     /// Shortcut dikirim sebagai chat; bubble pertanyaan langsung tampil.

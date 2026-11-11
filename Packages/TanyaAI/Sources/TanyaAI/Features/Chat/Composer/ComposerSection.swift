@@ -21,17 +21,20 @@ struct ComposerSection: View {
     private let phase: ChatTurnPhase
     private let onSend: (String) -> Bool
     private let onStop: () -> Void
+    private let onAttach: (() -> Void)?
 
     /// `onSend` true = bubble pertanyaan tampil, draft langsung dikosongkan. Selama menunggu jawaban nasabah boleh
     /// mengetik pertanyaan berikutnya, tetapi harus menekan stop (atau menunggu jawaban selesai) untuk mengirimnya.
+    /// `onAttach` nil = tombol lampiran tidak tampil.
     init(
         isEnabled: Bool, phase: ChatTurnPhase, onSend: @escaping (String) -> Bool,
-        onStop: @escaping () -> Void
+        onStop: @escaping () -> Void, onAttach: (() -> Void)? = nil
     ) {
         self.isEnabled = isEnabled
         self.phase = phase
         self.onSend = onSend
         self.onStop = onStop
+        self.onAttach = onAttach
     }
 
     var body: some View {
@@ -40,7 +43,7 @@ struct ComposerSection: View {
             MessageComposer(
                 text: $draft, placeholder: String(ChatCopy.placeholder, locale: locale),
                 actionLabel: String(actionCopy, locale: locale),
-                isEnabled: isEnabled, action: action, onSend: submit, onStop: onStop
+                isEnabled: isEnabled, action: action, attachment: attachment, onSend: submit, onStop: onStop
             )
             .padding(FigmaSize.spacingLarge.scaledToArtwork)
         }
@@ -57,6 +60,11 @@ struct ComposerSection: View {
 // MARK: - Helpers
 
 private extension ComposerSection {
+    var attachment: MessageComposerAttachment? {
+        let label = String(ChatCopy.liveAgentAttachment, locale: locale)
+        return onAttach.map { MessageComposerAttachment(label: label, onTap: $0) }
+    }
+
     var action: MessageComposerAction {
         switch phase {
         case .idle:

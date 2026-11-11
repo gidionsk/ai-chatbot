@@ -10,7 +10,8 @@ struct ChatTableState: Equatable {
     var items: [ChatListItem] = []
     /// Berubah setiap nasabah mengirim pertanyaan dari halaman ini.
     var sentQuestionID: String?
-    /// Berubah setiap pesan baru datang di luar turn yang sedang berjalan.
+    /// Berubah setiap pesan baru datang di luar turn yang sedang berjalan, kartu live agent datang, atau agen mulai
+    /// dan berhenti mengetik.
     var incomingMessageID: String?
     var historyPhase = ChatHistoryPhase.loading
     var rowInputs = ChatRowInputs()

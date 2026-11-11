@@ -21,15 +21,16 @@ public struct MessageComposer: View {
     private let isEnabled: Bool
     private let action: MessageComposerAction
     private let fontFace: FontFace
+    private let attachment: MessageComposerAttachment?
     private let onSend: () -> Void
     private let onStop: () -> Void
 
     /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol;
-    /// draft selalu bisa diketik.
+    /// draft selalu bisa diketik. `attachment` nil = tanpa tombol lampiran.
     public init(
         text: Binding<String>, placeholder: String, actionLabel: String,
         isEnabled: Bool = true, action: MessageComposerAction = .send, fontFace: FontFace = .firaSansRegular,
-        onSend: @escaping () -> Void, onStop: @escaping () -> Void = {}
+        attachment: MessageComposerAttachment? = nil, onSend: @escaping () -> Void, onStop: @escaping () -> Void = {}
     ) {
         self._text = text
         self.placeholder = placeholder
@@ -37,11 +38,25 @@ public struct MessageComposer: View {
         self.isEnabled = isEnabled
         self.action = action
         self.fontFace = fontFace
+        self.attachment = attachment
         self.onSend = onSend
         self.onStop = onStop
     }
 
+    /// Tombol lampiran di luar kartu, sejajar bawah dengan tombol kirim: padding vertikalnya sama dengan padding
+    /// kartu dan jaraknya ke kartu sama dengan jarak field ke tombol kirim.
     public var body: some View {
+        HStack(alignment: .bottom, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
+            if let attachment {
+                attachmentButton(attachment)
+                    .frame(minHeight: singleLineRowHeight)
+                    .padding(.vertical, FigmaSize.spacingLarge.scaledToArtwork)
+            }
+            card
+        }
+    }
+
+    private var card: some View {
         HStack(alignment: .bottom, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
             field
                 .frame(minHeight: singleLineRowHeight)
@@ -97,6 +112,20 @@ public struct MessageComposer: View {
         .disabled(!isActionEnabled)
         .accessibilityLabel(actionLabel)
         .accessibilityIdentifier(ComponentIdentifier.Composer.send)
+    }
+
+    private func attachmentButton(_ attachment: MessageComposerAttachment) -> some View {
+        Button(action: attachment.onTap) {
+            Image(DesignColorIcon.attachment).resizable().scaledToFit()
+                .frame(
+                    width: CustomSizes.Composer.sendButton.scaledToArtwork,
+                    height: CustomSizes.Composer.sendButton.scaledToArtwork
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(ArtworkButtonStyle())
+        .accessibilityLabel(attachment.label)
+        .accessibilityIdentifier(ComponentIdentifier.Composer.attachment)
     }
 }
 

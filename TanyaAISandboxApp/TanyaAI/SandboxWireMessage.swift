@@ -11,6 +11,7 @@ import Foundation
 struct SandboxWireMessage: Encodable {
     static let user = "user"
     static let assistant = "assistant"
+    static let agent = "agent"
     static let active = "active"
     /// Tombstone pertanyaan yang dihentikan; dikirim ulang dengan `message_id` sama.
     static let canceled = "canceled"

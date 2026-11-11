@@ -9,7 +9,7 @@ import DesignKit
 import SwiftUI
 
 /// Satu pesan pada table percakapan. Pertanyaan nasabah = bubble merah (gagal kirim: abu-abu dengan hint); jawaban
-/// bot = Markdown tanpa background; agen = teks polos tanpa background. Link di jawaban diteruskan ke host.
+/// bot = Markdown tanpa background; agen = kartu dengan avatar dan label pengirim. Link di jawaban diteruskan ke host.
 @MainActor
 struct MessageRow: View {
     @Environment(\.locale) private var locale
@@ -42,7 +42,9 @@ private extension MessageRow {
 
     @ViewBuilder
     func messageView(_ message: ChatMessage) -> some View {
-        if let document = message.document {
+        if message.author == .agent, let text = message.text {
+            LiveAgentMessageRow(text: text)
+        } else if let document = message.document {
             MarkdownContent(document: document, onOpenLink: onOpenLink)
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier(ChatElementIdentifier.answer)

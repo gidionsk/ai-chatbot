@@ -19,5 +19,6 @@ enum ComponentIdentifier {
         static let root = "composer"
         static let input = "composer.input"
         static let send = "composer.send"
+        static let attachment = "composer.attachment"
     }
 }

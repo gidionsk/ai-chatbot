@@ -14,6 +14,11 @@ enum ChatListItem: Identifiable, Equatable {
     case date(ChatDayIdentifier, isSpaced: Bool)
     case message(ChatRow, isSpaced: Bool)
     case followUps([String], isEnabled: Bool)
+    /// Kartu status live agent (antre, selesai, batal, tidak tersedia).
+    case liveAgentNotice(LiveAgentNotice)
+    /// "Batalkan proses ini" di bawah kartu antre.
+    case leaveAgentQueue(isEnabled: Bool)
+    case agentTyping
     /// Konten yang disisipkan pemakai `ChatScreen`.
     case content
 
@@ -27,6 +32,12 @@ enum ChatListItem: Identifiable, Equatable {
             return .message(row.id)
         case .followUps:
             return .followUps
+        case .liveAgentNotice(let notice):
+            return .liveAgentNotice(notice.seq)
+        case .leaveAgentQueue:
+            return .leaveAgentQueue
+        case .agentTyping:
+            return .agentTyping
         case .content:
             return .content
         }
@@ -40,8 +51,10 @@ enum ChatListItem: Identifiable, Equatable {
     /// Jarak dari tepi atas baris ke isinya; posisi parkir pertanyaan dihitung dari isinya, bukan dari tepi baris.
     var topSpacing: CGFloat {
         switch self {
-        case .date(_, isSpaced: true), .message(_, isSpaced: true):
+        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping:
             return FigmaSize.spacingLarge.scaledToArtwork
+        case .leaveAgentQueue:
+            return FigmaSize.spacingMedium.scaledToArtwork
         default:
             return .zero
         }

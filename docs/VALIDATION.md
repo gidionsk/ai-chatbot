@@ -747,3 +747,32 @@ Tinggi baris diukur pada kedua jalur sel, tetapi jalur iOS 15 berjalan di runtim
 `ScreenContainer` dan `.onScrollProgressChange` dihapus karena pemakainya hanya `DetailScreen` di sandbox. Halaman
 itu kini memakai `ScreenScaffold`. Catatan lama di dokumen ini yang menyebut keduanya adalah riwayat. Header chat
 tetap memakai `CGFloat.scrollProgress`, yang diuji di `ScrollProgressTests` DesignKit dan `HeaderUITests`.
+
+## Live agent: state dan keluar antrean — 10 November 2026
+
+Init dan event `state` mengisi `conversationState`. `TanyaAIBridgeLiveAgentTests` memeriksa kirim tanpa
+kunci selama `AGENT_QUEUED`/`AGENT_ACTIVE`, kunci kembali setelah state kembali ke bot, turn serah terima tetap
+ditutup `turn_end`, kartu `system` urut `seq` tanpa dobel saat replay, kartu dibuang saat percakapan berganti,
+dan `leave-agent` (`left:true`, `left:false`, 409, body rusak, 401, di luar antrean). Saat kunci selalu dipasang,
+`agentStatesFromInitDoNotLockSending` dan `stateEventsSwitchTheTurnLock` gagal; tanpa kembali ke bot setelah
+`left:true`, `leavingTheQueueReturnsToTheAssistant` gagal.
+
+## Live agent: tampilan dan indikator mengetik — 10 November 2026
+
+`TanyaAIBridgeLiveAgentNoticeTests` memeriksa kartu antre hanya selama antre (juga di akhir daftar bila event-nya
+tidak ikut replay), kartu selesai dari history, tanpa kartu saat agen masih melayani, kartu dari stream
+menggantikan kartu dari history, serta indikator mengetik yang hilang oleh `typing:false`, pesan agen, atau
+`ttl_s`. `ArrayLiveAgentNoticeTests` memeriksa posisi kartu dan batas sesi agen. Mutasi yang gagal: kartu selesai
+saat agen masih melayani, tanpa filter kartu dari stream, indikator tanpa batas waktu, dan kartu selalu di awal
+daftar. `LiveAgentUITests` (`--live-agent`, iPhone 17 Pro iOS 26.5) menjalankan alur antre → agen mengetik →
+pesan agen → kirim tanpa stop → kartu selesai, dan batal antre → kartu batal tanpa agen. Kartu selesai sempat
+tertutup keyboard karena hanya pesan yang menggeser daftar; kini kartu dan indikator mengetik ikut memicunya.
+
+## Live agent: tombol lampiran dan tombol batal — 10 November 2026
+
+`LiveAgentUITests` memeriksa tombol lampiran hanya tampil selama agen melayani, di kiri luar kartu composer,
+dengan ukuran dan titik tengah vertikal sama dengan tombol kirim; mutasi tanpa padding vertikal gagal. Tombol batal
+antre sempat terpotong composer karena kartu antre baru tampil saat event `state` tiba setelah event `system`,
+sementara pemicu ikut ke bawah hanya berubah oleh event `system`. Kini pemicunya kartu yang tampil;
+`followTriggerChangesWhenTheQueueCardAppears` dan UI test (tombol batal di atas garis composer) gagal pada mutasi
+pemicu lama. `MessageComposerTests` memeriksa tombol lampiran tidak menambah tinggi composer.

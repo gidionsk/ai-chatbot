@@ -81,8 +81,9 @@ tersedia pada history/main.
   `Chat/Gateway`: format respons, decoding, history, dan framing SSE; HTTP tetap milik host.
 - `Chat/Keys`: `ChatCopy`, `ChatImage`, `ChatElementIdentifier` serta accessor terkait. Jangan membuat
   `Shared` sebelum ada beberapa fitur yang benar-benar memakai fungsi yang sama.
-- Intent belum diputuskan. Rancangannya ada di `docs/PACKAGE_STRUCTURE.md` dan dikonfirmasi ke user saat Figma
-  dan contract flow pertama ada. Jangan menambah folder kosong atau BaseIntent sebelum itu.
+- `Chat/Intents/<Nama>`: satu folder per intent. `LiveAgent` digerakkan event gateway: decode di `Gateway`,
+  state dan `leave-agent` di `Session`, nilai yang dilihat nasabah di `Intents/LiveAgent`. Intent berbentuk flow
+  host (form/PIN) masih rancangan di `docs/PACKAGE_STRUCTURE.md`. Jangan menambah folder kosong atau BaseIntent.
 - `Resources/`: aset dan lokalisasi saja, tanpa file Swift. Tests mencerminkan folder Sources;
   helper test di `Support/`.
 

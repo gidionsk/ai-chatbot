@@ -35,6 +35,16 @@ struct ChatListRow<Content: View>: View {
             MessageRow(row: row, onOpenLink: actions.onOpenLink)
         case .followUps(let questions, let isEnabled):
             FollowUpsSection(questions: questions, isEnabled: isEnabled, onSelect: actions.onSelectFollowUp)
+        case .liveAgentNotice(let notice):
+            LiveAgentNoticeCard(kind: notice.kind)
+        case .leaveAgentQueue(let isEnabled):
+            FilledLinkButton(
+                title: String(ChatCopy.leaveAgentQueue, locale: locale), isEnabled: isEnabled,
+                onTap: actions.onLeaveAgentQueue
+            )
+            .accessibilityIdentifier(ChatElementIdentifier.leaveAgentQueue)
+        case .agentTyping:
+            AgentTypingIndicator()
         case .content:
             VStack(spacing: .zero) { content }
         }

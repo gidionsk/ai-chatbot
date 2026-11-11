@@ -11,15 +11,17 @@ import TanyaAI
 /// Tiruan service chat-gateway Byon (Alamofire): gaya callback, body mentah tanpa envelope host, dan callback
 /// selalu di main queue. Semua state disentuh di main queue, jadi aman dipanggil dari thread mana pun.
 final class TanyaAIChatService {
-    private let options: SandboxOptions
+    let options: SandboxOptions
     /// Meniru blocker jaringan host: kirim tanpa internet juga dilaporkan ke halaman host.
     private let onSubmissionFailed: (Error) -> Void
-    private var frames: SandboxGatewayFrames
+    var frames: SandboxGatewayFrames
     private var onLine: ((String) -> Void)?
     /// Pertanyaan yang jawabannya belum selesai; nil = tidak ada turn aktif (cancel = no-op).
-    private var pendingQuestion: SandboxWireMessage?
+    var pendingQuestion: SandboxWireMessage?
     /// Kemunculan pertanyaan dan jawaban yang dijadwalkan; dibatalkan saat stop.
-    private var pendingWork: [DispatchWorkItem] = []
+    var pendingWork: [DispatchWorkItem] = []
+    /// State percakapan tiruan untuk `--live-agent`.
+    var conversationState = SandboxGatewayFrames.assistantActive
 
     init(options: SandboxOptions, onSubmissionFailed: @escaping (Error) -> Void) {
         self.options = options
@@ -97,6 +99,15 @@ final class TanyaAIChatService {
         }
     }
 
+    /// Keluar antrean agen; hanya `--live-agent` yang punya antrean, selain itu selalu `left:false`.
+    func leaveAgent(
+        conversationID: String, onSuccess: @escaping (Data) -> Void, onFailed: @escaping (Error) -> Void
+    ) {
+        DispatchQueue.main.async { [weak self] in
+            onSuccess(self?.leaveQueue() ?? SandboxGatewayFrames.notInAgentQueue)
+        }
+    }
+
     /// Stream SSE tiruan: `onLine` per baris lengkap. Kembalian dipakai pemanggil untuk menutup stream,
     /// sama seperti `DataStreamRequest.cancel()` di Byon.
     func events(
@@ -116,7 +127,7 @@ final class TanyaAIChatService {
 
 // MARK: - Gateway tiruan
 
-private extension TanyaAIChatService {
+extension TanyaAIChatService {
     static func latestHistorySeq(_ options: SandboxOptions) -> Int {
         if options.isShowingLongHistory { return SandboxGatewayFrames.longHistoryLatestSeq }
         return options.isShowingHistory ? SandboxGatewayFrames.historyLatestSeq : .zero
@@ -135,6 +146,7 @@ private extension TanyaAIChatService {
     /// Pertanyaan tampil di stream setelah jeda pendek, lalu dijawab setelah jeda berikutnya, seperti gateway asli.
     /// `--hold-reply`: jawaban tidak pernah datang, sehingga stop bisa diuji.
     func accept(_ text: String, clientMessageID: String) -> Data {
+        guard !options.isLiveAgent else { return acceptForLiveAgent(text, clientMessageID: clientMessageID) }
         let ack = frames.ack()
         let question = frames.newMessage(
             direction: SandboxWireMessage.user, text: text, clientMessageID: clientMessageID

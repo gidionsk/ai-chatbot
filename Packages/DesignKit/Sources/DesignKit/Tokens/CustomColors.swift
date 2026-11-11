@@ -15,6 +15,11 @@ public enum CustomColors {
         public static let strong = CustomBasePaletteColor.glossySilver
     }
 
+    public enum Button {
+        /// Figma tombol batal di bawah kartu status.
+        public static let muted = CustomBasePaletteColor.slateBlue
+    }
+
     public enum Shadow {
         public static let opacity: Double = 0.4
         public static let color = CustomBasePaletteColor.glossySilver.opacity(opacity)

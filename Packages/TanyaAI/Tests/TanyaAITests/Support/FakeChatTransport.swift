@@ -18,6 +18,7 @@ final class FakeChatTransport: TanyaAIChatTransport {
     var scriptedStreams: [[String]] = []
     var sendResult: Result<Data, Error> = .success(WireFixture.ack())
     var cancelResult: Result<Data, Error> = .success(WireFixture.cancel(isCanceled: true))
+    var leaveResult: Result<Data, Error> = .success(WireFixture.leave(isLeft: true))
     /// `client_msg_id` kirim terakhir, untuk memancarkan pertanyaan yang sama dari stream.
     private(set) var lastClientMessageID: String?
     /// Dijalankan sebelum ack dikembalikan, mis. stream lebih cepat dari respons HTTP.
@@ -57,6 +58,11 @@ final class FakeChatTransport: TanyaAIChatTransport {
     func cancelTurn(conversationID: String) async throws -> Data {
         calls.append("cancel")
         return try cancelResult.get()
+    }
+
+    func leaveAgent(conversationID: String) async throws -> Data {
+        calls.append("leave")
+        return try leaveResult.get()
     }
 
     func releaseAck() {
