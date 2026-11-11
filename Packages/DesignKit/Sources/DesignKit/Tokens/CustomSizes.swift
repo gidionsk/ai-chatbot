@@ -40,12 +40,6 @@ public enum CustomSizes {
         public static let offsetY: CGFloat = 2
     }
 
-    /// Figma `auto_scroll`: bayangan x 0, y 2, blur 8. Sisi tombol 36 sudah ada di `FigmaSize.weightIconMedium`,
-    /// dan y 2 sama dengan `Shadow.offsetY`.
-    public enum FloatingIconButton {
-        public static let shadowRadius: CGFloat = 8
-    }
-
     /// Bubble pesan nasabah: radius tiga sudut (kanan bawah siku) dan jarak minimum dari tepi kiri.
     /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari screenshot (sama dengan PR #36).
     public enum MessageBubble {

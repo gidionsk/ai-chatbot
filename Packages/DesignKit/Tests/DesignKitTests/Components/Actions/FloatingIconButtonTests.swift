@@ -16,7 +16,7 @@ import UIKit
 struct FloatingIconButtonTests {
     @Test
     func buttonKeepsItsFigmaSide() {
-        let button = FloatingIconButton(icon: .arrowDown, label: "Ke pesan terbaru") {}
+        let button = FloatingIconButton(icon: .arrowDown) {}
         let size = UIHostingController(rootView: button).sizeThatFits(in: CGSize(width: 343, height: 800))
         let side = FigmaSize.weightIconMedium.scaledToArtwork
         #expect(size == CGSize(width: side, height: side))

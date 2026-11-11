@@ -73,11 +73,10 @@ public struct ChatScreen<Content: View>: View {
     @ViewBuilder
     private var latestButton: some View {
         if !isLatestVisible {
-            FloatingIconButton(
-                icon: .arrowDown, label: String(ChatCopy.scrollToLatest, locale: locale), onTap: showLatest
-            )
-            .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
-            .accessibilityIdentifier(ChatElementIdentifier.scrollToLatest)
+            FloatingIconButton(icon: .arrowDown, onTap: showLatest)
+                .accessibilityLabel(String(ChatCopy.scrollToLatest, locale: locale))
+                .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
+                .accessibilityIdentifier(ChatElementIdentifier.scrollToLatest)
         }
     }
 

@@ -781,9 +781,9 @@ pemicu lama. `MessageComposerTests` memeriksa tombol lampiran tidak menambah tin
 
 `FloatingIconButton` (Figma `auto_scroll`: sisi 36, bayangan x 0, y 2, blur 8, `#BEC3D0` 80%) tampil di tengah, di
 atas composer, selama ujung daftar di luar layar (jarak lebih dari 48, batas yang sama dengan aturan ikut ke bawah).
-Diketuk = ke pesan terbaru yang sebenarnya; pertanyaan yang parkir dilepas. Warna isi (`colorsSurfacePrimary`), warna
-ikon (`colorsIconColored`), sisi ikon 24, jarak 16 ke composer, dan ikon `arrowDown` (PDF dummy) masih perkiraan dari
-foto Figma. `ChatTableLatestTests`: menggulir ke atas melaporkan tersembunyi dan tombol mengembalikannya, membuka
+Diketuk = ke pesan terbaru yang sebenarnya; pertanyaan yang parkir dilepas. Ikon mengisi sisa sisi setelah padding 8
+(`spacingMedium`), jadi 20; label aksesibilitas dipasang pemakai. Warna isi (`colorsSurfacePrimary`), warna ikon
+(`colorsIconColored`), jarak 16 ke composer, dan ikon `arrowDown` (PDF dummy) masih perkiraan dari foto Figma. `ChatTableLatestTests`: menggulir ke atas melaporkan tersembunyi dan tombol mengembalikannya, membuka
 history tidak pernah melaporkan tersembunyi, jawaban pendek di bawah pertanyaan parkir tidak memunculkan tombol,
 dan jawaban yang melewati layar memunculkannya. Mutasi tanpa aksi lompat dan tanpa laporan gagal.
 `FloatingIconButtonTests` memeriksa sisi 36. `ChatScrollUITests.testArrowReturnsToTheLatestMessage` memeriksa tombol
