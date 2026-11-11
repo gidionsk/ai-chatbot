@@ -14,7 +14,7 @@ import Testing
 struct ChatIntentTests {
     @Test(
         arguments: [
-            ("handover-to-agent", ChatIntent.handoverToAgent),
+            ("handover-to-agent", ChatIntent.liveAgent),
             ("portfolio-summary", .unknown),
             ("", nil)
         ] as [(String, ChatIntent?)])

@@ -69,7 +69,8 @@ scroll progress. Service bisnis, validasi rekening, serta flow transfer milik ho
 | `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi. |
 | `Chat/Gateway` | `Models` kontrak respons/event/history, `Decoding`, `Streaming`, serta metadata protokol. HTTP tetap host. |
 | `Chat/Keys` | Key copy, image, identifier, tautan, dan `Extensions` accessor-nya. |
-| `Chat/Intents/<Nama>` | Satu folder per intent. `LiveAgent`: `Models` kartu status, `Extensions` copy kartu, kartu selesai dari history, dan penyisipan kartu ke daftar, `Views` kartu, pesan agen, dan indikator mengetik. |
+| `Chat/Intents` | `Models/ChatIntent` daftar intent dari gateway. |
+| `Chat/Intents/<Nama>` | Satu folder per intent, nama sama dengan case `ChatIntent`. `LiveAgent`: `Models` kartu status, `Extensions` copy kartu, kartu selesai dari history, dan penyisipan kartu ke daftar, `Views` kartu, pesan agen, dan indikator mengetik. |
 
 Saat bagian berbeda membutuhkan model yang sama, letakkan pada pemilik bersama
 terdekat. Model khusus Welcome tetap di `Welcome/Models`; model yang benar-benar

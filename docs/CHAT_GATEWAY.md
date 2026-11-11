@@ -36,8 +36,8 @@ Typing, limits, list conversations, close, dan `success-id` belum dipakai.
 - `type` tidak dibaca. Jawaban `assistant` selalu diproses sebagai Markdown (keputusan user 4 November 2026):
   teks biasa adalah Markdown yang valid. `html` tampil sebagai teks, karena tidak ada HTML renderer.
   Payload objek (`interaction`, `json`) belum punya tampilan dan disembunyikan.
-- `intent` dibaca ke `ChatMessage.intent` (`ChatIntent`, di `Gateway/Models`): `handover-to-agent` =
-  `handoverToAgent`, kosong atau tidak ada = nil, nilai lain = `unknown`. Belum ada tampilan yang membacanya;
+- `intent` dibaca ke `ChatMessage.intent` (`ChatIntent`, daftar intent di `Intents/Models`): `handover-to-agent` =
+  `liveAgent`, kosong atau tidak ada = nil, nilai lain = `unknown`. Belum ada tampilan yang membacanya;
   intent baru ditambah sebagai case saat ada fitur yang memakainya.
 
 ## Saran lanjutan
@@ -52,8 +52,9 @@ State percakapan diambil dari init lalu diperbarui event `state`. Selama `AGENT_
 kirim tidak memakai turn lock karena `turn_end` tidak datang (contract §7.5): nasabah boleh kirim beberapa
 pesan dan tombol tidak menjadi stop. Turn bot yang menyerahkan ke agen tetap ditutup `turn_end`-nya sendiri.
 Pesan bot di turn itu ("Baik, kami akan menghubungkan...") adalah `Message` assistant biasa dengan
-`intent: "handover-to-agent"` dan `source: ""`; teksnya dari bot dan ikut history. Aplikasi tidak membaca
-intent ini: antre/agen ditentukan event `state` dan `system`. Antre lewat init `mode:"agent"` tidak punya pesan ini.
+`intent: "handover-to-agent"` (`ChatIntent.liveAgent`) dan `source: ""`; teksnya dari bot dan ikut history.
+Aplikasi tidak memakai intent ini: antre/agen ditentukan event `state` dan `system`. Antre lewat init
+`mode:"agent"` tidak punya pesan ini.
 
 Event `system` yang menjadi kartu: `agent_connecting` (antre), `agent_ended`, `agent_idle_timeout`,
 `queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` tidak menjadi kartu (agen menyapa
