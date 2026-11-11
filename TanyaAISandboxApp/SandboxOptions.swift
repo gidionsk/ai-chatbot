@@ -27,6 +27,10 @@ struct SandboxOptions {
     static let lateMessageDelay: TimeInterval = 3
     /// Jeda jawaban bot tiruan setelah pertanyaan muncul di stream.
     static let replyDelay: TimeInterval = 1
+    /// `--live-agent`: jeda agen bergabung setelah antre, dan jeda agen menutup percakapan setelah menjawab.
+    static let agentJoinDelay: TimeInterval = 3
+    /// `--live-agent`: lama indikator agen mengetik sebelum pesannya datang.
+    static let agentTypingDelay: TimeInterval = 1.5
     /// File yang tidak ada: unduhan ikon pasti gagal tanpa bergantung pada jaringan.
     static let brokenIconURL = URL(fileURLWithPath: "/sandbox/missing-icon.png")
     /// Alamat TEST-NET (RFC 5737) yang tidak pernah menjawab: ikon tertahan di state loading sampai timeout.
@@ -43,6 +47,7 @@ struct SandboxOptions {
     private static let brokenIconsFlag = "--broken-icons"
     private static let slowIconsFlag = "--slow-icons"
     private static let hideTermsFlag = "--hide-terms"
+    private static let liveAgentFlag = "--live-agent"
 
     /// Opsi dari argumen peluncuran proses ini.
     static var current: SandboxOptions {
@@ -64,6 +69,8 @@ struct SandboxOptions {
     let isSendingLateQuestion: Bool
     /// `--hide-terms`: host tidak menampilkan syarat & ketentuan, seperti saat fiturnya belum naik.
     let isHidingTerms: Bool
+    /// `--live-agent`: pertanyaan pertama diserahkan ke agen tiruan (antre → bergabung → menjawab → selesai).
+    let isLiveAgent: Bool
     let isHeaderDemo: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
@@ -78,6 +85,7 @@ struct SandboxOptions {
         isSendingLateMessage = arguments.contains(Self.lateMessageFlag)
         isSendingLateQuestion = arguments.contains(Self.lateQuestionFlag)
         isHidingTerms = arguments.contains(Self.hideTermsFlag)
+        isLiveAgent = arguments.contains(Self.liveAgentFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {

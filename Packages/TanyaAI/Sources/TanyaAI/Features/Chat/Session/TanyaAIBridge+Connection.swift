@@ -58,6 +58,7 @@ private extension TanyaAIBridge {
             conversationID: session.conversationId, latestSeq: isSameConversation ? messages.latestSeq : nil
         )
         replaceOrMerge(history, conversationID: session.conversationId)
+        conversationState = session.state
         guard session.state != .closed else { return false }
         // Replay mulai setelah pesan/event terakhir yang diterima: event di antara history dan stream tidak
         // hilang, duplikat pesan digabung lewat `message_id`, `turn_end` yang sudah diproses tidak diulang.

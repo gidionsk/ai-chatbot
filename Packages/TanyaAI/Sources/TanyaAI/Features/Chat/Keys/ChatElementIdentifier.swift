@@ -14,6 +14,10 @@ enum ChatElementIdentifier {
     static let failedQuestion = "chat.question.failed"
     static let dateChip = "chat.date"
     static let answer = "chat.answer"
+    static let agentMessage = "chat.agent.message"
+    static let agentTyping = "chat.agent.typing"
+    static let liveAgentNotice = "chat.agent.notice"
+    static let leaveAgentQueue = "chat.agent.leaveQueue"
 
     /// Saran pertanyaan lanjutan ke-`index` (mulai 0) sesuai urutan dari gateway.
     static func followUp(_ index: Int) -> String { "chat.followUp.\(index)" }

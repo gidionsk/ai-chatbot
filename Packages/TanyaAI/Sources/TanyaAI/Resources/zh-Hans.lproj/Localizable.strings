@@ -14,3 +14,18 @@
 "chat.sendFailed" = "此消息发送失败";
 "welcome.shortcutsTitle" = "从这里开始：";
 "welcome.terms" = "了解 TANYA AI 的[使用条款](terms)。";
+/* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */
+"liveAgent.sender" = "Live Agent OCBC Nyala";
+"liveAgent.typing" = "客服正在输入...";
+"liveAgent.leaveQueue" = "取消此请求";
+"liveAgent.attachment" = "附加 PDF 或图片";
+"liveAgent.connecting.title" = "正在连接客服";
+"liveAgent.connecting.message" = "您目前正在排队。\n\n请稍候，Tanya OCBC NISP 客服将尽快为您服务。";
+"liveAgent.ended.title" = "客服对话已结束";
+"liveAgent.ended.message" = "您已完成与 Tanya OCBC NISP 客服的对话。Tanya AI 随时为您服务。";
+"liveAgent.idle.title" = "客服对话已关闭";
+"liveAgent.idle.message" = "由于长时间无活动，对话已结束。Tanya AI 随时为您服务。";
+"liveAgent.canceled.title" = "已取消客服请求";
+"liveAgent.canceled.message" = "您已取消连接客服的请求。Tanya AI 随时为您服务。";
+"liveAgent.unavailable.title" = "暂无可用客服";
+"liveAgent.unavailable.message" = "客服目前无法为您服务，请稍后再试。Tanya AI 随时为您服务。";

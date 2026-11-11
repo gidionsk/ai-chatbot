@@ -172,6 +172,10 @@ Mulai 30 Oktober 2026 `TanyaAIChatTransport` mewajibkan `cancelTurn(conversation
 tambah satu fungsi di `TanyaAIUseCase+Chat` dengan pola continuation yang sama (contoh:
 [TanyaAIUseCase+Chat](../TanyaAISandboxApp/TanyaAI/TanyaAIUseCase+Chat.swift)).
 
+Mulai 10 November 2026 transport juga mewajibkan `leaveAgent(conversationID:)`
+(`POST /v1/chat/conversations/{id}/leave-agent`, tanpa body) untuk tombol batal antrean live agent. Polanya
+sama dengan `cancelTurn`: satu fungsi service callback dan satu fungsi continuation di `TanyaAIUseCase+Chat`.
+
 ```swift
 TanyaAIHost(locale: locale, colors: colors, welcome: welcome, bridge: bridge)
 ```

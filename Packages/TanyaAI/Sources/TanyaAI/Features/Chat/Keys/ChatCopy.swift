@@ -17,4 +17,20 @@ enum ChatCopy: String, CaseIterable {
     case shortcutsTitle = "welcome.shortcutsTitle"
     /// Bagian yang bisa diketuk ditulis sebagai link Markdown; tujuannya diabaikan.
     case welcomeTerms = "welcome.terms"
+    /// Label pengirim di atas bubble agen; statis, bukan nama agen dari gateway.
+    case liveAgentSender = "liveAgent.sender"
+    case liveAgentTyping = "liveAgent.typing"
+    case leaveAgentQueue = "liveAgent.leaveQueue"
+    /// Label aksesibilitas tombol lampiran saat dilayani agen.
+    case liveAgentAttachment = "liveAgent.attachment"
+    case agentConnectingTitle = "liveAgent.connecting.title"
+    case agentConnectingMessage = "liveAgent.connecting.message"
+    case agentEndedTitle = "liveAgent.ended.title"
+    case agentEndedMessage = "liveAgent.ended.message"
+    case agentIdleTitle = "liveAgent.idle.title"
+    case agentIdleMessage = "liveAgent.idle.message"
+    case agentCanceledTitle = "liveAgent.canceled.title"
+    case agentCanceledMessage = "liveAgent.canceled.message"
+    case agentUnavailableTitle = "liveAgent.unavailable.title"
+    case agentUnavailableMessage = "liveAgent.unavailable.message"
 }

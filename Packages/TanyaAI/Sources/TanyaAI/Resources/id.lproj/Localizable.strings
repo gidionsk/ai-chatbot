@@ -14,3 +14,18 @@
 "chat.sendFailed" = "Pesan ini gagal terkirim";
 "welcome.shortcutsTitle" = "Mulai dari sini:";
 "welcome.terms" = "Pelajari [Syarat & Ketentuan](terms) penggunaan TANYA AI.";
+/* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */
+"liveAgent.sender" = "Live Agent OCBC Nyala";
+"liveAgent.typing" = "Agen sedang mengetik...";
+"liveAgent.leaveQueue" = "Batalkan proses ini";
+"liveAgent.attachment" = "Lampirkan PDF atau gambar";
+"liveAgent.connecting.title" = "Menghubungkan ke Agent";
+"liveAgent.connecting.message" = "Saat ini Anda berada dalam antrian.\n\nMohon kesediaannya untuk menunggu. Customer Assistant Tanya OCBC NISP akan segera melayani Anda.";
+"liveAgent.ended.title" = "Percakapan dengan Agent Selesai";
+"liveAgent.ended.message" = "Anda telah melakukan percakapan dengan Customer Assistant Tanya OCBC NISP. Tanya AI siap membantu Anda kembali.";
+"liveAgent.idle.title" = "Percakapan dengan Agent Berakhir";
+"liveAgent.idle.message" = "Percakapan berakhir karena tidak ada aktivitas. Tanya AI siap membantu Anda kembali.";
+"liveAgent.canceled.title" = "Permintaan Agent Dibatalkan";
+"liveAgent.canceled.message" = "Anda telah membatalkan permintaan untuk terhubung dengan Customer Assistant. Tanya AI siap membantu Anda kembali.";
+"liveAgent.unavailable.title" = "Agent Belum Tersedia";
+"liveAgent.unavailable.message" = "Customer Assistant belum dapat melayani Anda saat ini. Silakan coba lagi nanti; Tanya AI siap membantu Anda kembali.";

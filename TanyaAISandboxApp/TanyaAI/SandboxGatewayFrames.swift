@@ -23,6 +23,21 @@ struct SandboxGatewayFrames {
     /// Respons cancel: turn yang berjalan dihentikan / tidak ada turn aktif.
     static let canceled = Data(#"{"success":true,"data":{"canceled":true}}"#.utf8)
     static let nothingToCancel = Data(#"{"success":true,"data":{"canceled":false}}"#.utf8)
+    /// Respons `leave-agent`: keluar dari antrean / tidak sedang antre.
+    static let leftAgentQueue = Data(#"{"success":true,"data":{"left":true}}"#.utf8)
+    static let notInAgentQueue = Data(#"{"success":true,"data":{"left":false}}"#.utf8)
+    static let assistantActive = "ASSISTANT_ACTIVE"
+    static let agentQueued = "AGENT_QUEUED"
+    static let agentActive = "AGENT_ACTIVE"
+    static let agentConnecting = "agent_connecting"
+    static let agentJoined = "agent_joined"
+    static let agentEnded = "agent_ended"
+    static let backToAssistant = "back_to_assistant"
+    static let queueCanceled = "queue_canceled"
+    /// Data dummy `--live-agent`.
+    static let handoverReply = "Baik, kami akan menghubungkan kamu ke live agent kami."
+    static let agentGreeting = "Hi, saya Durenk, live agent yang akan membantu kamu."
+    static let agentReply = "Baik, saya cek dulu ya."
     static let canceledStatus = "canceled"
     static let completedStatus = "completed"
     /// Data dummy: jawaban bot mengulang pertanyaan.
@@ -97,6 +112,25 @@ struct SandboxGatewayFrames {
     mutating func turnEnd(status: String = completedStatus) -> [String] {
         seq += 1
         return ["id: \(seq)", "event: turn_end", #"data: {"status":"\#(status)","active_turn_id":"sandbox"}"#, ""]
+    }
+
+    /// Frame `state` contract §5; nama agen hanya saat menuju `AGENT_ACTIVE`.
+    mutating func state(_ state: String, previous: String) -> [String] {
+        seq += 1
+        let agent = state == Self.agentActive ? #"{"name":"Durenk"}"# : "null"
+        let data = #"{"from":"\#(previous)","to":"\#(state)","agent":\#(agent)}"#
+        return ["id: \(seq)", "event: state", "data: \(data)", ""]
+    }
+
+    /// Frame `system` contract §7.6.
+    mutating func system(_ type: String) -> [String] {
+        seq += 1
+        return ["id: \(seq)", "event: system", #"data: {"type":"\#(type)","data":null}"#, ""]
+    }
+
+    /// Frame `typing` tidak tersimpan, jadi tidak memakai seq baru.
+    func typing(isTyping: Bool) -> [String] {
+        ["id: \(seq)", "event: typing", #"data: {"direction":"agent","typing":\#(isTyping),"ttl_s":10}"#, ""]
     }
 
     private static func longHistoryMessage(seq: Int) -> String {

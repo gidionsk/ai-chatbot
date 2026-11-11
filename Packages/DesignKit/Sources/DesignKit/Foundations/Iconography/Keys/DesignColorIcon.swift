@@ -9,6 +9,8 @@
 /// Nama imageset mengikuti aset host Byon agar bisa disalin apa adanya; `AssetTests` menjaga kecocokannya.
 /// TODO: Ganti PDF dummy dengan aset Figma, nama tetap.
 public enum DesignColorIcon: String, CaseIterable {
+    /// Tombol lampiran di kiri composer.
+    case attachment
     /// Tombol kirim aktif.
     case sendOn = "send-on"
     /// Tombol kirim nonaktif (draft kosong atau belum siap).

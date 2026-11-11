@@ -29,8 +29,17 @@ enum WireFixture {
         return Data(#"{"success":true,"data":{"messages":[\#(messages)],"next_before":\#(next)}}"#.utf8)
     }
 
+    /// Halaman history dari objek `Message` utuh (`message(seq:)`), terbaru dulu.
+    static func history(messages: [String]) -> Data {
+        Data(#"{"success":true,"data":{"messages":[\#(messages.joined(separator: ","))],"next_before":null}}"#.utf8)
+    }
+
     static func cancel(isCanceled: Bool) -> Data {
         Data(#"{"success":true,"data":{"canceled":\#(isCanceled)}}"#.utf8)
+    }
+
+    static func leave(isLeft: Bool) -> Data {
+        Data(#"{"success":true,"data":{"left":\#(isLeft)}}"#.utf8)
     }
 
     static func ack(seq: Int = 2) -> Data {
@@ -77,7 +86,19 @@ enum WireFixture {
         ["id: \(seq)", "event: turn_end", #"data: {"status":"\#(status)","active_turn_id":"100001"}"#, ""]
     }
 
-    static func typingFrame(seq: Int) -> [String] {
-        ["id: \(seq)", "event: typing", #"data: {"direction":"agent","typing":true,"ttl_s":10}"#, ""]
+    /// Frame `state` contract §5; nama agen hanya ada saat menuju `AGENT_ACTIVE`.
+    static func stateFrame(seq: Int, state: String, previous: String = "ASSISTANT_ACTIVE") -> [String] {
+        let agent = state == "AGENT_ACTIVE" ? #"{"name":"Durenk"}"# : "null"
+        let data = #"{"from":"\#(previous)","to":"\#(state)","agent":\#(agent)}"#
+        return ["id: \(seq)", "event: state", "data: \(data)", ""]
+    }
+
+    /// Frame `system` contract §7.6.
+    static func systemFrame(seq: Int, type: String) -> [String] {
+        ["id: \(seq)", "event: system", #"data: {"type":"\#(type)","data":null}"#, ""]
+    }
+
+    static func typingFrame(seq: Int, isTyping: Bool = true, lifetime: Int = 10) -> [String] {
+        ["id: \(seq)", "event: typing", #"data: {"direction":"agent","typing":\#(isTyping),"ttl_s":\#(lifetime)}"#, ""]
     }
 }

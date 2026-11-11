@@ -8,16 +8,20 @@
 import Foundation
 
 extension TanyaAIBridge {
-    /// Satu pertanyaan per waktu. Bubble pertanyaan tampil saat itu juga dan tombol langsung menjadi stop; salinan
-    /// dari stream menggantikannya tanpa jeda. Gagal kirim = bubble gagal (tanpa retry) dan kunci dibuka.
+    /// Satu pertanyaan per waktu selama dilayani bot. Bubble pertanyaan tampil saat itu juga dan tombol langsung
+    /// menjadi stop; salinan dari stream menggantikannya tanpa jeda. Gagal kirim = bubble gagal (tanpa retry) dan
+    /// kunci dibuka.
     /// Nil = ditolak tanpa diteruskan ke host (belum siap atau masih menunggu jawaban), draft tetap di composer.
-    /// Task selesai setelah respons kirim diproses.
+    /// Task selesai setelah respons kirim diproses. Selama antre atau dilayani agen tidak ada `turn_end`, jadi kirim
+    /// tidak dikunci dan tombol tidak menjadi stop.
     @discardableResult
     func send(_ text: String) -> Task<Void, Never>? {
         guard !isAwaitingReply, isReady, let conversationID else { return nil }
         // Penanda pertanyaan ini: respons yang datang setelah turn berganti tidak mengubah turn yang baru.
         let clientMessageID = UUID().uuidString
-        turn.start(clientMessageID: clientMessageID)
+        if !conversationState.isLiveAgent {
+            turn.start(clientMessageID: clientMessageID)
+        }
         localQuestions.append(LocalQuestion(id: clientMessageID, text: text, afterSeq: messages.latestSeq))
         latestSentQuestionID = clientMessageID
         return Task {

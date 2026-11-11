@@ -69,6 +69,7 @@ scroll progress. Service bisnis, validasi rekening, serta flow transfer milik ho
 | `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi. |
 | `Chat/Gateway` | `Models` kontrak respons/event/history, `Decoding`, `Streaming`, serta metadata protokol. HTTP tetap host. |
 | `Chat/Keys` | Key copy, image, identifier, tautan, dan `Extensions` accessor-nya. |
+| `Chat/Intents/<Nama>` | Satu folder per intent. `LiveAgent`: `Models` kartu status, `Extensions` copy kartu, kartu selesai dari history, dan penyisipan kartu ke daftar, `Views` kartu, pesan agen, dan indikator mengetik. |
 
 Saat bagian berbeda membutuhkan model yang sama, letakkan pada pemilik bersama
 terdekat. Model khusus Welcome tetap di `Welcome/Models`; model yang benar-benar
@@ -96,10 +97,32 @@ Host membuat bridge sekali selama halaman terbuka. Folder bukan batas module Swi
 Perubahan `onOpenLink` menjadi `String` dan perbaikan back iOS 15 sudah berasal dari
 PR #52 di basis `startingpoint`; keduanya dipertahankan pada struktur ini.
 
-## Pola intent berikutnya
+## Pola intent
 
-**Rancangan, belum keputusan.** Struktur dan pembagian state di bawah dikonfirmasi ulang saat Figma dan
-contract flow pertama tersedia. Belum ada implementasi atau folder kosong dalam package:
+Intent pertama adalah `LiveAgent` (serah terima ke agen manusia). Flow ini digerakkan event gateway,
+bukan form host, jadi decode tetap di `Gateway`, state dan aksi `leave-agent` di `Session`
+(`TanyaAIBridge+LiveAgent`), dan hanya nilai yang dilihat nasabah di `Intents/LiveAgent`:
+
+```text
+TanyaAI/Features/Chat/Intents/LiveAgent/
+├── Models/
+│   ├── LiveAgentNotice.swift
+│   └── LiveAgentNoticeKind.swift
+├── Extensions/
+│   ├── Array+AgentSession.swift
+│   ├── Array+LiveAgentNotice.swift
+│   └── LiveAgentNoticeKind+Copy.swift
+└── Views/
+    ├── AgentTypingIndicator.swift
+    ├── LiveAgentMessageRow.swift
+    └── LiveAgentNoticeCard.swift
+```
+
+Komponen visualnya generik di DesignKit: `NoticeCard`, `SenderMessageCard`, dan `FilledLinkButton`.
+Tombol lampiran adalah parameter `attachment` milik `MessageComposer`.
+
+Intent berbentuk flow host, misalnya surat referensi, masih **rancangan, belum keputusan**. Struktur dan
+pembagian state di bawah dikonfirmasi ulang saat Figma dan contract flow tersebut tersedia:
 
 ```text
 TanyaAI/Features/Chat/Intents/ReferenceLetter/

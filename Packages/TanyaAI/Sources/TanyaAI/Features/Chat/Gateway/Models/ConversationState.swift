@@ -13,6 +13,9 @@ enum ConversationState: String, Decodable {
     case closed = "CLOSED"
     case unknown
 
+    /// Nasabah menunggu atau dilayani agen manusia: kirim tidak memakai turn lock dan `turn_end` (contract §7.5).
+    var isLiveAgent: Bool { self == .agentQueued || self == .agentActive }
+
     init(from decoder: Decoder) throws {
         self = Self(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .unknown
     }

@@ -14,3 +14,18 @@
 "chat.sendFailed" = "This message failed to send";
 "welcome.shortcutsTitle" = "Start here:";
 "welcome.terms" = "Learn the [Terms & Conditions](terms) for using TANYA AI.";
+/* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */
+"liveAgent.sender" = "Live Agent OCBC Nyala";
+"liveAgent.typing" = "Agent is typing...";
+"liveAgent.leaveQueue" = "Cancel this request";
+"liveAgent.attachment" = "Attach PDF or image";
+"liveAgent.connecting.title" = "Connecting to an Agent";
+"liveAgent.connecting.message" = "You are currently in the queue.\n\nPlease wait. A Tanya OCBC NISP Customer Assistant will serve you shortly.";
+"liveAgent.ended.title" = "Agent Conversation Ended";
+"liveAgent.ended.message" = "You have finished your conversation with a Tanya OCBC NISP Customer Assistant. Tanya AI is ready to help you again.";
+"liveAgent.idle.title" = "Agent Conversation Closed";
+"liveAgent.idle.message" = "The conversation ended because there was no activity. Tanya AI is ready to help you again.";
+"liveAgent.canceled.title" = "Agent Request Canceled";
+"liveAgent.canceled.message" = "You canceled the request to connect with a Customer Assistant. Tanya AI is ready to help you again.";
+"liveAgent.unavailable.title" = "No Agent Available";
+"liveAgent.unavailable.message" = "A Customer Assistant cannot serve you right now. Please try again later; Tanya AI is ready to help you again.";
