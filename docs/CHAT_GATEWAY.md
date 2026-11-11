@@ -87,9 +87,11 @@ Tombol batal berwarna #567180 (`CustomColors.Button.muted`).
 Nasabah mengetik (§7.7) dikirim lewat `TanyaAIChatTransport.sendTyping` hanya selama `AGENT_ACTIVE`. Composer
 mengabarkan draft berisi/kosong; draft tetap lokal. `typing:true` dikirim saat mulai dan diulang paling cepat
 tiap 5 detik selama terus mengetik (ttl server 10 detik). `typing:false` dikirim setelah 3 detik tanpa ketikan,
-saat draft kosong (termasuk setelah terkirim), atau saat composer hilang. Kiriman berurutan. Saat state
-meninggalkan agen, status dilupakan tanpa kiriman. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan ke
-agen memakai `sendMessage` yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
+saat draft kosong (termasuk setelah terkirim), atau saat composer hilang. Satu pengirim berurutan; sinyal yang
+menunggu digabung menjadi yang terbaru dan dicek ulang sebelum dikirim. Saat state meninggalkan agen (lewat init
+maupun stream), percakapan berganti, atau sesi berakhir, status dilupakan tanpa kiriman, dan indikator agen
+mengetik ikut dihapus. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan ke agen memakai `sendMessage`
+yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
 
 Selama `AGENT_ACTIVE` composer menampilkan tombol lampiran (PDF/gambar) di luar kartu sebelah kiri, sejajar
 dengan tombol kirim. Contract v1.5.0 belum punya endpoint upload, jadi ketukannya belum melakukan apa pun. Bila
@@ -131,7 +133,8 @@ mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
    retry, dan kunci dibuka; bubble gagal tetap di posisinya selama halaman hidup. 401 saat kirim tetap
    `onSessionExpired` dan 404/410 (percakapan hilang) tetap `onConnectionFailed`, sama seperti saat sambung.
    Respons kirim dicocokkan lewat `client_msg_id`: respons yang datang terlambat untuk pertanyaan lama
-   (mis. setelah percakapan berganti) tidak mengubah pertanyaan yang sedang ditunggu.
+   (mis. setelah percakapan berganti) tidak mengubah pertanyaan yang sedang ditunggu. 404/410 dari kirim, stop,
+   atau `leave-agent` milik percakapan yang sudah diganti init juga tidak menutup percakapan yang baru.
 5. Fase composer: tidak ada titik bergerak. Sejak kirim tombol menjadi stop; nasabah boleh mengetik
    pertanyaan berikutnya tetapi harus menekan stop (atau menunggu `turn_end`) untuk mengirimnya.
 6. Stop: `POST .../cancel`; ditekan sebelum ack = cancel dikirim saat ack tiba (tidak dikirim bila

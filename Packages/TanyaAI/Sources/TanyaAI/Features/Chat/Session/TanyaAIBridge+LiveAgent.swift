@@ -64,6 +64,16 @@ extension TanyaAIBridge {
 // MARK: - Typing
 
 extension TanyaAIBridge {
+    /// Dari init (termasuk setelah reconnect) maupun event `state`: di luar antre/agen tidak ada agen yang mengetik,
+    /// dan di luar `AGENT_ACTIVE` tidak ada yang menerima sinyal mengetik nasabah.
+    func didChangeConversationState() {
+        if !conversationState.isLiveAgent {
+            showAgentTyping(false)
+        }
+        guard conversationState != .agentActive else { return }
+        resetUserTyping()
+    }
+
     /// Event `typing` tidak tersimpan, jadi indikator dihapus sendiri setelah `lifetime` bila kabar berikutnya
     /// (mis. `typing:false`) hilang. Event baru mengganti penghapus yang lama.
     func showAgentTyping(_ isTyping: Bool, lifetime: TimeInterval = .zero) {

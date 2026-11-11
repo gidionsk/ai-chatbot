@@ -142,6 +142,19 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         await waitUntil { !bridge.isAgentTyping }
     }
 
+    /// Agen selesai saat putus: init membawa state bot tanpa event `state`, indikator tidak menunggu `ttl_s`.
+    @Test
+    func reconnectingOutsideTheAgentHidesTheTypingIndicator() async {
+        let (transport, bridge) = await connectedBridge(state: "AGENT_ACTIVE", isSleepReal: true)
+        defer { bridge.connectionTask?.cancel() }
+        transport.initResults = [.success(WireFixture.initialize())]
+        transport.emit(WireFixture.typingFrame(seq: 3))
+        await waitUntil { bridge.isAgentTyping }
+        transport.drop()
+        await waitUntil { bridge.conversationState == .assistantActive }
+        #expect(!bridge.isAgentTyping)
+    }
+
     /// `typing:false` bisa hilang di jaringan; indikator dihapus sendiri setelah `ttl_s`.
     @Test
     func typingExpiresAfterItsLifetime() async {

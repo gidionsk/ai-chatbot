@@ -134,11 +134,50 @@ struct TanyaAIBridgeTurnTests {
         #expect(bridge.localQuestions.isEmpty)
         #expect(bridge.rows.map(\.id) == ["m-3"])
     }
+
+    /// Init mengganti percakapan selagi kirim berjalan: 404/410 milik percakapan lama tidak menutup yang baru.
+    @Test(arguments: [404, 410])
+    func sendFailureForAReplacedConversationKeepsTheNewOne(statusCode: Int) async {
+        let (transport, bridge) = await connectedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.sendResult = .failure(
+            TanyaAITransportError.response(statusCode: statusCode, body: WireFixture.error(isRetryable: false)))
+        transport.isHoldingAck = true
+        let delivery = bridge.send("Halo")
+        await waitUntil { transport.isAckHeld }
+        await replaceConversation(transport, bridge)
+        transport.releaseAck()
+        await delivery?.value
+        #expect(bridge.connection == .live)
+    }
+
+    /// Sama untuk stop yang responsnya datang setelah percakapan berganti.
+    @Test
+    func stopFailureForAReplacedConversationKeepsTheNewOne() async {
+        let (transport, bridge) = await awaitingReplyBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.cancelResult = .failure(
+            TanyaAITransportError.response(statusCode: 410, body: WireFixture.error(isRetryable: false)))
+        transport.isHoldingCancel = true
+        let stop = Task { await bridge.cancelTurn() }
+        await waitUntil { transport.isAckHeld }
+        await replaceConversation(transport, bridge)
+        transport.releaseAck()
+        await stop.value
+        #expect(bridge.connection == .live)
+    }
 }
 
 // MARK: - Helpers
 
 private extension TanyaAIBridgeTurnTests {
+    /// Stream putus lalu init memberi percakapan lain.
+    func replaceConversation(_ transport: FakeChatTransport, _ bridge: TanyaAIBridge) async {
+        transport.initResults = [.success(WireFixture.initialize(conversationID: "lain"))]
+        transport.drop()
+        await waitUntil { bridge.conversationID == "lain" && bridge.connection == .live }
+    }
+
     /// Sambungan hidup; test menghentikannya lewat `connectionTask` di akhir.
     func connectedBridge() async -> (FakeChatTransport, TanyaAIBridge) {
         let transport = FakeChatTransport()

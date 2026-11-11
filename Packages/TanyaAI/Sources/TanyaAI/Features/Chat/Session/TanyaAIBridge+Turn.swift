@@ -65,7 +65,7 @@ private extension TanyaAIBridge {
         } catch {
             turn.cancel(clientMessageID: clientMessageID)
             updateQuestion(clientMessageID) { $0.isFailed = true }
-            didFailRequest(error)
+            didFailRequest(error, conversationID: conversationID)
         }
     }
 
@@ -79,7 +79,7 @@ private extension TanyaAIBridge {
             }
         } catch {
             turn.stopCanceling(clientMessageID: clientMessageID)
-            didFailRequest(error)
+            didFailRequest(error, conversationID: conversationID)
         }
     }
 

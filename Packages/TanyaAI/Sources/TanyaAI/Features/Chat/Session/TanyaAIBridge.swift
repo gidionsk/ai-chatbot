@@ -34,12 +34,9 @@ public final class TanyaAIBridge: ObservableObject {
     @Published
     var connection = ChatConnection.connecting
     /// State dari init terakhir, diperbarui event `state`. `unknown` sebelum init pertama. Lewat init maupun stream,
-    /// keluar dari `AGENT_ACTIVE` melupakan status mengetik nasabah.
+    /// status mengetik kedua pihak ikut dibersihkan (lihat `didChangeConversationState`).
     @Published var conversationState = ConversationState.unknown {
-        didSet {
-            guard conversationState != .agentActive else { return }
-            resetUserTyping()
-        }
+        didSet { didChangeConversationState() }
     }
     /// Kartu status live agent yang diterima selama halaman terbuka, urut `seq`.
     @Published private(set) var liveAgentNotices: [LiveAgentNotice] = []
@@ -145,13 +142,12 @@ extension TanyaAIBridge {
     /// tampilan; sementara stop bisa ditekan lagi.
     /// `requestConversationID` = percakapan milik request; 404/410 dari percakapan yang sudah diganti init tidak
     /// menutup percakapan yang baru.
-    func didFailRequest(_ error: Error, conversationID requestConversationID: String? = nil) {
+    func didFailRequest(_ error: Error, conversationID requestConversationID: String) {
         guard case let .response(statusCode, _)? = error as? TanyaAITransportError else { return }
         if ChatBackoff.isUnauthorized(statusCode: statusCode) {
             return expireSession()
         }
-        guard ChatBackoff.isConversationGone(statusCode: statusCode),
-            requestConversationID == nil || requestConversationID == conversationID
+        guard ChatBackoff.isConversationGone(statusCode: statusCode), requestConversationID == conversationID
         else { return }
         failConnection(error)
     }
@@ -190,9 +186,6 @@ extension TanyaAIBridge {
             turn.end(seq: seq)
         case .state(let state):
             conversationState = state
-            if !state.isLiveAgent {
-                showAgentTyping(false)
-            }
         case .notice(let notice):
             // Replay setelah reconnect bisa mengulang event yang sama; `seq` menjadi kuncinya.
             let others = liveAgentNotices.filter { $0.seq != notice.seq }
@@ -210,6 +203,7 @@ extension TanyaAIBridge {
             messages = history.merging([])
             localQuestions = []
             liveAgentNotices = []
+            showAgentTyping(false)
             resetUserTyping()
             turn.cancel()
             eventCursor = nil

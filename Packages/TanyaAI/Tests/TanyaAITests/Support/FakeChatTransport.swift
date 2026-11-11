@@ -26,8 +26,9 @@ final class FakeChatTransport: TanyaAIChatTransport {
     var beforeAck: (() -> Void)?
     /// True = respons kirim berikutnya ditahan sampai `releaseAck()` (respons yang datang terlambat).
     var isHoldingAck = false
-    /// True = respons `typing`/`leave-agent` berikutnya ditahan sampai `releaseAck()`.
+    /// True = respons `typing`/`leave-agent`/`cancel` berikutnya ditahan sampai `releaseAck()`.
     var isHoldingTyping = false
+    var isHoldingCancel = false
     var isHoldingLeave = false
     private(set) var calls: [String] = []
     /// Jumlah stream yang sudah ditutup (putus, selesai, atau dibatalkan pemakai).
@@ -62,7 +63,12 @@ final class FakeChatTransport: TanyaAIChatTransport {
 
     func cancelTurn(conversationID: String) async throws -> Data {
         calls.append("cancel")
-        return try cancelResult.get()
+        let result = cancelResult
+        if isHoldingCancel {
+            isHoldingCancel = false
+            await withCheckedContinuation { heldAck = $0 }
+        }
+        return try result.get()
     }
 
     func leaveAgent(conversationID: String) async throws -> Data {
@@ -86,7 +92,7 @@ final class FakeChatTransport: TanyaAIChatTransport {
         }
     }
 
-    /// Melepas respons yang ditahan: kirim, `typing`, atau `leave-agent`.
+    /// Melepas respons yang ditahan: kirim, stop, `typing`, atau `leave-agent`.
     func releaseAck() {
         heldAck?.resume()
         heldAck = nil
