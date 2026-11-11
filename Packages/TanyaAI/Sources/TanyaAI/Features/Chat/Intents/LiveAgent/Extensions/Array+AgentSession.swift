@@ -31,8 +31,8 @@ extension Array where Element == ChatMessage {
 
     /// Permintaan agen yang tidak dilanjutkan: pesan bot ber-intent `liveAgent` yang tidak diikuti pesan agen sampai
     /// bot menjawab lagi, atau sampai akhir daftar bila `isSettled` (tidak antre/dilayani dan turn serah terima sudah
-    /// selesai). Kartunya tepat setelah pesan serah terima. Rentang yang sudah punya kartu dari stream, termasuk
-    /// kartu antre, tidak diberi kartu lagi.
+    /// selesai). Kartunya tepat setelah pesan serah terima. Rentang yang sudah punya kartu penutup dari stream tidak
+    /// diberi kartu lagi; `notices` tidak boleh berisi kartu antre, karena kartu itu tersembunyi setelah antre selesai.
     func unfinishedHandovers(isSettled: Bool, closedBy notices: [LiveAgentNotice]) -> [LiveAgentNotice] {
         var handovers: [(seq: Int, nextSeq: Int)] = []
         var handoverSeq: Int?

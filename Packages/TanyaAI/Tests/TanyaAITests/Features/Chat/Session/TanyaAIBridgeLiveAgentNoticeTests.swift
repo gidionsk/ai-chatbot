@@ -105,6 +105,28 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connecting, seq: 5)])
     }
 
+    /// Kartu antre yang sudah tersembunyi bukan penutup: antre selesai saat putus lalu bot menjawab lagi, kartu
+    /// "tidak dilanjutkan" tetap dibuat dari history.
+    @Test
+    func staleQueueCardDoesNotHideTheUnfinishedHandover() async {
+        let transport = FakeChatTransport()
+        transport.initResults = [.success(WireFixture.initialize()), .success(WireFixture.initialize())]
+        let first = [WireFixture.message(seq: 2, intent: "handover-to-agent"), WireFixture.message(seq: 1)]
+        transport.historyPages = [
+            WireFixture.history(messages: first), WireFixture.history(messages: [WireFixture.message(seq: 6)] + first)
+        ]
+        let bridge = TanyaAIBridge(transport: transport, onSessionExpired: nil, sleep: { _ in })
+        Task { await bridge.run() }
+        defer { bridge.connectionTask?.cancel() }
+        await waitUntil { bridge.connection == .live }
+        transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.conversationState == .agentQueued }
+        transport.drop()
+        await waitUntil { bridge.messages.count == 3 }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .notContinued, seq: 2)])
+    }
+
     /// Indikator hilang saat `typing:false` atau pesan agen datang.
     @Test
     func typingStopsWithTypingFalseOrTheAgentMessage() async {
