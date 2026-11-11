@@ -5,6 +5,8 @@
 //  Created by Wendra on 5/11/26.
 //
 
+import Foundation
+
 /// Yang ditampilkan table dan pemicu posisi scroll-nya.
 struct ChatTableState: Equatable {
     var items: [ChatListItem] = []
@@ -13,6 +15,8 @@ struct ChatTableState: Equatable {
     /// Berubah setiap pesan baru datang di luar turn yang sedang berjalan, kartu live agent datang, atau agen mulai
     /// dan berhenti mengetik.
     var incomingMessageID: String?
+    /// Berubah setiap nasabah menekan tombol ke pesan terbaru.
+    var latestJumpID: UUID?
     var historyPhase = ChatHistoryPhase.loading
     var rowInputs = ChatRowInputs()
 }

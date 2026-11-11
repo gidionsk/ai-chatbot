@@ -11,6 +11,8 @@
 /// Ikon berwarna utuh ada di `DesignColorIcon`; gambar non-ikon (ilustrasi, latar) dibuat enum terpisah karena
 /// sifatnya berbeda.
 public enum DesignIcon: String, CaseIterable {
+    /// TODO: Ganti PDF dummy dengan aset Figma `icon_arrow` (komponen `auto_scroll`), nama tetap.
+    case arrowDown
     case backArrow
     case chevronRight
     /// TODO: Ganti PDF dummy dengan aset Figma ikon headset kartu status, nama tetap.

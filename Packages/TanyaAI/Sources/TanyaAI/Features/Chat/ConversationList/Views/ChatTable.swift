@@ -17,17 +17,19 @@ struct ChatTable<Row: View>: UIViewControllerRepresentable {
     private let headerHeight: CGFloat
     private let actions: ChatRowActions
     private let onScrollProgress: (CGFloat) -> Void
+    private let onLatestVisibilityChange: (Bool) -> Void
     private let row: (ChatListItem, ChatRowActions) -> Row
 
     init(
         state: ChatTableState, headerHeight: CGFloat, actions: ChatRowActions,
-        onScrollProgress: @escaping (CGFloat) -> Void,
+        onScrollProgress: @escaping (CGFloat) -> Void, onLatestVisibilityChange: @escaping (Bool) -> Void,
         @ViewBuilder row: @escaping (ChatListItem, ChatRowActions) -> Row
     ) {
         self.state = state
         self.headerHeight = headerHeight
         self.actions = actions
         self.onScrollProgress = onScrollProgress
+        self.onLatestVisibilityChange = onLatestVisibilityChange
         self.row = row
     }
 
@@ -41,6 +43,7 @@ struct ChatTable<Row: View>: UIViewControllerRepresentable {
     /// sel yang dibuat berikutnya; sel yang tampil diperbarui `update` dan `refreshInjectedContent`.
     func updateUIViewController(_ controller: ChatTableController, context: Context) {
         controller.onScrollProgress = onScrollProgress
+        controller.onLatestVisibilityChange = onLatestVisibilityChange
         controller.rowActions = actions
         controller.updateHeaderHeight(headerHeight)
         controller.makeCell = { [row, weak controller] table, indexPath, item in
