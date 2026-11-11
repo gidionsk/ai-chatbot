@@ -183,6 +183,46 @@ struct TanyaAIBridgeConnectionTests {
         #expect(bridge.messages.map(\.seq) == [1])
         #expect(transport.calls.last == "events:1")
     }
+
+    /// Halaman tampil lagi (`.task` jalan ulang) setelah gagal permanen: status final, tidak ada init atau stream
+    /// baru, dan host tidak diberi tahu dua kali.
+    @Test
+    func rerunAfterAPermanentFailureDoesNotReconnect() async {
+        let transport = FakeChatTransport()
+        var failures = 0
+        var isRerunFinished = false
+        let bridge = TanyaAIBridge(
+            transport: transport, onSessionExpired: nil, onConnectionFailed: { _ in failures += 1 }, sleep: { _ in })
+        let first = Task { await bridge.run() }
+        await waitUntil { bridge.connection == .live }
+        transport.sendResult = .failure(response(410, WireFixture.error(isRetryable: false)))
+        _ = await bridge.sendAndWait("Halo")
+        await first.value
+        let rerun = Task {
+            await bridge.run()
+            isRerunFinished = true
+        }
+        defer { rerun.cancel() }
+        await waitUntil { isRerunFinished }
+        #expect(transport.calls.filter { $0 == "init" }.count == 1)
+        #expect(bridge.connection == .closed)
+        #expect(failures == 1)
+    }
+
+    /// Halaman yang hanya tertutup halaman lain lalu tampil lagi tetap menyambung ulang.
+    @Test
+    func rerunAfterThePageWasHiddenReconnects() async {
+        let transport = FakeChatTransport()
+        let bridge = makeBridge(transport)
+        let first = Task { await bridge.run() }
+        await waitUntil { bridge.connection == .live }
+        first.cancel()
+        await first.value
+        let rerun = Task { await bridge.run() }
+        defer { rerun.cancel() }
+        await waitUntil { transport.calls.filter { $0.hasPrefix("events") }.count == 2 }
+        #expect(bridge.connection == .live)
+    }
 }
 
 // MARK: - Helpers

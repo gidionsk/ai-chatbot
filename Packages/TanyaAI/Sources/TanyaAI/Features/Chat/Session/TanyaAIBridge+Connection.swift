@@ -10,7 +10,8 @@ import Foundation
 extension TanyaAIBridge {
     /// Dijalankan `ChatScreen` lewat `.task` selama halaman tampil: init → history → SSE. Stream putus atau
     /// error yang bisa di-retry = jeda backoff lalu ulang dari init. Berhenti saat task dibatalkan (halaman
-    /// ditutup), percakapan ditutup, sesi habis, atau error yang tidak bisa di-retry.
+    /// ditutup), percakapan ditutup, sesi habis, atau error yang tidak bisa di-retry. Tiga yang terakhir final:
+    /// `.task` yang jalan ulang saat halaman tampil lagi tidak menyambung, karena host sudah diberi tahu sekali.
     func run() async {
         // Task terpisah agar sesi habis (mis. 401 saat kirim) bisa menutup stream yang sedang terbuka.
         let task = Task { await connectUntilStopped() }
@@ -28,7 +29,7 @@ extension TanyaAIBridge {
 private extension TanyaAIBridge {
     func connectUntilStopped() async {
         var backoff = ChatBackoff()
-        while !Task.isCancelled, connection != .expired {
+        while !Task.isCancelled, !isConnectionFinal {
             let delay: TimeInterval
             do {
                 guard try await connectOnce(onLive: { backoff.reset() }) else {
@@ -43,11 +44,14 @@ private extension TanyaAIBridge {
                 delay = retryDelay
             }
             // Sesi habis atau halaman ditutup selama stream terbuka: status final tidak ditimpa.
-            guard !Task.isCancelled, connection != .expired else { return }
+            guard !Task.isCancelled, !isConnectionFinal else { return }
             connection = .connecting
             try? await sleep(delay)
         }
     }
+
+    /// Sesi habis (401) atau ditutup (gagal permanen, percakapan `CLOSED`): tidak berubah selama bridge hidup.
+    var isConnectionFinal: Bool { connection == .expired || connection == .closed }
 
     /// Satu siklus. False = percakapan `CLOSED` (history tetap dimuat, stream tidak dibuka).
     /// True = stream berakhir normal dan perlu disambung ulang.

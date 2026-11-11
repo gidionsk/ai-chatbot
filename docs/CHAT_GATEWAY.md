@@ -123,8 +123,10 @@ mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
 3. Berhenti: halaman ditutup (task dibatalkan), init mengembalikan `CLOSED` (history tetap tampil; sejak
    contract 1.4 init resume membuka lagi percakapan `CLOSED`, jadi ini hanya pengaman),
    401 (`onSessionExpired`, sekali), atau error lain dengan `retryable:false` (`onConnectionFailed`, sekali,
-   dengan `TanyaAITransportError`). Loading awal ikut berhenti. 401 dari jalur mana pun (termasuk kirim)
-   menutup stream yang sedang terbuka dan bersifat final: tidak menyambung ulang.
+   dengan `TanyaAITransportError`). Loading awal ikut berhenti. 401 dan gagal permanen dari jalur mana pun
+   (termasuk kirim) menutup stream yang sedang terbuka dan bersifat final selama bridge hidup: halaman yang
+   tampil lagi (`.task` jalan ulang) tidak menyambung ulang; host membuka halaman baru untuk mencoba lagi.
+   Halaman yang hanya tertutup halaman lain lalu tampil lagi tetap menyambung ulang.
 4. Kirim (keputusan user 2 November 2026): bubble pertanyaan tampil saat itu juga (`LocalQuestion`) dan
    draft dikosongkan; ack 202 memberi `seq` pertanyaan. Salinan dari stream atau history (dicocokkan lewat
    `client_msg_id`, atau seq ack bila kosong) menggantikan bubble lokal tanpa jeda. Hanya `turn_end` dengan
