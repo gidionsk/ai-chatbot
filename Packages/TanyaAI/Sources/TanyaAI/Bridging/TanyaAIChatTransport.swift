@@ -32,6 +32,10 @@ public protocol TanyaAIChatTransport: AnyObject {
     /// Respons 200 `{left}`; 409 bila agen sudah bergabung (hanya agen yang bisa menutup).
     func leaveAgent(conversationID: String) async throws -> Data
 
+    /// `POST /v1/chat/conversations/{id}/typing` dengan body `{"typing": true|false}`: nasabah sedang mengetik,
+    /// diteruskan ke agen. Respons 204 tanpa body. Hanya dipanggil selama dilayani agen.
+    func sendTyping(conversationID: String, isTyping: Bool) async throws
+
     /// `GET /v1/chat/conversations/{id}/events` (`Accept: text/event-stream`), dengan header `Last-Event-ID`
     /// bila tidak nil. Kirim setiap baris teks apa adanya tanpa newline (baris kosong boleh dibuang,
     /// misalnya oleh `URLSession.AsyncBytes.lines`). Stream selesai saat koneksi ditutup server; error

@@ -29,3 +29,5 @@
 "liveAgent.canceled.message" = "You canceled the request to connect with a Customer Assistant. Tanya AI is ready to help you again.";
 "liveAgent.unavailable.title" = "No Agent Available";
 "liveAgent.unavailable.message" = "A Customer Assistant cannot serve you right now. Please try again later; Tanya AI is ready to help you again.";
+"liveAgent.notContinued.title" = "Agent Request Not Continued";
+"liveAgent.notContinued.message" = "You requested to connect with a Customer Assistant, but the conversation did not continue. Tanya AI is ready to help you again.";

@@ -60,6 +60,16 @@ extension TanyaAIUseCase: TanyaAIChatTransport {
         }
     }
 
+    func sendTyping(conversationID: String, isTyping: Bool) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            chatService.sendTyping(
+                conversationID: conversationID, isTyping: isTyping,
+                onSuccess: { continuation.resume() },
+                onFailed: { continuation.resume(throwing: $0) }
+            )
+        }
+    }
+
     func events(conversationID: String, lastEventID: String?) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             let request = chatService.events(

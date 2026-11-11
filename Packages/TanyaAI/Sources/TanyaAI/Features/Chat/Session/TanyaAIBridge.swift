@@ -43,6 +43,14 @@ public final class TanyaAIBridge: ObservableObject {
     @Published var isAgentTyping = false
     /// Penghapus indikator mengetik setelah batas waktunya; diganti setiap event `typing` baru.
     var agentTypingExpiry: Task<Void, Never>?
+    /// Agen sedang diberi tahu nasabah mengetik (`typing:true` terakhir yang dikirim); tidak di-publish.
+    var isUserTypingSent = false
+    /// `typing:true` terkirim kurang dari `ChatWire.typingRefresh` yang lalu, jadi ketikan berikutnya tidak dikirim.
+    var isUserTypingFresh = false
+    var userTypingIdle: Task<Void, Never>?
+    var userTypingRefresh: Task<Void, Never>?
+    /// Kiriman `typing` terakhir; kiriman berikutnya menunggu ini agar urutannya tetap.
+    var userTypingDelivery: Task<Void, Never>?
     /// Percakapan dari `/v1/chat/init` terakhir; nil sebelum init pertama berhasil.
     var conversationID: String?
     /// `id` event SSE terbesar yang sudah diterima (termasuk `turn_end`), bagian dari `Last-Event-ID`.
@@ -168,6 +176,9 @@ extension TanyaAIBridge {
             conversationState = state
             if !state.isLiveAgent {
                 showAgentTyping(false)
+            }
+            if state != .agentActive {
+                stopUserTyping(isDelivered: false)
             }
         case .notice(let notice):
             // Replay setelah reconnect bisa mengulang event yang sama; `seq` menjadi kuncinya.

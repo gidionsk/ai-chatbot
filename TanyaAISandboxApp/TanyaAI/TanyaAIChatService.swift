@@ -108,6 +108,14 @@ final class TanyaAIChatService {
         }
     }
 
+    /// Sinyal nasabah mengetik; gateway tiruan tidak punya agen sungguhan, jadi cukup dijawab 204.
+    func sendTyping(
+        conversationID: String, isTyping: Bool, onSuccess: @escaping () -> Void,
+        onFailed: @escaping (Error) -> Void
+    ) {
+        DispatchQueue.main.async { onSuccess() }
+    }
+
     /// Stream SSE tiruan: `onLine` per baris lengkap. Kembalian dipakai pemanggil untuk menutup stream,
     /// sama seperti `DataStreamRequest.cancel()` di Byon.
     func events(

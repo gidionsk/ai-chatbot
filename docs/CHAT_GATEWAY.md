@@ -27,7 +27,7 @@ di-decode TanyaAI karena khusus Tanya AI dan sama di semua host.
 | `leaveAgent(conversationID:)` | `POST /v1/chat/conversations/{id}/leave-agent`, tanpa body → 200 `{left}`, 409 bila agen sudah bergabung |
 | `events(conversationID:lastEventID:)` | `GET /v1/chat/conversations/{id}/events`, `Accept: text/event-stream`, `Last-Event-ID` bila ada |
 
-Typing, limits, list conversations, close, dan `success-id` belum dipakai.
+Limits, list conversations, close, dan `success-id` belum dipakai.
 
 ## Nilai contract yang dipakai iOS
 
@@ -74,7 +74,22 @@ dan label statis "Live Agent OCBC Nyala", teks polos). Kartu antre di posisi eve
 dibuka lagi saat masih antre tanpa event yang ikut replay. Kartu selesai dari history ditaruh setelah pesan agen
 terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau di akhir bila agen tidak sedang melayani), kecuali
 stream sudah memberi kartu penutup untuk sesi itu. Waktu antre habis dan agen tidak tersedia memakai kartu yang sama.
+Kartu dari history memakai `seq` pesan yang ditutupnya dan disisipkan dengan `<=`, jadi tepat setelah pesan itu.
+
+Pesan bot ber-intent `handover-to-agent` yang tidak diikuti pesan agen (sampai bot menjawab lagi, atau sampai akhir
+daftar bila sudah tidak antre/dilayani dan turn-nya selesai) diberi kartu "tidak dilanjutkan" tepat setelahnya.
+History tidak membawa event `system`, jadi penyebabnya (batal, antre habis, agen tidak tersedia) tidak diketahui
+dan copy-nya netral. Rentang yang sudah punya kartu dari stream (termasuk kartu antre) tidak diberi kartu ini.
+Serah terima dari kanal lain yang tiba di luar turn halaman ini bisa menampilkan kartu sekejap sebelum event
+antre-nya tiba.
 Tombol batal berwarna #567180 (`CustomColors.Button.muted`).
+
+Nasabah mengetik (§7.7) dikirim lewat `TanyaAIChatTransport.sendTyping` hanya selama `AGENT_ACTIVE`. Composer
+mengabarkan draft berisi/kosong; draft tetap lokal. `typing:true` dikirim saat mulai dan diulang paling cepat
+tiap 5 detik selama terus mengetik (ttl server 10 detik). `typing:false` dikirim setelah 3 detik tanpa ketikan,
+saat draft kosong (termasuk setelah terkirim), atau saat composer hilang. Kiriman berurutan. Saat state
+meninggalkan agen, status dilupakan tanpa kiriman. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan ke
+agen memakai `sendMessage` yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
 
 Selama `AGENT_ACTIVE` composer menampilkan tombol lampiran (PDF/gambar) di luar kartu sebelah kiri, sejajar
 dengan tombol kirim. Contract v1.5.0 belum punya endpoint upload, jadi ketukannya belum melakukan apa pun. Bila

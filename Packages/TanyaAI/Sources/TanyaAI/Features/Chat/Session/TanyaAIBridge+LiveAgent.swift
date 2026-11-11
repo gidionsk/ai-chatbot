@@ -30,11 +30,14 @@ extension TanyaAIBridge {
 
 extension TanyaAIBridge {
     /// Kartu yang tampil di daftar. Kartu antre hanya selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir
-    /// daftar bila event-nya tidak ikut replay. Kartu selesai dari history ditambahkan untuk sesi agen yang tidak
-    /// punya kartu penutup dari stream.
+    /// daftar bila event-nya tidak ikut replay. Dari history ditambahkan kartu selesai untuk sesi agen dan kartu
+    /// "tidak dilanjutkan" untuk serah terima tanpa agen, bila stream tidak memberi kartunya.
     var visibleLiveAgentNotices: [LiveAgentNotice] {
-        var notices = liveAgentNotices.filter { $0.kind != .connecting }
-        notices += messages.endedAgentSessions(isOngoing: conversationState == .agentActive, closedBy: notices)
+        let closing = liveAgentNotices.filter { $0.kind != .connecting }
+        let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
+        var notices = closing
+        notices += messages.endedAgentSessions(isOngoing: conversationState == .agentActive, closedBy: closing)
+        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: liveAgentNotices)
         if conversationState == .agentQueued {
             let latest = liveAgentNotices.last { $0.kind == .connecting }
             notices.append(latest ?? LiveAgentNotice(kind: .connecting, seq: .max))
@@ -69,6 +72,62 @@ extension TanyaAIBridge {
         agentTypingExpiry = Task { [weak self, sleep] in
             guard (try? await sleep(lifetime)) != nil, !Task.isCancelled else { return }
             self?.isAgentTyping = false
+        }
+    }
+}
+
+// MARK: - User typing
+
+extension TanyaAIBridge {
+    /// Dari composer: `true` di setiap ketikan selama draft berisi, `false` saat draft kosong (termasuk setelah
+    /// terkirim) atau composer hilang. Hanya diteruskan ke agen selama `AGENT_ACTIVE` (contract §7.7): `true` saat
+    /// mulai, diulang paling cepat tiap `typingRefresh` agar tidak kedaluwarsa di server, dan `false` setelah
+    /// `typingIdle` tanpa ketikan.
+    func userTypingChanged(_ isTyping: Bool) {
+        guard isTyping, conversationState == .agentActive else { return stopUserTyping(isDelivered: true) }
+        userTypingIdle?.cancel()
+        userTypingIdle = Task { [weak self, sleep] in
+            guard (try? await sleep(ChatWire.typingIdle)) != nil, !Task.isCancelled else { return }
+            self?.stopUserTyping(isDelivered: true)
+        }
+        guard !isUserTypingFresh else { return }
+        isUserTypingSent = true
+        isUserTypingFresh = true
+        deliverUserTyping(true)
+        userTypingRefresh = Task { [weak self, sleep] in
+            guard (try? await sleep(ChatWire.typingRefresh)) != nil, !Task.isCancelled else { return }
+            self?.isUserTypingFresh = false
+        }
+    }
+
+    /// `isDelivered` false saat state meninggalkan agen: tidak ada lagi yang menerima sinyalnya.
+    func stopUserTyping(isDelivered: Bool) {
+        userTypingIdle?.cancel()
+        userTypingRefresh?.cancel()
+        isUserTypingFresh = false
+        guard isUserTypingSent else { return }
+        isUserTypingSent = false
+        guard isDelivered else { return }
+        deliverUserTyping(false)
+    }
+}
+
+private extension TanyaAIBridge {
+    /// Dikirim berurutan agar `false` tidak mendahului `true`. Sinyal ini tidak disimpan server, jadi gagal
+    /// diabaikan; hanya 401 yang mengakhiri sesi seperti jalur lain.
+    func deliverUserTyping(_ isTyping: Bool) {
+        guard let conversationID else { return }
+        let previous = userTypingDelivery
+        userTypingDelivery = Task { [weak self, transport] in
+            await previous?.value
+            do {
+                try await transport.sendTyping(conversationID: conversationID, isTyping: isTyping)
+            } catch {
+                guard case let .response(statusCode, _)? = error as? TanyaAITransportError,
+                    ChatBackoff.isUnauthorized(statusCode: statusCode)
+                else { return }
+                self?.expireSession()
+            }
         }
     }
 }

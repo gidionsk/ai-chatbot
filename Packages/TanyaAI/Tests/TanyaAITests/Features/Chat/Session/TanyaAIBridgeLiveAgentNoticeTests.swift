@@ -76,6 +76,35 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .ended, seq: 4)])
     }
 
+    /// Dibuka lagi setelah serah terima yang tidak sampai ke agen: kartu "tidak dilanjutkan" setelah pesan itu.
+    /// Selama masih antre yang tampil kartu antre.
+    @Test(arguments: [
+        ("ASSISTANT_ACTIVE", LiveAgentNotice(kind: .notContinued, seq: 2)),
+        ("AGENT_QUEUED", LiveAgentNotice(kind: .connecting, seq: .max))
+    ])
+    func handoverInHistoryWithoutAnAgent(state: String, expected: LiveAgentNotice) async {
+        let (_, bridge) = await connectedBridge(state: state, history: [1, 2], handover: 2)
+        defer { bridge.connectionTask?.cancel() }
+        #expect(bridge.visibleLiveAgentNotices == [expected])
+    }
+
+    /// Serah terima yang sedang berjalan tidak sempat menjadi kartu "tidak dilanjutkan" sebelum event antre tiba.
+    @Test
+    func liveHandoverIsNotMistakenForAnUnfinishedOne() async {
+        let (transport, bridge) = await connectedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        #expect(await bridge.sendAndWait("Saya mau agen"))
+        let handover = WireFixture.message(seq: 4, intent: "handover-to-agent")
+        transport.emit(["id: 4", "event: message", "data: \(handover)", ""])
+        await waitUntil { bridge.messages.last?.intent == .liveAgent }
+        #expect(bridge.visibleLiveAgentNotices.isEmpty)
+        transport.emit(WireFixture.systemFrame(seq: 5, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 6, state: "AGENT_QUEUED"))
+        transport.emit(WireFixture.turnEndFrame(seq: 7))
+        await waitUntil { bridge.turnPhase == .idle }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connecting, seq: 5)])
+    }
+
     /// Indikator hilang saat `typing:false` atau pesan agen datang.
     @Test
     func typingStopsWithTypingFalseOrTheAgentMessage() async {
@@ -105,13 +134,17 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
 // MARK: - Helpers
 
 private extension TanyaAIBridgeLiveAgentNoticeTests {
-    /// History seq 3 = pesan agen (seq 1 user, 2 bot). `isSleepReal` untuk batas waktu indikator mengetik.
+    /// History seq 3 = pesan agen (seq 1 user, 2 bot); `handover` = seq bot ber-intent serah terima.
+    /// `isSleepReal` untuk batas waktu indikator mengetik.
     func connectedBridge(
-        state: String = "ASSISTANT_ACTIVE", history: [Int] = [], isSleepReal: Bool = false
+        state: String = "ASSISTANT_ACTIVE", history: [Int] = [], handover: Int? = nil, isSleepReal: Bool = false
     ) async -> (FakeChatTransport, TanyaAIBridge) {
         let transport = FakeChatTransport()
         transport.initResults = [.success(WireFixture.initialize(state: state))]
-        let messages = history.reversed().map { WireFixture.message(seq: $0, direction: $0 == 3 ? "agent" : nil) }
+        let messages = history.reversed().map { seq in
+            let intent = seq == handover ? ChatIntent.liveAgent.rawValue : ""
+            return WireFixture.message(seq: seq, direction: seq == 3 ? "agent" : nil, intent: intent)
+        }
         transport.historyPages = [WireFixture.history(messages: messages)]
         let sleep: (TimeInterval) async throws -> Void = { seconds in
             guard isSleepReal else { return }

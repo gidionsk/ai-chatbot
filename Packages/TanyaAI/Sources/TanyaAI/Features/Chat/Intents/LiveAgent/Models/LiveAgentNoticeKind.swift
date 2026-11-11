@@ -21,4 +21,7 @@ enum LiveAgentNoticeKind: String, Equatable {
     case queueTimeout = "queue_timeout"
     /// Sambungan ke sistem agen ditolak atau hilang.
     case unavailable = "agent_unavailable"
+    /// Bukan event gateway (tidak ada di katalog §7.6): dibuat dari pesan bot ber-intent `liveAgent` di history
+    /// yang tidak diikuti pesan agen. Penyebabnya (batal, antre habis, agen tidak tersedia) tidak diketahui.
+    case notContinued = "handover_not_continued"
 }
