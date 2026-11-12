@@ -21,3 +21,7 @@
 "sandbox.prelogin.title" = "Belum masuk";
 "sandbox.link.title" = "Link diteruskan ke host";
 "sandbox.link.close" = "Tutup";
+"sandbox.sheet.open" = "Buka bottom sheet";
+"sandbox.sheet.title" = "Pilih salah satu";
+"sandbox.sheet.option" = "Pilihan contoh";
+"sandbox.sheet.close" = "Tutup sheet";

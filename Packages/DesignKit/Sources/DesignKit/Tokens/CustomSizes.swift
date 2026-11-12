@@ -69,6 +69,15 @@ public enum CustomSizes {
         public static let imageMaxSide: CGFloat = 335
     }
 
+    /// Wadah bottom sheet: radius sudut atas, ukuran grabber, dan jarak geser ke bawah yang menutup sheet saat dilepas.
+    /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari foto.
+    public enum BottomSheet {
+        public static let cornerRadius: CGFloat = 20
+        public static let handleWidth: CGFloat = 40
+        public static let handleHeight: CGFloat = 4
+        public static let dismissDistance: CGFloat = 80
+    }
+
     /// Kotak ikon dan chevron bulat pada kartu aksi.
     /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari screenshot.
     public enum ActionCard {

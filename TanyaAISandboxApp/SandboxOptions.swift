@@ -21,6 +21,14 @@ struct SandboxOptions {
     static let demoStartIdentifier = "sandbox.demo.start"
     static let demoEndIdentifier = "sandbox.demo.end"
     static let demoParagraphCount = 12
+    static let sheetOpenIdentifier = "sandbox.sheet.open"
+    static let sheetOptionIdentifier = "sandbox.sheet.option"
+    /// `--sheet-demo`: jumlah baris contoh di dalam bottom sheet.
+    static let sheetOptionCount = 4
+    /// `--sheet-max`: batas tinggi sheet contoh, bagian dari tinggi layar.
+    static let sheetMaxFraction: CGFloat = 0.6
+    /// `--sheet-long`: jumlah baris contoh, lebih panjang dari layar.
+    static let sheetLongOptionCount = 20
     /// Jeda pertanyaan nasabah muncul di stream setelah ack; selama ini bubble lokal yang tampil.
     static let echoDelay: TimeInterval = 0.6
     /// Jeda pesan bot yang datang sendiri setelah stream tersambung (`--late-message`).
@@ -43,6 +51,9 @@ struct SandboxOptions {
     private static let lateMessageFlag = "--late-message"
     private static let lateQuestionFlag = "--late-question"
     private static let headerDemoFlag = "--header-demo"
+    private static let sheetDemoFlag = "--sheet-demo"
+    private static let sheetMaxFlag = "--sheet-max"
+    private static let sheetLongFlag = "--sheet-long"
     private static let offlineFlag = "--offline"
     private static let brokenIconsFlag = "--broken-icons"
     private static let slowIconsFlag = "--slow-icons"
@@ -72,6 +83,12 @@ struct SandboxOptions {
     /// `--live-agent`: pertanyaan pertama diserahkan ke agen tiruan (antre → bergabung → menjawab → selesai).
     let isLiveAgent: Bool
     let isHeaderDemo: Bool
+    /// `--sheet-demo`: area scroll berisi tombol yang membuka bottom sheet contoh di atas halaman Tanya AI.
+    let isSheetDemo: Bool
+    /// `--sheet-max` (bersama `--sheet-demo`): sheet contoh paling tinggi `sheetMaxFraction` layar.
+    let isSheetMaxSet: Bool
+    /// `--sheet-long` (bersama `--sheet-demo`): baris contoh lebih panjang dari layar, jadi isinya di-scroll.
+    let isSheetLong: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
     /// `--slow-icons` (tidak menjawab, cek loading). Nil = URL dari fixture.
@@ -87,6 +104,9 @@ struct SandboxOptions {
         isHidingTerms = arguments.contains(Self.hideTermsFlag)
         isLiveAgent = arguments.contains(Self.liveAgentFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
+        isSheetDemo = arguments.contains(Self.sheetDemoFlag)
+        isSheetMaxSet = arguments.contains(Self.sheetMaxFlag)
+        isSheetLong = arguments.contains(Self.sheetLongFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {
             iconOverrideURL = Self.brokenIconURL

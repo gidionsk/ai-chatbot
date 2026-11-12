@@ -49,6 +49,10 @@ Contoh penempatan yang sudah diterapkan:
 - `Components/Markdown/Models/MarkdownDocument.swift`: Markdown yang sudah di-parse.
 - `Components/Markdown/Parsing/MarkdownParser.swift`: parsing dokumen.
 - `Components/Markdown/Views/MarkdownContent.swift`: rendering dokumen.
+- `Components/Screen/BottomSheet/Models/BottomSheetMaxHeight.swift`: batas tinggi, di bawah status bar atau bagian layar.
+- `Components/Screen/BottomSheet/Views/BottomSheet.swift`: permukaan sheet, grabber, dan scroll bila isi melewati batas.
+- `Components/Screen/BottomSheet/ViewModifiers/BottomSheetPresenter.swift`: latar gelap, posisi, dan animasi masuk.
+- `Components/Screen/BottomSheet/Extensions/View+BottomSheet.swift`: `.bottomSheet(...)`, satu-satunya pintu publiknya.
 
 `Foundations` berisi dukungan lintas komponen: `Typography`, `Iconography`,
 `Appearance`, dan `Accessibility`. `Extensions` pada root DesignKit hanya untuk

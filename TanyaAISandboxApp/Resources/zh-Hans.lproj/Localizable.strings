@@ -21,3 +21,7 @@
 "sandbox.prelogin.title" = "未登录";
 "sandbox.link.title" = "链接已交给主机";
 "sandbox.link.close" = "关闭";
+"sandbox.sheet.open" = "打开底部面板";
+"sandbox.sheet.title" = "请选择一项";
+"sandbox.sheet.option" = "示例选项";
+"sandbox.sheet.close" = "关闭面板";

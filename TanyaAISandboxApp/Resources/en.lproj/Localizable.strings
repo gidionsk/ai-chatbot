@@ -21,3 +21,7 @@
 "sandbox.prelogin.title" = "Not logged in";
 "sandbox.link.title" = "Link handed to the host";
 "sandbox.link.close" = "Close";
+"sandbox.sheet.open" = "Open bottom sheet";
+"sandbox.sheet.title" = "Choose an option";
+"sandbox.sheet.option" = "Sample option";
+"sandbox.sheet.close" = "Close sheet";
