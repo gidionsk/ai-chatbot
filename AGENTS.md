@@ -246,6 +246,8 @@ tersedia pada history/main.
 - Tanpa `if ... else`: pakai `if A { return A }` lalu `return B`, `continue` di dalam loop, atau `switch`.
   Pengecualian: di dalam `@ViewBuilder` yang tidak bisa `return` lebih awal, dan `guard ... else`.
 - Atribut variabel satu baris dengan variabelnya: `@Environment(\.designColors) private var colors`.
+- Parameter dan argumen: satu baris bila muat; bila tidak, satu per baris semuanya. Tidak boleh campuran
+  (mis. dua di baris pertama lalu tiga di baris berikutnya). Kode lama tidak dirombak hanya untuk ini.
 - Maksimal 250 baris/file, 50 baris fisik/method, 120 karakter/baris; Bool berawalan
   `is`, kecuali nama wajib protocol seperti `PreferenceKey.defaultValue` dengan
   pengecualian lint lokal beralasan. Jangan padatkan implementasi agar lolos batas.

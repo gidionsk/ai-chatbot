@@ -111,7 +111,7 @@ struct ChatTableControllerTests {
         defer { fixture.close() }
         fixture.update(items: ChatTableFixture.history(count: 31), phase: .restored, sentQuestionID: "m30")
         fixture.controller.scrollViewWillBeginDragging(fixture.table)
-        #expect(!fixture.controller.isHoldingParking)
+        #expect(fixture.controller.scrollMode == .releasedQuestion)
     }
 
     @Test

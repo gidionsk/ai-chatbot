@@ -82,7 +82,7 @@ struct ChatTableLatestTests {
         fixture.jumpToLatest()
         await fixture.spin()
         #expect(reports == [false, true])
-        #expect(!fixture.controller.isParked)
+        #expect(!fixture.controller.scrollMode.isQuestionParked)
         #expect(abs(fixture.distanceToContentEnd) <= 1)
         #expect(fixture.isRowVisible(33))
     }

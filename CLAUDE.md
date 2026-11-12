@@ -5,7 +5,8 @@ CustomColors), nilai awal, theme environment, fonts, localization dan style. Sco
 shared header, composer maksimal empat baris, halaman sambutan (welcome) dari BE, dan
 bridge host ke chat-gateway (init → history → SSE, retry, merge), dan daftar pesan `ChatTable` (`UITableView`, baris SwiftUI; aturannya di `docs/REVAMP_NOTES.md`). Minimum iOS 15 (host ikut naik ke iOS 15 untuk revamp).
 
-- Tanpa `if ... else`, pakai early return; atribut variabel satu baris dengan variabelnya. Detail di AGENTS.md.
+- Tanpa `if ... else`, pakai early return; atribut variabel satu baris dengan variabelnya; parameter satu baris
+  atau satu per baris semuanya, tanpa campuran. Detail di AGENTS.md.
 - Semua teks memakai Fira Sans. Open Sans belum dipakai: jangan jadi default komponen atau dipakai di layar.
 - Ukuran dan area tap 1:1 Figma lewat `.scaledToArtwork`. Jangan menambahkan
   minimum touch target 44 atau hit frame tambahan; ini keputusan UI/UX.

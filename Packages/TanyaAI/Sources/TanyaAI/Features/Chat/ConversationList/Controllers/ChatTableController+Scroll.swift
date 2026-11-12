@@ -37,22 +37,24 @@ extension ChatTableController: UITableViewDelegate {
         reportScrollProgress()
     }
 
-    /// Menggeser membatalkan parkir: posisi kini milik nasabah.
+    /// Menggeser membatalkan parkir dan animasi ke pesan terbaru: posisi kini milik nasabah, jadi tombol ke pesan
+    /// terbaru mengikuti posisi itu lagi.
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        isHoldingParking = false
+        scrollMode = scrollMode.afterDrag
         isScrollAnimating = false
-        isFollowingLatest = false
+        refreshNearBottom()
     }
 
     func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         isScrollAnimating = false
-        guard isFollowingLatest else {
+        guard scrollMode == .followingLatest else {
             maintainParking()
             recordSettledPosition()
             return
         }
         continueFollowingLatest()
         recordSettledPosition()
+        refreshNearBottom()
     }
 
     /// Posisi terprogram pasti setelah layout, dan selama animasi berjalan belum ada posisi akhirnya.
@@ -73,12 +75,14 @@ extension ChatTableController: UITableViewDelegate {
 
     /// Tinggi baris di atas layar bisa berubah tanpa scroll, mis. saat VoiceOver membaca daftar dan baris yang belum
     /// tampil ikut terukur. Table tidak mengoreksi itu sendiri, jadi posisi dijaga lewat baris, bukan angka offset.
+    /// Konten juga bisa memendek dari bawah, mis. kartu antre hilang saat agen bergabung: posisi lama dibatasi di
+    /// ujung konten. Animasi yang mulai dari luar konten melewati targetnya, jadi daftar turun dulu lalu naik lagi.
     func restoreReadingPosition() {
-        guard !isUserScrolling, !isScrollAnimating, !isHoldingParking, let anchorItemID,
+        guard !isUserScrolling, !isScrollAnimating, scrollMode != .holdingQuestion, let anchorItemID,
             let row = state.items.firstIndex(where: { $0.id == anchorItemID })
         else { return }
         let rowTop = tableView.rectForRow(at: IndexPath(row: row, section: .zero)).minY
-        scroll(to: rowTop - anchorDistance, isAnimated: false)
+        scroll(to: min(rowTop - anchorDistance, bottomOffset + trailingInset), isAnimated: false)
     }
 
     /// Scroll bisa terjadi di tengah update SwiftUI, jadi nilainya dikirim pada putaran berikutnya.
@@ -95,7 +99,7 @@ extension ChatTableController: UITableViewDelegate {
     /// Sama seperti progress header: dikirim pada putaran berikutnya. Yang dikirim nilai saat itu, jadi posisi
     /// sementara di tengah update (mis. sebelum history parkir di bawah) tidak pernah sampai ke halaman.
     func reportLatestVisibility() {
-        guard isNearBottom != isNearBottomReported, !isVisibilityPending else { return }
+        guard isLatestInReach != isLatestInReachReported, !isVisibilityPending else { return }
         isVisibilityPending = true
         DispatchQueue.main.async { [weak self] in self?.publishLatestVisibility() }
     }
@@ -107,9 +111,9 @@ extension ChatTableController: UITableViewDelegate {
 
     private func publishLatestVisibility() {
         isVisibilityPending = false
-        guard isNearBottom != isNearBottomReported else { return }
-        isNearBottomReported = isNearBottom
-        onLatestVisibilityChange(isNearBottom)
+        guard isLatestInReach != isLatestInReachReported else { return }
+        isLatestInReachReported = isLatestInReach
+        onLatestVisibilityChange(isLatestInReach)
     }
 
     private func publishScrollProgress() {

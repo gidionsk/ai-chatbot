@@ -797,3 +797,42 @@ history tidak pernah melaporkan tersembunyi, jawaban pendek di bawah pertanyaan 
 dan jawaban yang melewati layar memunculkannya. Mutasi tanpa aksi lompat dan tanpa laporan gagal.
 `FloatingIconButtonTests` memeriksa sisi 36. `ChatScrollUITests.testArrowReturnsToTheLatestMessage` memeriksa tombol
 tidak ada saat dibuka, muncul di tengah di atas composer setelah digulir, dan hilang setelah diketuk.
+
+## Daftar tidak turun dulu saat konten memendek — 11 November 2026
+
+Saat agen bergabung kartu antre hilang, jadi konten memendek dari bawah. `restoreReadingPosition()` mengembalikan
+posisi lama yang kini di luar ujung konten, lalu animasi ikut ke bawah mulai dari sana dan berhenti melewati targetnya
+(log simulator: target 6636, animasi berhenti di 6425, baru dikoreksi animasi kedua). Hasilnya daftar turun dulu lalu
+naik lagi, dan tombol ke pesan terbaru sempat muncul. Kini posisi yang dipulihkan dibatasi di ujung konten, jadi daftar
+langsung di posisi akhirnya. `ChatTableShrinkTests`: baris terakhir hilang tidak menyisakan ruang kosong, ikut ke bawah
+di update yang sama tidak melaporkan ujung daftar tersembunyi (keduanya gagal sebelum perbaikan), dan pembaca yang
+sedang di atas tetap di barisnya.
+
+## Mode posisi daftar jadi satu enum — 11 November 2026
+
+`isParked`, `isHoldingParking`, dan `isFollowingLatest` di `ChatTableController` diganti `scrollMode`
+(`ChatScrollMode`: `free`, `holdingQuestion`, `releasedQuestion`, `followingLatest`). Tiga Bool itu punya 8 kombinasi
+padahal hanya 4 yang sah; kini kombinasi lain tidak bisa ditulis. Perilaku tidak berubah: test `ChatTable*` dan UI
+test scroll/live agent lulus; hanya dua pemeriksaan yang dulu membaca flag lama yang disesuaikan.
+`ChatScrollModeTests` memeriksa transisi saat nasabah menggeser dan kapan ruang kosong parkir masih disediakan.
+
+## Pesan beruntun saat halaman dibuka — 12 November 2026
+
+Rekaman Byon: history berakhir di pesan serah terima, lalu stream langsung mengulang satu sesi agen (antre, agen
+bergabung, sapaan, dua pesan nasabah, selesai) dalam kurang dari 0,1 detik. Daftar bergerak naik turun sekitar satu
+detik dan tombol ke pesan terbaru berkedip. Direproduksi di simulator dengan gateway tiruan sementara dan log posisi:
+
+| | Sebelum | Sesudah |
+| --- | --- | --- |
+| Sampai di ujung daftar setelah event pertama | ±0,95 detik, tiga animasi berantai | ±0,05 detik, tanpa animasi lanjutan |
+| Ujung daftar dilaporkan tersembunyi (tombol muncul) | ya, selama animasi | tidak |
+
+Sebabnya: pesan yang tiba selagi animasi ikut ke bawah berjalan tidak diikuti (ujung daftar belum tampak, jadi
+pembaca dianggap sedang membaca ke atas), lalu sisa jaraknya dikejar animasi demi animasi. Kini selama animasi itu
+pembaca tetap dihitung di ujung, pesan berikutnya langsung ditaruh di ujung tanpa animasi baru, dan tombol tidak
+dilaporkan selama daftar sendiri sedang menuju ujung. Kode sebelum PR #60 bergerak sama di skenario ini, jadi bukan
+regresi PR itu. `ChatTableBurstTests`: dua dari tiga test gagal sebelum perbaikan.
+
+Yang tidak berubah: tiap state hasil replay tetap sempat tampil sekilas (mis. kartu antre satu-dua frame), karena
+datanya memang tiba bertahap. Itu hanya terjadi bila history tertinggal dari stream; penyebabnya perlu dicek di
+respons history gateway atau transport host.

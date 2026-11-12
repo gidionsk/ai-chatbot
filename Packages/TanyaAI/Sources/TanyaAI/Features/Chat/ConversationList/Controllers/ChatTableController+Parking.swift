@@ -14,6 +14,9 @@ import UIKit
 /// terseret.
 extension ChatTableController {
     var isUserScrolling: Bool { tableView.isDragging || tableView.isDecelerating }
+    /// Ujung daftar terlihat, atau sedang dituju animasi ke pesan terbaru. Ini yang dilaporkan ke halaman: selama
+    /// daftar sendiri sedang menuju ujung, tombol ke pesan terbaru tidak perlu muncul.
+    var isLatestInReach: Bool { isNearBottom || scrollMode == .followingLatest }
 
     var baseBottomInset: CGFloat { FigmaSize.spacingLarge.scaledToArtwork }
 
@@ -47,24 +50,25 @@ extension ChatTableController {
     }
 
     func parkLatestQuestion() {
-        isFollowingLatest = false
-        isParked = true
-        isHoldingParking = true
+        scrollMode = .holdingQuestion
         tableView.layoutIfNeeded()
         refreshTrailingInset()
         guard let target = parkingTarget else { return }
         scroll(to: target, isAnimated: true)
     }
 
+    /// Pesan yang datang selagi animasi sebelumnya belum selesai (beruntun, mis. stream mengulang satu sesi agen saat
+    /// halaman dibuka) langsung ditaruh di ujung. Kalau tiap pesan memulai animasi baru, daftar bergerak tersendat
+    /// lama setelah pesan terakhir tiba.
     func followLatest() {
         guard isOpened else { return }
-        isParked = false
-        isHoldingParking = false
+        let isCatchingUp = scrollMode == .followingLatest
+        scrollMode = .free
         setTrailingInset(.zero)
         tableView.layoutIfNeeded()
-        scroll(to: bottomOffset, isAnimated: true)
-        isFollowingLatest = isScrollAnimating
-        guard !isFollowingLatest else { return }
+        scroll(to: bottomOffset, isAnimated: !isCatchingUp)
+        scrollMode = isScrollAnimating ? .followingLatest : .free
+        guard scrollMode == .free else { return }
         settleAtBottom()
         recordSettledPosition()
     }
@@ -72,15 +76,15 @@ extension ChatTableController {
     /// Baris baru masih memakai perkiraan tinggi saat dibidik, jadi setelah terukur sisa jaraknya digeser lagi.
     func continueFollowingLatest() {
         scroll(to: bottomOffset, isAnimated: true)
-        isFollowingLatest = isScrollAnimating
+        scrollMode = isScrollAnimating ? .followingLatest : .free
     }
 
     /// Ruang kosong selalu diperbarui; posisi hanya dikoreksi selama parkir dijaga dan tidak ada animasi berjalan.
     func maintainParking() {
-        guard isParked else { return }
+        guard scrollMode.isQuestionParked else { return }
         refreshTrailingInset()
         guard !isScrollAnimating else { return }
-        guard isHoldingParking, let target = parkingTarget else {
+        guard scrollMode == .holdingQuestion, let target = parkingTarget else {
             clampToContentEnd()
             return
         }
@@ -91,7 +95,7 @@ extension ChatTableController {
     /// ikut dijalankan, daftar kembali ke posisi lama dan pesan terakhir tertutup keyboard.
     func keepPositionAfterLayout() {
         defer { isStickingToBottom = false }
-        guard isStickingToBottom, !isHoldingParking, !isUserScrolling else {
+        guard isStickingToBottom, scrollMode != .holdingQuestion, !isUserScrolling else {
             restoreReadingPosition()
             return
         }
