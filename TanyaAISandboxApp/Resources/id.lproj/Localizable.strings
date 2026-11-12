@@ -9,6 +9,12 @@
 "sandbox.demo.title" = "Konten contoh";
 "sandbox.demo.body" = "Gulir contoh ini untuk melihat batas header dan blur latar. Judul dan tombol kembali tetap di tempat saat teks bergerak di belakangnya.";
 "sandbox.demo.end" = "Akhir contoh";
+"sandbox.formToggle.title" = "Tampilkan informasi saldo";
+"sandbox.formToggle.on" = "Aktif";
+"sandbox.formToggle.off" = "Nonaktif";
+"sandbox.formToggle.changeValue" = "Ubah nilai dari parent";
+"sandbox.formToggle.enabled" = "Aktifkan komponen";
+"sandbox.formToggle.formEnabled" = "Aktifkan form induk";
 "sandbox.main.title" = "Beranda";
 "sandbox.detail.open" = "Buka halaman detail";
 "sandbox.detail.title" = "Halaman detail";
@@ -21,3 +27,7 @@
 "sandbox.prelogin.title" = "Belum masuk";
 "sandbox.link.title" = "Link diteruskan ke host";
 "sandbox.link.close" = "Tutup";
+"sandbox.sheet.open" = "Buka bottom sheet";
+"sandbox.sheet.title" = "Pilih salah satu";
+"sandbox.sheet.option" = "Pilihan contoh";
+"sandbox.sheet.close" = "Tutup sheet";

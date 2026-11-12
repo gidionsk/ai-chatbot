@@ -9,6 +9,12 @@
 "sandbox.demo.title" = "Example content";
 "sandbox.demo.body" = "Scroll this example to see the header boundary and background blur. The title and back button remain in place while the text moves behind them.";
 "sandbox.demo.end" = "End of example";
+"sandbox.formToggle.title" = "Show balance information";
+"sandbox.formToggle.on" = "On";
+"sandbox.formToggle.off" = "Off";
+"sandbox.formToggle.changeValue" = "Change value from parent";
+"sandbox.formToggle.enabled" = "Enable component";
+"sandbox.formToggle.formEnabled" = "Enable parent form";
 "sandbox.main.title" = "Home";
 "sandbox.detail.open" = "Open detail page";
 "sandbox.detail.title" = "Detail page";
@@ -21,3 +27,7 @@
 "sandbox.prelogin.title" = "Not logged in";
 "sandbox.link.title" = "Link handed to the host";
 "sandbox.link.close" = "Close";
+"sandbox.sheet.open" = "Open bottom sheet";
+"sandbox.sheet.title" = "Choose an option";
+"sandbox.sheet.option" = "Sample option";
+"sandbox.sheet.close" = "Close sheet";

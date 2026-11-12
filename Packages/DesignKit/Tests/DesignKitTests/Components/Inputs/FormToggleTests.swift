@@ -2,6 +2,8 @@
 //  FormToggleTests.swift
 //  DesignKit
 //
+//  Created by Wendra on 12/11/26.
+//
 
 import SwiftUI
 import Testing
@@ -11,29 +13,29 @@ import UIKit
 
 @MainActor
 struct FormToggleTests {
-    @Test
-    func rendersAtAvailableWidth() throws {
+    @Test(arguments: [false, true], [false, true])
+    func rendersAtAvailableWidth(isOn: Bool, isEnabled: Bool) throws {
         try FontFace.registerFonts()
         let width: CGFloat = 343
-        let view = FormToggle(title: "Tampilkan informasi saldo", isOn: .constant(false))
+        let view = FormToggle(title: "Tampilkan informasi saldo", isOn: .constant(isOn), isEnabled: isEnabled)
         let size = UIHostingController(rootView: view)
             .sizeThatFits(in: CGSize(width: width, height: 800))
         #expect(size.width == width)
-        #expect(size.height >= 24)
+        #expect(abs(size.height - CustomSizes.FormToggle.height.scaledToArtwork) <= 0.5)
     }
 
-    @Test
-    func supportsEnabledAndDisabledStates() throws {
+    @Test(arguments: [false, true])
+    func longLabelWrapsWithoutIncreasingTheRowWidth(isParentDisabled: Bool) throws {
         try FontFace.registerFonts()
-        for isEnabled in [true, false] {
-            let view = FormToggle(
-                title: "Tampilkan dana investasi",
-                isOn: .constant(true),
-                isEnabled: isEnabled
-            )
-            let size = UIHostingController(rootView: view)
-                .sizeThatFits(in: CGSize(width: 343, height: 800))
-            #expect(size.height >= 24)
-        }
+        let width: CGFloat = 200
+        let view = FormToggle(
+            title: "Tampilkan informasi saldo beserta seluruh dana investasi dalam surat referensi",
+            isOn: .constant(false)
+        )
+        .disabled(isParentDisabled)
+        let size = UIHostingController(rootView: view)
+            .sizeThatFits(in: CGSize(width: width, height: 800))
+        #expect(size.width == width)
+        #expect(size.height > CustomSizes.FormToggle.height.scaledToArtwork)
     }
 }

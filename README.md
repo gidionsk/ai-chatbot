@@ -10,6 +10,7 @@ Font Fira Sans/Open Sans dan copy English, Bahasa Indonesia, serta 简体中文 
 ./Scripts/run_sandbox.sh --language en
 ./Scripts/run_sandbox.sh --language zh-Hans
 ./Scripts/run_sandbox.sh --language id --header-demo
+./Scripts/run_sandbox.sh --language id --form-toggle-demo
 ./Scripts/run_sandbox.sh --language id --offline
 ```
 
@@ -23,6 +24,11 @@ Tombol kembali atau swipe dari tepi kiri menutup feature dan mengembalikan layar
 `--offline` menampilkan blocker host di atas Tanya AI saat mengirim.
 Mode `--header-demo` menyisipkan teks dummy untuk mengecek separator dan blur
 saat scroll. Percakapan kosong menampilkan welcome bila host memberikannya.
+
+Mode `--form-toggle-demo` langsung membuka fixture FormToggle: ketuk label/switch,
+ubah nilai dari parent, lalu nonaktifkan komponen atau form induknya. Label demo
+tersedia di ketiga bahasa. State accessibility memakai representasi Toggle native;
+verifikasi VoiceOver dan Reduce Motion pada simulator/perangkat sebelum integrasi.
 
 - [Aturan penempatan file dan pola intent berikutnya](docs/PACKAGE_STRUCTURE.md)
 - [Urutan belajar dan tree](docs/STARTING_POINT.md)

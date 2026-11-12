@@ -836,3 +836,59 @@ regresi PR itu. `ChatTableBurstTests`: dua dari tiga test gagal sebelum perbaika
 Yang tidak berubah: tiap state hasil replay tetap sempat tampil sekilas (mis. kartu antre satu-dua frame), karena
 datanya memang tiba bertahap. Itu hanya terjadi bila history tertinggal dari stream; penyebabnya perlu dicek di
 respons history gateway atau transport host.
+
+## Wadah bottom sheet — 12 November 2026
+
+`.bottomSheet(isPresented:closeLabel:content:)` di DesignKit: latar gelap menutupi seluruh halaman termasuk header,
+sheet naik dari bawah dengan sudut atas membulat dan grabber, tinggi mengikuti isi. Overlay SwiftUI, bukan `.sheet`,
+karena iOS 15 belum punya tinggi sheet custom. Belum ada pemicu di chat; dicoba lewat sandbox `--sheet-demo`.
+
+| Nilai | Sumber |
+| --- | --- |
+| Radius sudut atas 20, grabber 40×4, jarak grabber 8 atas dan 16 bawah | Perkiraan dari foto Figma |
+| Latar gelap `colorsSurfaceOverlay24` 60% | Token palette; opacity perkiraan dari foto |
+| Durasi 0,25 detik, geser 80 untuk menutup | Belum ada di desain |
+
+`BottomSheetTests`: tinggi sheet = grabber + isi + safe area bawah. `BottomSheetPresenterTests`: isi hanya dibangun
+selama sheet tampil. `BottomSheetUITests` (iPhone 17 Pro, iOS 26.5): sheet menempel di bawah setinggi isinya dan
+isinya berhenti sebelum home indicator; ketukan di posisi tombol kembali menutup sheet tanpa keluar dari halaman;
+geseran pendek yang ditahan mengembalikan sheet dan geseran panjang menutupnya; memilih baris menutupnya.
+Tidak diuji: keyboard yang ditutup saat sheet tampil (simulator tidak menampilkan keyboard layar), VoiceOver di
+perangkat, dan tampilan di iOS 15.
+
+Setelah review: swipe dari tepi kiri selama sheet terbuka masih keluar dari halaman, karena latar gelap hanya
+menahan sentuhan SwiftUI dan gesture navigasi milik host. Sandbox (sebagai host) kini menahan swipe-back selama sheet
+terbuka dan membukanya lagi saat ditutup atau saat halaman hilang. `testSwipeBackIsHeldWhileTheSheetIsOpen` gagal
+tanpa perbaikan ini. Pemeriksaan jarak bawah dulu mengandaikan home indicator (gagal di iPhone SE: 651 > 637); kini
+dibandingkan dengan tepi bawah kartu composer, yang juga berhenti 16 di atas safe area. Kelima UI test lulus di
+iPhone 17 Pro dan iPhone SE (3rd generation), iOS 26.5.
+
+Batas tinggi: sheet tetap setinggi isinya. Bawaannya paling tinggi sampai tepat di bawah status bar (tidak pernah
+layar penuh); `maxHeight: .screenFraction(x)` membatasinya di x bagian dari tinggi layar penuh, tidak pernah melewati
+batas bawaan. Isi yang lebih panjang membuat sheet berhenti di batas dan isinya di-scroll; geser untuk menutup lalu
+hanya dari grabber, diukur di koordinat layar karena grabber ikut bergeser bersama sheet. Seperti
+scroll view bawaan, isi boleh lewat di bawah home indicator saat digeser, tetapi di ujung scroll baris terakhir
+berhenti di atas safe area. `BottomSheetMaxHeightTests` (batas bawaan, perhitungan dari tinggi layar, tidak melewati
+status bar, tidak negatif). UI test sandbox: `--sheet-long` tanpa batas berhenti di bawah status bar dan di-scroll;
+`--sheet-max --sheet-long` berhenti di 60% layar dan di-scroll tanpa mengubah tinggi; `--sheet-max` dengan 4 baris
+tetap setinggi isi. Unit test ukuran untuk isi yang melewati batas dicoba lewat `UIHostingController.sizeThatFits` di
+window, tetapi hasilnya ikut menghitung safe area window test, jadi perilaku ini diuji lewat UI test di aplikasi.
+
+Scroll di dalam sheet tanpa indikator dan tanpa bounce. Indikator lewat `ScrollView(showsIndicators: false)`. Bounce
+tidak punya API SwiftUI di iOS 15 (`scrollBounceBehavior` baru iOS 16.4, dan tetap memantul saat isi bisa di-scroll),
+jadi `ScrollBounceDisabler` (penanda UIKit di background isi) mematikan `bounces` pada scroll view terdekat di atasnya
+saja. `ScrollBounceDisablerTests`: dari dua scroll view di layar yang sama, hanya yang berisi penanda yang berhenti
+memantul. Di aplikasi (log sementara, `--sheet-long`): scroll view yang diubah adalah area isi sheet, `bounces` false
+dan indikator mati. Bila suatu saat SwiftUI tidak lagi memakai `UIScrollView`, penanda tidak menemukan apa-apa dan
+scroll kembali memantul; tidak ada efek lain.
+
+Sheet naik dulu lalu turun saat isinya panjang (laporan dari Byon, frame per frame): tinggi alami isi baru terbaca
+setelah frame pertama, jadi frame pertama setinggi isi (log sandbox: 1155 pt) lalu turun ke batas (524 pt), dan
+pergantian ke scroll ikut teranimasi sehingga isi lama dan baru tampak dobel. Kini sheet disembunyikan sampai tinggi isi
+terbaca, lalu tinggi dan visibilitasnya berubah tanpa animasi sementara sheet tetap meluncur masuk. Log sandbox per
+frame sesudahnya: frame tersembunyi 1155 pt, frame pertama yang tampil langsung 524 pt (batas 60%) atau 812 pt (tanpa
+batas); isi pendek 323 pt sejak awal. Mencoba membatasi isi di frame pertama dengan `frame(maxHeight:)` tidak bisa
+diandalkan (di aplikasi benar, di unit test tidak), jadi tidak dipakai. Belum ada test otomatis untuk frame pertama:
+XCUITest tidak bisa mengambil gambar per frame dan opacity SwiftUI tidak terbaca dari unit test; delapan UI test sheet
+tetap lulus.
+

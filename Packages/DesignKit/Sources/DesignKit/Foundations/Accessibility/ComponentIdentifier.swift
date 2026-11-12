@@ -15,6 +15,11 @@ enum ComponentIdentifier {
         static let back = "header.back"
     }
 
+    enum BottomSheet {
+        static let root = "sheet"
+        static let handle = "sheet.handle"
+    }
+
     enum Composer {
         static let root = "composer"
         static let input = "composer.input"

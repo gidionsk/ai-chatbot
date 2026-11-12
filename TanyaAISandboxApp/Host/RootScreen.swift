@@ -14,12 +14,16 @@ struct RootScreen: View {
     var appState: AppState
 
     var body: some View {
-        ZStack {
-            PreloginScreen()
-            if appState.state == .loggedIn {
-                MainCoordinator()
+        if SandboxOptions.current.isFormToggleDemo {
+            FormToggleDemoContent()
+        } else {
+            ZStack {
+                PreloginScreen()
+                if appState.state == .loggedIn {
+                    MainCoordinator()
+                }
             }
+            .environmentObject(appState)
         }
-        .environmentObject(appState)
     }
 }

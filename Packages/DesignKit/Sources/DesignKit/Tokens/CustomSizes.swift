@@ -51,6 +51,15 @@ public enum CustomSizes {
         public static let sendButton: CGFloat = 24
     }
 
+    public enum FormToggle {
+        /// Ukuran switch dari Figma; belum memiliki token generated khusus.
+        public static let width: CGFloat = 48
+        public static let height: CGFloat = 24
+        /// TODO: Konfirmasi thumb dan inset dengan Figma; mempertahankan nilai awal PR #63.
+        public static let thumbSize: CGFloat = 18
+        public static let thumbInset: CGFloat = 3
+    }
+
     /// Perkiraan awal tinggi baris table sebelum terukur; bukan nilai Figma dan tidak terlihat di layar.
     public enum HostedTable {
         public static let estimatedRowHeight: CGFloat = 80
@@ -67,6 +76,15 @@ public enum CustomSizes {
         public static let listMarkerWidth: CGFloat = 8
         public static let imageHeight: CGFloat = 200
         public static let imageMaxSide: CGFloat = 335
+    }
+
+    /// Wadah bottom sheet: radius sudut atas, ukuran grabber, dan jarak geser ke bawah yang menutup sheet saat dilepas.
+    /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari foto.
+    public enum BottomSheet {
+        public static let cornerRadius: CGFloat = 20
+        public static let handleWidth: CGFloat = 40
+        public static let handleHeight: CGFloat = 4
+        public static let dismissDistance: CGFloat = 80
     }
 
     /// Kotak ikon dan chevron bulat pada kartu aksi.

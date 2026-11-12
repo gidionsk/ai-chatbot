@@ -9,6 +9,12 @@
 "sandbox.demo.title" = "示例内容";
 "sandbox.demo.body" = "滚动此示例可查看标题栏的分隔线和背景模糊效果。文字在标题栏后方移动时，标题和返回按钮保持原位。";
 "sandbox.demo.end" = "示例结束";
+"sandbox.formToggle.title" = "显示余额信息";
+"sandbox.formToggle.on" = "开启";
+"sandbox.formToggle.off" = "关闭";
+"sandbox.formToggle.changeValue" = "从父视图更改值";
+"sandbox.formToggle.enabled" = "启用组件";
+"sandbox.formToggle.formEnabled" = "启用父表单";
 "sandbox.main.title" = "首页";
 "sandbox.detail.open" = "打开详情页";
 "sandbox.detail.title" = "详情页";
@@ -21,3 +27,7 @@
 "sandbox.prelogin.title" = "未登录";
 "sandbox.link.title" = "链接已交给主机";
 "sandbox.link.close" = "关闭";
+"sandbox.sheet.open" = "打开底部面板";
+"sandbox.sheet.title" = "请选择一项";
+"sandbox.sheet.option" = "示例选项";
+"sandbox.sheet.close" = "关闭面板";

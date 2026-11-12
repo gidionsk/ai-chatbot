@@ -15,6 +15,12 @@ enum SandboxCopy: String, CaseIterable {
     case demoTitle = "sandbox.demo.title"
     case demoBody = "sandbox.demo.body"
     case demoEnd = "sandbox.demo.end"
+    case toggleTitle = "sandbox.formToggle.title"
+    case toggleOn = "sandbox.formToggle.on"
+    case toggleOff = "sandbox.formToggle.off"
+    case toggleChangeValue = "sandbox.formToggle.changeValue"
+    case toggleEnabled = "sandbox.formToggle.enabled"
+    case toggleFormEnabled = "sandbox.formToggle.formEnabled"
     case mainTitle = "sandbox.main.title"
     case detailOpen = "sandbox.detail.open"
     case detailTitle = "sandbox.detail.title"
@@ -27,6 +33,10 @@ enum SandboxCopy: String, CaseIterable {
     case preloginTitle = "sandbox.prelogin.title"
     case linkTitle = "sandbox.link.title"
     case linkClose = "sandbox.link.close"
+    case sheetOpen = "sandbox.sheet.open"
+    case sheetTitle = "sandbox.sheet.title"
+    case sheetOption = "sandbox.sheet.option"
+    case sheetClose = "sandbox.sheet.close"
 }
 
 extension String {
