@@ -6,7 +6,8 @@
 //
 
 /// Diimplementasikan adapter host memakai service Byon existing. GET inquiry, cek response_code, mapping model,
-/// dan dekripsi email selesai di host sebelum data dikembalikan. Tidak memakai transport chat-gateway.
+/// dan dekripsi email selesai di host sebelum data dikembalikan. Route, DTO BE, dan encoding hanya berada
+/// pada project host, seperti implementasi transport live agent. Tidak memakai transport chat-gateway.
 @MainActor
 public protocol ReferenceLetterService: AnyObject {
     func inquiry() async throws -> ReferenceLetterInquiry
@@ -14,5 +15,8 @@ public protocol ReferenceLetterService: AnyObject {
     /// Plain PIN hanya argumen panggilan ini; tidak disimpan dalam draft, request ACK, atau history.
     func verify(pin: String) async throws -> ReferenceLetterVerification
     /// Dipanggil hanya sesudah verify sukses. Tidak di-retry otomatis.
-    func acknowledge(_ request: ReferenceLetterRequest) async throws -> ReferenceLetterReceipt
+    func acknowledge(
+        _ request: ReferenceLetterRequest,
+        verification: ReferenceLetterVerification
+    ) async throws -> ReferenceLetterReceipt
 }

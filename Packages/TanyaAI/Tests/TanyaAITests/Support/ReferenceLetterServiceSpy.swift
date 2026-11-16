@@ -19,6 +19,7 @@ final class ReferenceLetterServiceSpy: ReferenceLetterService {
     var continuation: CheckedContinuation<ReferenceLetterVerification, Error>?
     var ackContinuation: CheckedContinuation<ReferenceLetterReceipt, Error>?
     var receivedRequest: ReferenceLetterRequest?
+    var receivedVerification: ReferenceLetterVerification?
 
     func inquiry() async throws -> ReferenceLetterInquiry {
         calls.append("inquiry")
@@ -34,9 +35,13 @@ final class ReferenceLetterServiceSpy: ReferenceLetterService {
         return ReferenceLetterVerification(responseCodeOTP: "verified-response-otp")
     }
 
-    func acknowledge(_ request: ReferenceLetterRequest) async throws -> ReferenceLetterReceipt {
+    func acknowledge(
+        _ request: ReferenceLetterRequest,
+        verification: ReferenceLetterVerification
+    ) async throws -> ReferenceLetterReceipt {
         calls.append("ack")
         receivedRequest = request
+        receivedVerification = verification
         if let acknowledgementError { throw acknowledgementError }
         if isHoldingACK {
             return try await withCheckedThrowingContinuation { ackContinuation = $0 }

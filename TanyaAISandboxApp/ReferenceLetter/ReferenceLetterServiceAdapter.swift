@@ -1,24 +1,25 @@
 //
 //  ReferenceLetterServiceAdapter.swift
-//  TanyaAI
+//  TanyaAISandboxApp
 //
 //  Created by Wendra on 16/11/26.
 //
 
 import DesignKit
 import Foundation
+import TanyaAI
 
 /// Adapter contract BE; host menyuntikkan HTTP existing, generator OTP, dan decrypt email existing.
 /// Tidak memiliki credential/base URL, tidak log body/PIN, dan tidak me-retry request transaksi.
 @MainActor
-public final class ReferenceLetterServiceAdapter: ReferenceLetterService {
+final class ReferenceLetterServiceAdapter: ReferenceLetterService {
     private let send: (ReferenceLetterEndpoint, Data?) async throws -> Data
     private let preparePIN: (String) async throws -> ReferenceLetterPreparedPIN
     private let decryptEmail: (String) throws -> String
     private let locale: Locale
     private let fallbackMessage: String
 
-    public init(
+    init(
         locale: Locale,
         fallbackMessage: String,
         send: @escaping (ReferenceLetterEndpoint, Data?) async throws -> Data,
@@ -32,7 +33,7 @@ public final class ReferenceLetterServiceAdapter: ReferenceLetterService {
         self.decryptEmail = decryptEmail
     }
 
-    public func inquiry() async throws -> ReferenceLetterInquiry {
+    func inquiry() async throws -> ReferenceLetterInquiry {
         let raw = try await send(.inquiry, nil)
         let response = try JSONDecoder().decode(
             ReferenceLetterWire.Envelope<ReferenceLetterWire.Inquiry>.self,
@@ -55,7 +56,7 @@ public final class ReferenceLetterServiceAdapter: ReferenceLetterService {
         )
     }
 
-    public func verify(pin: String) async throws -> ReferenceLetterVerification {
+    func verify(pin: String) async throws -> ReferenceLetterVerification {
         guard TransactionPINRules.isValid(pin) else { throw ReferenceLetterServiceError.verification(fallbackMessage) }
         let prepared = try await preparePIN(pin)
         guard !prepared.verification.responseCodeOTP.isEmpty else {
@@ -73,9 +74,12 @@ public final class ReferenceLetterServiceAdapter: ReferenceLetterService {
         }
     }
 
-    public func acknowledge(_ request: ReferenceLetterRequest) async throws -> ReferenceLetterReceipt {
-        guard !request.responseCodeOTP.isEmpty else { throw ReferenceLetterServiceError.rejected(fallbackMessage) }
-        let body = try JSONEncoder().encode(request)
+    func acknowledge(
+        _ request: ReferenceLetterRequest,
+        verification: ReferenceLetterVerification
+    ) async throws -> ReferenceLetterReceipt {
+        guard !verification.responseCodeOTP.isEmpty else { throw ReferenceLetterServiceError.rejected(fallbackMessage) }
+        let body = try JSONEncoder().encode(ReferenceLetterACKRequest(request, verification: verification))
         let raw = try await send(.acknowledge, body)
         let response = try JSONDecoder().decode(
             ReferenceLetterWire.Envelope<ReferenceLetterWire.Receipt>.self,
