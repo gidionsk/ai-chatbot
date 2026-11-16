@@ -19,3 +19,8 @@ enum ReferenceLetterResponseCode: String {
     case invalidPIN = "05516"
     case blockedPIN = "05005"
 }
+
+/// Placeholder simbol native sampai aset Figma tersedia; tidak menambah binary gambar dummy.
+enum ReferenceLetterSymbols {
+    static let receipt = "doc.text"
+}
