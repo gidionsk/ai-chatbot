@@ -1,14 +1,15 @@
 //
 //  ReferenceLetterServiceAdapterTests.swift
-//  TanyaAI
+//  TanyaAISandboxTests
 //
 //  Created by Wendra on 16/11/26.
 //
 
 import Foundation
+import TanyaAI
 import Testing
 
-@testable import TanyaAI
+@testable import Tanya_AI_Sandbox
 
 @MainActor
 struct ReferenceLetterServiceAdapterTests {
@@ -30,16 +31,15 @@ struct ReferenceLetterServiceAdapterTests {
     func verifyUsesTheHostOTPAndACKUsesTheVerifiedToken() async throws {
         let fixture = AdapterFixture()
         let adapter = fixture.adapter()
+        let request = try await fixture.request()
+        fixture.calls = []
         let verification = try await adapter.verify(pin: "123456")
         let pinBody = try #require(fixture.verifyBody)
         let pinJSON = try #require(JSONSerialization.jsonObject(with: pinBody) as? [String: String])
         #expect(pinJSON["otpCode"] == "host-generated-otp")
         #expect(pinJSON["sequenceNumber"] == "4")
         #expect(pinJSON["challengeCode"] == nil)
-        let request = try #require(
-            ReferenceLetterRequest(inquiry: ReferenceLetterFixture.inquiry, draft: ReferenceLetterFixture.draft)
-        )
-        let receipt = try await adapter.acknowledge(request.authorized(with: verification))
+        let receipt = try await adapter.acknowledge(request, verification: verification)
         #expect(fixture.calls == [.verifyPIN, .acknowledge])
         #expect(receipt.title.isEmpty)
         #expect(receipt.message == "Notes supplied by ACK")
@@ -47,6 +47,15 @@ struct ReferenceLetterServiceAdapterTests {
         let ackJSON = try #require(JSONSerialization.jsonObject(with: ackBody) as? [String: Any])
         #expect(ackJSON["responseCodeOTP"] as? String == "host-ack-token")
         #expect(ackJSON["email"] as? String == "ciphertext-email")
+        #expect(ackJSON["onlineSessionId"] as? String == "session-id")
+        #expect(ackJSON["pin"] == nil)
+        #expect(ackJSON["otpCode"] == nil)
+        let purpose = try #require(ackJSON["purpose"] as? [String: String])
+        #expect(purpose == ["code": "001", "value": "VISA"])
+        let accounts = try #require(ackJSON["sourceAccounts"] as? [[String: String]])
+        #expect(accounts == [["code": "a", "value": "Account A", "description": "IDR 1.000.000"]])
+        #expect(ackJSON["isShowInvestmentFund"] as? Bool == false)
+        #expect(ackJSON["address"] as? String == "Address")
     }
 
     @Test(arguments: ["05516", "05005", "05000", "05006"])
@@ -71,11 +80,12 @@ struct ReferenceLetterServiceAdapterTests {
     @Test
     func aSnapshotWithoutVerificationCannotHitACK() async throws {
         let fixture = AdapterFixture()
-        let request = try #require(
-            ReferenceLetterRequest(inquiry: ReferenceLetterFixture.inquiry, draft: ReferenceLetterFixture.draft)
-        )
+        let request = try await fixture.request()
+        fixture.calls = []
         do {
-            _ = try await fixture.adapter().acknowledge(request)
+            _ = try await fixture.adapter().acknowledge(
+                request, verification: ReferenceLetterVerification(responseCodeOTP: "")
+            )
             Issue.record("ACK tanpa verifikasi harus ditolak")
         } catch is ReferenceLetterServiceError {}
         #expect(fixture.calls.isEmpty)
@@ -108,6 +118,16 @@ private final class AdapterFixture {
                 return "plain@example.com"
             }
         )
+    }
+
+    func request() async throws -> ReferenceLetterRequest {
+        let inquiry = try await adapter().inquiry()
+        var draft = ReferenceLetterDraft(inquiry: inquiry)
+        draft.destination = "Embassy"
+        draft.accountCodes = ["a"]
+        draft.currencyCode = "001"
+        draft.languageCode = "IN"
+        return try #require(ReferenceLetterRequest(inquiry: inquiry, draft: draft))
     }
 
     func response(_ endpoint: ReferenceLetterEndpoint, body: Data?) throws -> Data {
