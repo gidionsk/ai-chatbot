@@ -9,9 +9,12 @@
 public struct OptionItem: Identifiable, Equatable {
     public let id: String
     public let title: String
+    /// Keterangan dari pemakai, misalnya saldo rekening. Tidak di-parse atau diformat ulang oleh DesignKit.
+    public let subtitle: String?
 
-    public init(id: String, title: String) {
+    public init(id: String, title: String, subtitle: String? = nil) {
         self.id = id
         self.title = title
+        self.subtitle = subtitle
     }
 }

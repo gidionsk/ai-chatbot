@@ -177,7 +177,8 @@ Aturan yang berlaku untuk semua intent:
 ### Intent berbentuk form: yang sudah diputuskan dan yang belum dibangun
 
 Keputusan user 12 November 2026 untuk `request-bank-reference-letter` dan `buy-mutual-funds`; ini menggantikan
-rancangan lama (view model per intent di host, coordinator PIN existing):
+rancangan lama untuk ownership form. Klarifikasi user 17 November 2026: PIN dan verifikasi tetap memakai
+flow existing project host; package tidak membuat keypad atau endpoint PIN baru:
 
 - Satu mesin form di TanyaAI untuk semua intent form; per intent hanya definisi field dan pemetaannya ke request
   host. Jenis field: pilihan lewat bottom sheet (satu atau banyak), teks (termasuk nominal dan email), dan toggle.
@@ -185,8 +186,8 @@ rancangan lama (view model per intent di host, coordinator PIN existing):
 - Validasi hanya saat Konfirmasi: teks kosong = error merah di bawahnya; pilihan kosong paling atas = sheet-nya
   langsung terbuka.
 - Daftar pilihan dan service (submit, PIN) milik host; sheet punya state loading selama host mengambil data.
-- Tombol Batalkan + Konfirmasi. Konfirmasi membuka sheet PIN: keypad di package, angkanya diteruskan ke host,
-  tidak disimpan atau di-log. PIN salah = sheet tetap terbuka dengan error dari host.
+- Tombol Batalkan + Konfirmasi. Setelah valid, Konfirmasi meminta host membuka flow PIN existing beserta
+  verifikasinya. SDK menerima hasil sukses/batal/gagal, tanpa menerima angka PIN.
 - Selesai atau batal menjadi kartu status; di history cukup kartu "pernah request" dari `intent` pesan bot.
 
 Komponennya sudah ada di DesignKit (`SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`, `OptionList`,
@@ -218,7 +219,7 @@ TanyaAI/Bridging/
 TanyaAI/Features/Chat/Intents/Form/    // mesin bersama, bukan intent
 ├── Models/                            // jenis field, nilai form, state per instance, status
 ├── Extensions/                        // validasi saat Konfirmasi, dependensi dan reset field anak
-└── Views/                             // kartu form, isi sheet pilihan, keypad PIN, kartu selesai/batal
+└── Views/                             // kartu form, isi sheet pilihan, kartu selesai/batal
 
 TanyaAI/Features/Chat/Session/
 └── TanyaAIBridge+Form.swift           // state form per id pesan, buka sheet, alur submit dan PIN
@@ -243,8 +244,15 @@ TanyaAI/Features/Chat/Intents/ReferenceLetter/
 
 ```swift
 public protocol ReferenceLetterService: AnyObject {
-    func accounts() async throws -> [ReferenceLetterAccount]
-    func submit(_ request: ReferenceLetterRequest, pin: String) async throws
+    func inquiry() async throws -> ReferenceLetterInquiry
+}
+
+public protocol ReferenceLetterSubmissionService: AnyObject {
+    func authorize() async throws -> ReferenceLetterAuthorization?
+    func acknowledge(
+        _ request: ReferenceLetterRequest,
+        authorization: ReferenceLetterAuthorization
+    ) async throws -> ReferenceLetterReceipt
 }
 ```
 
@@ -259,12 +267,10 @@ Alasan bentuknya:
 - Protocol bertipe, bukan dictionary `[String: Any]`: pemetaan field ke request dicek compiler, dan host tinggal
   memanggil service yang sudah ada.
 - Wadah `TanyaAIIntentServices`: init bridge tidak bertambah panjang setiap ada intent.
-- PIN hanya diteruskan ke host dalam satu pemanggilan, tidak disimpan atau di-log package.
+- Angka PIN tidak masuk ke package; host menjalankan flow PIN dan verifikasi existing melalui `authorize()`.
 
-Diputuskan saat membangun, dari request surat referensi yang sebenarnya:
-
-- PIN ikut `submit` (seperti contoh di atas), atau service PIN bersama bila di host cek PIN adalah langkah terpisah.
-- Bentuk error dari host ke package, supaya pesan seperti "PIN salah" tampil di sheet.
+Pembagian scope 17 November 2026: inquiry dan form terlebih dahulu, kemudian pemanggilan flow PIN existing
+dan ACK. Inquiry tidak membutuhkan capability submit. Rincian enam PR ada di `REFERENCE_LETTER.md`.
 
 ## Panduan developer berikutnya
 

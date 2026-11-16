@@ -18,7 +18,12 @@ METADATA = {
     'Foundations/Typography/Models/FontFace.swift', 'Extensions/Color+Hex.swift', 'Extensions/String+Resource.swift',
     'Foundations/Accessibility/ComponentIdentifier.swift', 'Foundations/Iconography/Keys/DesignColorIcon.swift',
     'Features/Chat/Keys/ChatElementIdentifier.swift', 'Features/Chat/Keys/ChatCopy.swift',
-    'Features/Chat/Keys/TanyaAILink.swift', 'Features/Chat/Intents/Models/ChatIntent.swift',
+    'Features/Chat/Keys/TanyaAILink.swift',
+    # Kode SOFTCOPY/HARDCOPY berasal dari kontrak inquiry host.
+    'Features/Chat/Intents/ReferenceLetter/Models/ReferenceLetterFieldID.swift',
+    'TanyaAISandboxApp/ReferenceLetter/Models/ReferenceLetterEndpoint.swift',
+    'TanyaAISandboxApp/ReferenceLetter/Models/ReferenceLetterWire.swift',
+    'Features/Chat/Intents/Models/ChatIntent.swift',
     'Features/Chat/Gateway/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
     'Features/Chat/Gateway/Models/ConversationState.swift', 'Features/Chat/Gateway/Models/WireError.swift',
     'Features/Chat/Gateway/Models/WireCancel.swift', 'Features/Chat/Gateway/Models/WireLeaveAgent.swift',
