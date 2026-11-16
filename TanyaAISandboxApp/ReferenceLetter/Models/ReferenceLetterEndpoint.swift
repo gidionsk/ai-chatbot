@@ -8,8 +8,9 @@
 /// Route BE milik project host; tidak diekspor melalui SDK TanyaAI.
 enum ReferenceLetterEndpoint: String {
     case inquiry = "/user/tanya-ai/reference-letter/inquiry"
+    case acknowledge = "/user/tanya-ai/reference-letter/ack"
 
-    var method: String { "GET" }
+    var method: String { self == .inquiry ? "GET" : "POST" }
 }
 
 enum ReferenceLetterResponseCode: String {

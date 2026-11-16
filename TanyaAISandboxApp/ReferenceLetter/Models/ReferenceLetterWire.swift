@@ -47,4 +47,8 @@ enum ReferenceLetterWire {
         let onlineSessionId: String
     }
 
+    struct Receipt: Decodable {
+        let title: String
+        let message: String
+    }
 }
