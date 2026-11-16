@@ -10,6 +10,7 @@ Font Fira Sans dan copy English, Bahasa Indonesia, serta 简体中文 tersedia d
 ./Scripts/run_sandbox.sh --language en
 ./Scripts/run_sandbox.sh --language zh-Hans
 ./Scripts/run_sandbox.sh --language id --header-demo
+./Scripts/run_sandbox.sh --language id --reference-letter-demo
 ./Scripts/run_sandbox.sh --language id --offline
 ```
 
@@ -30,6 +31,7 @@ saat scroll. Percakapan kosong menampilkan welcome bila host memberikannya.
 - [Membuka screen dari host app](docs/HOST_INTEGRATION.md)
 - [Pola view dan resource](docs/VIEW_TEMPLATE.md)
 - [Aturan implementasi](AGENTS.md)
+- [Form Surat Referensi, PIN, mapping BE, dan adapter host](docs/REFERENCE_LETTER.md)
 - [Menjalankan tes (Xcode, workspace host, terminal)](docs/TESTING.md)
 - [Hasil validasi](docs/VALIDATION.md)
 - [Keputusan revamp dan tahap berikutnya](docs/REVAMP_NOTES.md)

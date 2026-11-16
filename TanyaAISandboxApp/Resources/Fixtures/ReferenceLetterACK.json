@@ -1,0 +1,9 @@
+{
+    "response_code": "00000",
+    "responseDescription": "SUCCESS",
+    "responseTitle": "SUKSES",
+    "data": {
+        "title": "",
+        "message": "Surat referensi akan diproses selama waktu 3 hari kerja dan dikirimkan ke email tersimpan di data pribadimu"
+    }
+}

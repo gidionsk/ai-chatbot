@@ -24,7 +24,7 @@ METADATA = {
     'Features/Chat/Intents/ReferenceLetter/Models/ReferenceLetterEndpoint.swift',
     'Features/Chat/Intents/ReferenceLetter/Models/ReferenceLetterWire.swift',
     'Components/Inputs/TransactionPIN/Models/TransactionPINRules.swift',
-    'Features/Chat/Intents/Models/ChatIntent.swift',
+    'TanyaAISandboxApp/ReferenceLetter/SandboxReferenceLetterService.swift', 'Features/Chat/Intents/Models/ChatIntent.swift',
     'Features/Chat/Gateway/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
     'Features/Chat/Gateway/Models/ConversationState.swift', 'Features/Chat/Gateway/Models/WireError.swift',
     'Features/Chat/Gateway/Models/WireCancel.swift', 'Features/Chat/Gateway/Models/WireLeaveAgent.swift',

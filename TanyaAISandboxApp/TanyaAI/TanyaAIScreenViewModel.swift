@@ -16,6 +16,10 @@ final class TanyaAIScreenViewModel: ScreenContentViewModel {
     @MainActor
     private(set) lazy var bridge = TanyaAIBridge(
         transport: useCase,
+        services: TanyaAIIntentServices(
+            referenceLetter: SandboxOptions.current.isReferenceLetterDemo
+                ? SandboxReferenceLetterService.make(locale: SandboxOptions.current.locale ?? .current) : nil
+        ),
         onSessionExpired: { [weak self] in self?.didReceiveError(URLError(.userAuthenticationRequired)) },
         onConnectionFailed: { [weak self] error in self?.didReceiveError(error) }
     )

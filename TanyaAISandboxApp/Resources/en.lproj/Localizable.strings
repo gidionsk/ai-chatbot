@@ -44,3 +44,6 @@
 "sandbox.form.cancel" = "Cancel";
 "sandbox.form.requiredText" = "Please fill this in";
 "sandbox.form.requiredChoice" = "Please choose one";
+
+"sandbox.reference.serviceFailed" = "The service could not process this request.";
+"sandbox.reference.invalidPIN" = "Incorrect PIN. Please try again.";

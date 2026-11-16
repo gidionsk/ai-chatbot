@@ -1,0 +1,32 @@
+{
+    "response_code": "00000",
+    "responseDescription": "SUCCESS",
+    "responseTitle": "SUKSES",
+    "data": {
+        "introduction": "Hi, untuk melanjutkan proses ini silakan mengisi form di bawah ini dengan baik dan benar.",
+        "purposes": [
+            {"code": "001", "value": "Parameter 1"},
+            {"code": "002", "value": "Parameter 2"},
+            {"code": "003", "value": "Parameter 3"}
+        ],
+        "documentFormats": [
+            {"code": "SOFTCOPY", "value": "Softcopy"},
+            {"code": "HARDCOPY", "value": "Hardcopy"}
+        ],
+        "sourceAccounts": [
+            {"code": "693800000723", "value": "Tanda 360 Max - 12345678", "description": "IDR 1.000.000"},
+            {"code": "693800000724", "value": "Tanda 360 Duo - 12345678", "description": "IDR 5.000.000"}
+        ],
+        "currencies": [
+            {"code": "001", "value": "IDR"},
+            {"code": "002", "value": "USD"}
+        ],
+        "address": "Jl Bsd Grand Boulevard",
+        "email": "sandbox-encrypted-email",
+        "languages": [
+            {"code": "IN", "value": "INDONESIA"},
+            {"code": "EN", "value": "ENGLISH"}
+        ],
+        "onlineSessionId": "fixture-reference-session"
+    }
+}

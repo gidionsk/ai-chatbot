@@ -10,6 +10,8 @@ import Foundation
 /// File JSON dummy BE di `Resources/Fixtures`. Nama case = nama file tanpa `.json`.
 enum SandboxFixtureFile: String, CaseIterable {
     case tanyaAIInitDummy = "TanyaAIInitDummy"
+    case referenceLetterInquiry = "ReferenceLetterInquiry"
+    case referenceLetterACK = "ReferenceLetterACK"
     /// Halaman history chat-gateway: empat pesan di dua tanggal, terbaru dulu.
     case tanyaAIHistoryDummy = "TanyaAIHistoryDummy"
 
