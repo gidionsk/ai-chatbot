@@ -18,6 +18,7 @@ struct ReferenceLetterSessionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
             content
+            message
         }
         .onChange(of: session.draft) { _ in session.clearResolvedErrors() }
     }
@@ -32,9 +33,9 @@ struct ReferenceLetterSessionView: View {
             FilledButton(title: String(ChatCopy.referenceRetry, locale: locale)) {
                 Task { await session.load() }
             }
-        case .history, .cancelled:
+        case .history, .cancelled, .completed:
             ReferenceLetterResultView(session: session)
-        case .editing:
+        case .editing, .authorizing, .submitting, .uncertain:
             form
         }
     }
@@ -46,7 +47,8 @@ struct ReferenceLetterSessionView: View {
                 inquiry: inquiry,
                 draft: $session.draft,
                 invalidFields: session.invalidFields,
-                onOpenOptions: onOpenSheet
+                onOpenOptions: onOpenSheet,
+                onSubmit: session.isSubmissionAvailable ? confirm : nil
             )
             .disabled(session.phase != .editing)
             if session.phase == .editing {
@@ -57,4 +59,32 @@ struct ReferenceLetterSessionView: View {
         }
     }
 
+    @ViewBuilder
+    private var message: some View {
+        if let message = session.errorMessage {
+            Text(message).designFont(.body).foregroundColor(colors.colorsTextNegative)
+        }
+        if session.failure != nil {
+            Text(String(ChatCopy.referenceAuthorizationFailed, locale: locale)).designFont(.body)
+        }
+        if session.phase.isBusy { LoadingIndicator() }
+        if session.phase == .uncertain {
+            Text(String(ChatCopy.referenceUncertain, locale: locale)).designFont(.body)
+        }
+    }
+}
+
+// MARK: - Actions
+
+private extension ReferenceLetterSessionView {
+    func confirm() {
+        Task {
+            await session.submit()
+            if let field = ReferenceLetterFieldID.allCases.first(where: {
+                $0 != .destination && session.invalidFields.contains($0)
+            }) {
+                onOpenSheet(field)
+            }
+        }
+    }
 }

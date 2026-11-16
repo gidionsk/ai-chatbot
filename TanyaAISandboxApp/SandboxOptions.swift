@@ -15,6 +15,10 @@ struct SandboxOptions {
     static let referenceEncryptedEmail = "sandbox-encrypted-email"
     static let referenceDecryptedEmail = "sample@example.com"
     private static let referenceFlag = "--reference-letter-demo"
+    static let referenceAuthorizationToken = "fixture-host-authorization"
+    private static let referenceAuthorizationErrorFlag = "--reference-letter-authorization-error"
+    private static let referenceAuthorizationCancelledFlag = "--reference-letter-authorization-cancelled"
+    private static let referenceACKTimeoutFlag = "--reference-letter-ack-timeout"
     static let fontFailure = "Font registration failed: "
     static let openIdentifier = "sandbox.open"
     static let detailOpenIdentifier = "sandbox.detail.open"
@@ -130,6 +134,9 @@ struct SandboxOptions {
     /// `--form-demo`: area scroll berisi form contoh (pilihan, field bergantung, field nonaktif, toggle, validasi).
     let isFormDemo: Bool
     let isReferenceLetterDemo: Bool
+    let isReferenceAuthorizationError: Bool
+    let isReferenceAuthorizationCancelled: Bool
+    let isReferenceACKTimeout: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
     /// `--slow-icons` (tidak menjawab, cek loading). Nil = URL dari fixture.
@@ -153,6 +160,9 @@ struct SandboxOptions {
         isSheetInput = arguments.contains(Self.sheetInputFlag)
         isFormDemo = arguments.contains(Self.formDemoFlag)
         isReferenceLetterDemo = arguments.contains(Self.referenceFlag)
+        isReferenceAuthorizationError = arguments.contains(Self.referenceAuthorizationErrorFlag)
+        isReferenceAuthorizationCancelled = arguments.contains(Self.referenceAuthorizationCancelledFlag)
+        isReferenceACKTimeout = arguments.contains(Self.referenceACKTimeoutFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {
             iconOverrideURL = Self.brokenIconURL

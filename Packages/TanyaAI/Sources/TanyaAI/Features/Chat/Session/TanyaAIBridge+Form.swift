@@ -15,6 +15,7 @@ extension TanyaAIBridge {
         else { return }
         let session = ReferenceLetterSession(
             service: service,
+            submission: services.referenceLetterSubmission,
             isHistory: isHistory
         )
         referenceLetters[message.id] = session

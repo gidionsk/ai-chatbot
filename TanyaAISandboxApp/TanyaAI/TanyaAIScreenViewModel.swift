@@ -18,8 +18,9 @@ final class TanyaAIScreenViewModel: ScreenContentViewModel {
         transport: useCase,
         services: TanyaAIIntentServices(
             referenceLetter: SandboxOptions.current.isReferenceLetterDemo
-                ? SandboxReferenceLetterService.inquiry(locale: SandboxOptions.current.locale ?? .current) : nil
-
+                ? SandboxReferenceLetterService.inquiry(locale: SandboxOptions.current.locale ?? .current) : nil,
+            referenceLetterSubmission: SandboxOptions.current.isReferenceLetterDemo
+                ? SandboxReferenceLetterService.submission(locale: SandboxOptions.current.locale ?? .current) : nil
         ),
         onSessionExpired: { [weak self] in self?.didReceiveError(URLError(.userAuthenticationRequired)) },
         onConnectionFailed: { [weak self] error in self?.didReceiveError(error) }

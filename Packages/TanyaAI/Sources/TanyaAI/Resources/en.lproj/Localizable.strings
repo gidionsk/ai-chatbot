@@ -52,6 +52,9 @@
 "referenceLetter.loadFailed" = "Unable to load reference letter details. Please try again.";
 "referenceLetter.retry" = "Try again";
 "referenceLetter.cancel" = "Cancel";
+"referenceLetter.uncertain" = "The request status is uncertain. Check with the bank before submitting another request.";
+"referenceLetter.completed" = "You have requested a reference letter for %@";
 "referenceLetter.cancelled" = "The reference letter request was cancelled.";
 "referenceLetter.history" = "You previously requested a reference letter.";
 "referenceLetter.close" = "Close";
+"referenceLetter.authorizationFailed" = "PIN verification could not be completed. Please try again.";

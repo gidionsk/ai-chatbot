@@ -32,13 +32,36 @@ final class ReferenceLetterUITests: XCTestCase {
         XCTAssertFalse(email.exists)
     }
 
-    func testInquiryOnlyFormHasNoSubmitCapability() {
+    func testSuccessfulHostAuthorizationShowsTheACKMessage() {
         launch()
-        let send = application.buttons["referenceLetter.send"]
-        scrollTo(send)
-        XCTAssertFalse(send.isEnabled)
+        fillForm()
+        open("referenceLetter.send")
+        let note = application.staticTexts["referenceLetter.receipt.message"]
+        XCTAssertTrue(note.waitForExistence(timeout: 10))
+        XCTAssertEqual(
+            note.label,
+            "Surat referensi akan diproses selama waktu 3 hari kerja "
+                + "dan dikirimkan ke email tersimpan di data pribadimu"
+        )
+        XCTAssertTrue(application.descendants(matching: .any)["referenceLetter.result"].exists)
+        XCTAssertFalse(application.buttons["referenceLetter.send"].exists)
     }
 
+    func testCancelledHostAuthorizationDoesNotShowReceipt() {
+        launch(extra: ["--reference-letter-authorization-cancelled"])
+        fillForm()
+        open("referenceLetter.send")
+        XCTAssertTrue(application.buttons["referenceLetter.send"].isEnabled)
+        XCTAssertFalse(application.staticTexts["referenceLetter.receipt.message"].exists)
+    }
+
+    func testInvalidFormDoesNotOpenPIN() {
+        launch()
+        open("referenceLetter.send")
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
+        XCTAssertTrue(sheet.buttons["Tanda 360 Max - 12345678"].exists)
+        XCTAssertFalse(sheet.buttons["1"].exists)
+    }
 }
 
 // MARK: - Helpers
@@ -58,6 +81,21 @@ private extension ReferenceLetterUITests {
         composer.typeText("Reference letter")
         application.buttons["composer.send"].tap()
         XCTAssertTrue(application.buttons["referenceLetter.purpose"].waitForExistence(timeout: 10))
+    }
+
+    func fillForm() {
+        let destination = application.textFields["referenceLetter.destination"]
+        scrollTo(destination)
+        destination.tap()
+        destination.typeText("Embassy")
+        open("referenceLetter.accounts")
+        application.buttons["Tanda 360 Max - 12345678"].tap()
+        application.buttons["Tanda 360 Duo - 12345678"].tap()
+        application.buttons["Choose"].tap()
+        open("referenceLetter.currency")
+        application.buttons["USD"].tap()
+        open("referenceLetter.language")
+        application.buttons["INDONESIA"].tap()
     }
 
     func open(_ identifier: String) {

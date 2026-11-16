@@ -46,3 +46,4 @@
 "sandbox.form.requiredChoice" = "Wajib dipilih";
 
 "sandbox.reference.serviceFailed" = "Layanan belum dapat memproses permintaan ini.";
+"sandbox.reference.authorizationFailed" = "Otorisasi gagal. Silakan coba lagi.";

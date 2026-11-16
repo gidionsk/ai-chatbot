@@ -46,3 +46,4 @@
 "sandbox.form.requiredChoice" = "请选择一项";
 
 "sandbox.reference.serviceFailed" = "服务暂时无法处理此请求。";
+"sandbox.reference.authorizationFailed" = "授权失败，请重试。";

@@ -52,6 +52,9 @@
 "referenceLetter.loadFailed" = "Data surat referensi belum dapat dimuat. Silakan coba lagi.";
 "referenceLetter.retry" = "Coba lagi";
 "referenceLetter.cancel" = "Batalkan";
+"referenceLetter.uncertain" = "Status pemesanan belum dapat dipastikan. Periksa status melalui bank sebelum mengajukan kembali.";
+"referenceLetter.completed" = "Kamu telah melakukan pemesanan surat referensi untuk %@";
 "referenceLetter.cancelled" = "Pemesanan surat referensi dibatalkan.";
 "referenceLetter.history" = "Kamu pernah mengajukan surat referensi.";
 "referenceLetter.close" = "Tutup";
+"referenceLetter.authorizationFailed" = "Verifikasi PIN belum berhasil. Silakan coba lagi.";

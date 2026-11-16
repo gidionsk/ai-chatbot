@@ -11,6 +11,7 @@ import Foundation
 enum SandboxFixtureFile: String, CaseIterable {
     case tanyaAIInitDummy = "TanyaAIInitDummy"
     case referenceLetterInquiry = "ReferenceLetterInquiry"
+    case referenceLetterACK = "ReferenceLetterACK"
     /// Halaman history chat-gateway: empat pesan di dua tanggal, terbaru dulu.
     case tanyaAIHistoryDummy = "TanyaAIHistoryDummy"
 

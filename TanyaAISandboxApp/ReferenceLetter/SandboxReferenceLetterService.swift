@@ -22,6 +22,27 @@ enum SandboxReferenceLetterService {
         )
     }
 
+    static func submission(locale: Locale) -> ReferenceLetterSubmissionAdapter {
+        ReferenceLetterSubmissionAdapter(
+            fallbackMessage: String(SandboxCopy.referenceServiceFailed, locale: locale),
+            authorizeWithHost: {
+                // Callback fixture saja. Project utama memasang flow PIN + verifikasi existing di sini.
+                if SandboxOptions.current.isReferenceAuthorizationCancelled { return nil }
+                if SandboxOptions.current.isReferenceAuthorizationError {
+                    throw ReferenceLetterServiceError.authorization(
+                        String(SandboxCopy.referenceAuthorizationFailed, locale: locale)
+                    )
+                }
+                return ReferenceLetterAuthorization(responseCodeOTP: SandboxOptions.referenceAuthorizationToken)
+            },
+            send: { _, body in
+                if SandboxOptions.current.isReferenceACKTimeout { throw URLError(.timedOut) }
+                guard body != nil else { throw URLError(.cannotParseResponse) }
+                return try data(.referenceLetterACK)
+            }
+        )
+    }
+
     private static func data(_ fixture: SandboxFixtureFile) throws -> Data {
         guard let url = fixture.url else { throw CocoaError(.fileNoSuchFile) }
         return try Data(contentsOf: url)

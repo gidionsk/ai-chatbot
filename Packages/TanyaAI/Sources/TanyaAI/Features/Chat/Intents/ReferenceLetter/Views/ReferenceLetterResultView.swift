@@ -18,11 +18,14 @@ struct ReferenceLetterResultView: View {
             if let introduction = session.inquiry?.introduction {
                 Text(introduction).designFont(.body)
             }
-            NoticeCard(title: String(ChatCopy.referenceTitle, locale: locale), message: message) {
+            NoticeCard(title: title, message: message) {
                 Image(systemName: ReferenceLetterSymbols.receipt)
             }
             .accessibilityIdentifier(ChatElementIdentifier.referenceResult)
-
+            if let receipt = session.receipt {
+                Text(receipt.message).designFont(.body)
+                    .accessibilityIdentifier(ChatElementIdentifier.referenceReceiptMessage)
+            }
         }
     }
 }
@@ -30,8 +33,19 @@ struct ReferenceLetterResultView: View {
 // MARK: - Helpers
 
 private extension ReferenceLetterResultView {
+    var title: String {
+        guard let title = session.receipt?.title, !title.isEmpty else {
+            return String(ChatCopy.referenceTitle, locale: locale)
+        }
+        return title
+    }
+
     var message: String {
         switch session.phase {
+        case .completed:
+            return String(
+                format: String(ChatCopy.referenceCompleted, locale: locale), session.submittedPurpose ?? String()
+            )
         case .cancelled:
             return String(ChatCopy.referenceCancelled, locale: locale)
         default:
