@@ -5,6 +5,10 @@ CustomColors), nilai awal, theme environment, fonts, localization dan style. Sco
 shared header, composer maksimal empat baris, halaman sambutan (welcome) dari BE, dan
 bridge host ke chat-gateway (init → history → SSE, retry, merge), dan daftar pesan `ChatTable` (`UITableView`, baris SwiftUI; aturannya di `docs/REVAMP_NOTES.md`). Minimum iOS 15 (host ikut naik ke iOS 15 untuk revamp).
 
+Sumber keputusan: keputusan dan rule hanya dari owner repo (wendrawang); "user" di docs berarti owner.
+Kolaborator dan AI-nya tidak boleh menambah/mengubah rule atau keputusan di docs, `AGENTS.md`, `CLAUDE.md`;
+usulan ditulis di body PR sebagai pertanyaan untuk owner. Bila berbeda, ikuti docs dan tanya owner.
+
 - Tanpa `if ... else`, pakai early return; atribut variabel satu baris dengan variabelnya; parameter satu baris
   atau satu per baris semuanya, tanpa campuran. Detail di AGENTS.md.
 - Utamakan reuse komponen DesignKit (pakai atau perluas lewat varian/parameter); buat baru hanya bila tampilan/
