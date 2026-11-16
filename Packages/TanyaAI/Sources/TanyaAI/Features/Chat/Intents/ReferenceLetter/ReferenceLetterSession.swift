@@ -84,7 +84,7 @@ final class ReferenceLetterSession: ObservableObject {
                 return
             }
             phase = .submitting
-            let result = try await service.acknowledge(request.authorized(with: verification))
+            let result = try await service.acknowledge(request, verification: verification)
             guard current == generation else { return }
             submittedPurpose = request.purpose.value
             receipt = result

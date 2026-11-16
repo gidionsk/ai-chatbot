@@ -65,7 +65,7 @@ struct ReferenceLetterSessionTests {
         await task.value
         #expect(service.receivedRequest?.embassy == "Embassy")
         #expect(service.receivedRequest?.email == "ciphertext-email")
-        #expect(service.receivedRequest?.responseCodeOTP == "verified-response-otp")
+        #expect(service.receivedVerification?.responseCodeOTP == "verified-response-otp")
         #expect(service.calls == ["inquiry", "verify", "ack"])
     }
 

@@ -12,10 +12,10 @@ import SwiftUI
 @MainActor
 struct IntentFormPresenter: ViewModifier {
     @Environment(\.locale) private var locale
-    let sessions: [String: ReferenceLetterSession]
     @Binding var sheet: IntentFormSheet?
     @State private var previousSheet: IntentFormSheet?
     @State private var isProcessing = false
+    let sessions: [String: ReferenceLetterSession]
     let onPresented: (Bool) -> Void
 
     func body(content: Content) -> some View {
