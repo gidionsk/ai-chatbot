@@ -14,4 +14,5 @@ struct ChatRowActions {
     var onSelectShortcut: (WelcomeShortcut) -> Void = { _ in }
     var onSelectFollowUp: (String) -> Void = { _ in }
     var onLeaveAgentQueue: () -> Void = {}
+    var onOpenFormSheet: (IntentFormSheet) -> Void = { _ in }
 }

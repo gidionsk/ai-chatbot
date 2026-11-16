@@ -58,7 +58,8 @@ final class ChatTableController: UIViewController {
             onOpenLink: { [weak self] in self?.rowActions.onOpenLink($0) },
             onSelectShortcut: { [weak self] in self?.rowActions.onSelectShortcut($0) },
             onSelectFollowUp: { [weak self] in self?.rowActions.onSelectFollowUp($0) },
-            onLeaveAgentQueue: { [weak self] in self?.rowActions.onLeaveAgentQueue() }
+            onLeaveAgentQueue: { [weak self] in self?.rowActions.onLeaveAgentQueue() },
+            onOpenFormSheet: { [weak self] in self?.rowActions.onOpenFormSheet($0) }
         )
     }
 

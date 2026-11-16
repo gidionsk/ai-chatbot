@@ -13,6 +13,8 @@ import Foundation
 /// TanyaAI yang menyambung (init → history → SSE), menyambung ulang, dan menggabungkan pesan.
 @MainActor
 public final class TanyaAIBridge: ObservableObject {
+    @Published var referenceLetters: [String: ReferenceLetterSession] = [:]
+    let services: TanyaAIIntentServices
     /// Pesan dari gateway, urut `seq` naik.
     @Published private(set) var messages: [ChatMessage] = []
     /// Pertanyaan yang sudah tampil tetapi belum datang dari stream, termasuk yang gagal dikirim (urut waktu kirim).
@@ -69,21 +71,24 @@ public final class TanyaAIBridge: ObservableObject {
     /// sambungan; host menampilkan error sesuai polanya. Error berupa `TanyaAITransportError` dari transport, atau
     /// `DecodingError` bila respons init/history tidak terbaca.
     public convenience init(
-        transport: TanyaAIChatTransport, onSessionExpired: (() -> Void)? = nil,
+        transport: TanyaAIChatTransport, services: TanyaAIIntentServices = .init(),
+        onSessionExpired: (() -> Void)? = nil,
         onConnectionFailed: ((Error) -> Void)? = nil
     ) {
         self.init(
             transport: transport, onSessionExpired: onSessionExpired, onConnectionFailed: onConnectionFailed,
-            sleep: ChatBackoff.sleep(seconds:)
+            sleep: ChatBackoff.sleep(seconds:), services: services
         )
     }
 
     /// `sleep` disuntikkan test agar jeda reconnect instan.
     init(
         transport: TanyaAIChatTransport, onSessionExpired: (() -> Void)?,
-        onConnectionFailed: ((Error) -> Void)? = nil, sleep: @escaping (TimeInterval) async throws -> Void
+        onConnectionFailed: ((Error) -> Void)? = nil, sleep: @escaping (TimeInterval) async throws -> Void,
+        services: TanyaAIIntentServices = .init()
     ) {
         self.transport = transport
+        self.services = services
         self.onSessionExpired = onSessionExpired
         self.onConnectionFailed = onConnectionFailed
         self.sleep = sleep
@@ -163,6 +168,7 @@ extension TanyaAIBridge {
     func expireSession() {
         guard connection != .expired else { return }
         connection = .expired
+        resetForms()
         connectionTask?.cancel()
         resetUserTyping()
         onSessionExpired?()
@@ -173,6 +179,7 @@ extension TanyaAIBridge {
         switch event {
         case .message(let message):
             messages = messages.merging([message])
+            registerForm(for: message, isHistory: false)
             if message.author == .agent {
                 showAgentTyping(false)
             }
@@ -196,6 +203,7 @@ extension TanyaAIBridge {
     /// History yang sudah dikejar; percakapan berbeda dari sebelumnya mengganti daftar, bukan digabung.
     func replaceOrMerge(_ history: [ChatMessage], conversationID: String) {
         guard self.conversationID == nil || self.conversationID == conversationID else {
+            resetForms()
             messages = history.merging([])
             localQuestions = []
             sentMessageIDs = []
@@ -206,11 +214,13 @@ extension TanyaAIBridge {
             eventCursor = nil
             self.conversationID = conversationID
             isHistoryLoaded = true
+            history.forEach { registerForm(for: $0, isHistory: true) }
             updateLatestIncomingMessage()
             return
         }
         self.conversationID = conversationID
         messages = messages.merging(history)
+        history.forEach { registerForm(for: $0, isHistory: true) }
         isHistoryLoaded = true
         // Pertanyaan yang terlewat stream saat putus datang lewat history.
         removeDeliveredQuestions()

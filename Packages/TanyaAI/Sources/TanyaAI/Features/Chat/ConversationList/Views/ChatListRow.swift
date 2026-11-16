@@ -16,6 +16,7 @@ struct ChatListRow<Content: View>: View {
     let welcome: WelcomeContent?
     let content: Content
     let actions: ChatRowActions
+    var referenceLetter: ReferenceLetterSession? = nil
 
     var body: some View {
         rowContent
@@ -49,6 +50,12 @@ struct ChatListRow<Content: View>: View {
             AgentTypingIndicator()
         case .content:
             VStack(spacing: .zero) { content }
+        case .referenceLetter(let id):
+            if let referenceLetter {
+                ReferenceLetterSessionView(session: referenceLetter) { sheet in
+                    actions.onOpenFormSheet(sheet.sheet(id))
+                }
+            }
         }
     }
 }
