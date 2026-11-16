@@ -13,6 +13,8 @@
 public enum DesignIcon: String, CaseIterable {
     /// TODO: Ganti PDF dummy dengan aset Figma `icon_arrow` (komponen `auto_scroll`), nama tetap.
     case arrowDown
+    /// TODO: Ganti PDF dummy dengan aset Figma panah hapus `Device/Keyboard PIN Custom`, nama tetap.
+    case arrowLeft
     case backArrow
     /// TODO: Ganti PDF dummy dengan aset Figma centang pilihan banyak, nama tetap.
     case checkmark
@@ -22,6 +24,8 @@ public enum DesignIcon: String, CaseIterable {
     /// TODO: Ganti PDF dummy dengan aset Figma ikon headset kartu status, nama tetap.
     case headset
     case lightbulb
+    /// TODO: Ganti PDF dummy dengan aset Figma gembok sheet PIN (`_Input OTP PIN DEBIT TRANSACTION`), nama tetap.
+    case lock
     /// TODO: Ganti PDF dummy dengan aset Figma `reply`, nama tetap.
     case reply
 }

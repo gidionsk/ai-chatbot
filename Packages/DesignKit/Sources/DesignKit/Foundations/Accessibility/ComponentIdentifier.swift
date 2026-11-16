@@ -20,6 +20,16 @@ enum ComponentIdentifier {
         static let handle = "sheet.handle"
     }
 
+    enum PinEntry {
+        static let dots = "pin.dots"
+        static let error = "pin.error"
+        static let delete = "pin.delete"
+
+        static func digit(_ digit: Int) -> String {
+            "pin.digit.\(digit)"
+        }
+    }
+
     enum Composer {
         static let root = "composer"
         static let input = "composer.input"

@@ -26,6 +26,7 @@ struct FormDemoContent: View {
             ToggleRow(label: String(SandboxCopy.formBalance, locale: locale), isOn: $model.isBalanceShown)
                 .accessibilityIdentifier(SandboxOptions.formBalanceIdentifier)
             actions
+            submittedNote
         }
         .padding(FigmaSize.spacingLarge.scaledToArtwork)
         .cardStyle(isOutlined: false)
@@ -59,6 +60,17 @@ struct FormDemoContent: View {
                 .accessibilityIdentifier(SandboxOptions.formCancelIdentifier)
             FilledButton(title: String(SandboxCopy.formConfirm, locale: locale), onTap: model.confirm)
                 .accessibilityIdentifier(SandboxOptions.formConfirmIdentifier)
+        }
+    }
+
+    /// Tanda PIN diterima "service host" sandbox.
+    @ViewBuilder
+    private var submittedNote: some View {
+        if model.isSubmitted {
+            Text(String(SandboxCopy.formSubmitted, locale: locale))
+                .designFont(.bodyStrong)
+                .foregroundColor(colors.colorsTextPositive)
+                .accessibilityIdentifier(SandboxOptions.formSubmittedIdentifier)
         }
     }
 

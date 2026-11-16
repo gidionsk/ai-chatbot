@@ -10,8 +10,10 @@ import DesignKit
 import Foundation
 
 /// Sandbox saja: state form contoh `--form-demo`, untuk mencoba komponen field DesignKit. Validasi hanya saat
-/// Konfirmasi: semua field kosong ditandai, dan pilihan kosong paling atas langsung membuka sheet-nya. Mesin form yang
-/// sebenarnya menyusul di TanyaAI. Class karena `ObservableObject` mewajibkannya.
+/// Konfirmasi: semua field kosong ditandai, dan pilihan kosong paling atas langsung membuka sheet-nya. Form yang valid
+/// membuka sheet PIN; "service host" tiruan menerima `SandboxOptions.formPin` saja. PIN hanya ada di memori selama
+/// diketik dan dikosongkan setelah diperiksa atau saat sheet ditutup; tidak pernah di-log. Mesin form yang sebenarnya
+/// menyusul di TanyaAI. Class karena `ObservableObject` mewajibkannya.
 @MainActor
 final class FormDemoModel: ObservableObject {
     @Published private(set) var formatID: String?
@@ -21,7 +23,15 @@ final class FormDemoModel: ObservableObject {
     }
     @Published var isBalanceShown = false
     @Published private(set) var invalidFields: Set<FormDemoField> = []
-    @Published var sheet: FormDemoSheet?
+    @Published var sheet: FormDemoSheet? {
+        didSet { clearPinUnlessOpen() }
+    }
+    @Published var pin = String() {
+        didSet { clearRejectionOnTyping() }
+    }
+    @Published private(set) var isPinRejected = false
+    @Published private(set) var isVerifying = false
+    @Published private(set) var isSubmitted = false
     /// Nil = masih diambil dari "service host".
     @Published private(set) var accountOptions: [OptionItem]?
 
@@ -57,19 +67,54 @@ final class FormDemoModel: ObservableObject {
         address = String()
         isBalanceShown = false
         invalidFields = []
+        isSubmitted = false
     }
 
+    /// Form valid = sheet PIN; selain itu pilihan kosong paling atas dibuka.
     func confirm() {
         let invalid = FormDemoField.allCases.filter(isInvalid)
         invalidFields = Set(invalid)
-        guard let sheet = invalid.compactMap(\.sheet).first else { return }
+        guard let sheet = invalid.isEmpty ? .pin : invalid.compactMap(\.sheet).first else { return }
         open(sheet)
+    }
+
+    /// Seolah service host memeriksa PIN: keypad nonaktif dan sheet terkunci selama jeda.
+    func verify(_ enteredPin: String) {
+        isVerifying = true
+        let isAccepted = enteredPin == SandboxOptions.formPin
+        DispatchQueue.main.asyncAfter(deadline: .now() + SandboxOptions.formVerifyDelay) { [weak self] in
+            self?.finishVerifying(isAccepted: isAccepted)
+        }
     }
 }
 
 // MARK: - Helpers
 
 private extension FormDemoModel {
+    /// PIN ditolak: sheet tetap terbuka, titik dikosongkan, error tampil. Diterima: sheet ditutup.
+    func finishVerifying(isAccepted: Bool) {
+        isVerifying = false
+        pin = String()
+        guard isAccepted else {
+            isPinRejected = true
+            return
+        }
+        sheet = nil
+        isSubmitted = true
+    }
+
+    func clearPinUnlessOpen() {
+        guard sheet != .pin else { return }
+        pin = String()
+        isPinRejected = false
+    }
+
+    /// Error PIN salah hilang begitu nasabah mulai mengetik lagi.
+    func clearRejectionOnTyping() {
+        guard !pin.isEmpty else { return }
+        isPinRejected = false
+    }
+
     func isInvalid(_ field: FormDemoField) -> Bool {
         switch field {
         case .format:

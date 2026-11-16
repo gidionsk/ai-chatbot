@@ -37,8 +37,13 @@ struct TanyaAIScreen: ScreenContent {
             ) {
                 SheetDemoSheetContent(selectedIDs: sheetChoiceIDs, onSelect: choose)
             }
-            // Beberapa jenis sheet, satu pemasangan: sheet tampil selama `formDemo.sheet` terisi.
-            .bottomSheet(item: $formDemo.sheet, closeLabel: String(SandboxCopy.sheetClose, locale: locale)) { sheet in
+            // Beberapa jenis sheet, satu pemasangan: sheet tampil selama `formDemo.sheet` terisi. Terkunci selama PIN
+            // diperiksa, supaya nasabah tidak menutupnya di tengah proses.
+            .bottomSheet(
+                item: $formDemo.sheet,
+                closeLabel: String(SandboxCopy.sheetClose, locale: locale),
+                isDismissable: !formDemo.isVerifying
+            ) { sheet in
                 FormDemoSheetContent(model: formDemo, sheet: sheet)
             }
             // Latar gelap hanya menahan sentuhan di dalam halaman; swipe-back milik navigasi host, jadi host yang

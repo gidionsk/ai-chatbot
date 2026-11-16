@@ -85,7 +85,7 @@ Aturan pemasangan:
 | Daftar yang datanya menyusul | Siap | `items: nil` = spinner; daftar datang kemudian tanpa kehilangan centang |
 | Pilihan sebelumnya langsung terlihat | Siap | `selectedIDs` dari pemakai |
 | Isi statis: teks, kartu, tombol | Siap | Tinggi mengikuti isi |
-| Keypad buatan sendiri (PIN) | Wadah siap, isi belum ada | Tidak memakai keyboard sistem; angka diteruskan ke host |
+| PIN | Siap | `PinEntry`: titik, error, keypad sendiri tanpa keyboard sistem; PIN diteruskan ke host lewat `onComplete` |
 | Beberapa jenis sheet bergantian | Siap | `.bottomSheet(item:)` |
 | Tombol yang menempel di bawah | Siap | `.bottomSheetFooter { ... }` pada isi |
 | Isi dengan field teks | Wadah siap | Sheet naik ke atas keyboard; field pencarian di `OptionList` belum ada |
@@ -98,7 +98,7 @@ Aturan pemasangan:
 | --- | --- |
 | Pencarian di daftar pilihan | Wadah sudah mengikuti keyboard; field pencarian dan penyaringan di `OptionList` belum dibuat karena belum ada tampilan pastinya |
 | Tampilan pasti tombol pilihan banyak | Sementara tombol menempel di bawah tanpa garis atau bayangan pemisah |
-| Isi keypad PIN | Hanya wadahnya yang siap, termasuk kunci tutup selama PIN diperiksa |
+| Jarak sheet PIN | Sebagian jarak `PinEntry` diukur dari foto Figma; menunggu angka pastinya |
 | Tanda visual sheet terkunci | Grabber tetap tampil supaya tinggi sheet tidak berubah; belum ada tanda lain |
 
 Kemampuan baru untuk semua sheet ditambahkan di wadah (`BottomSheet`, `BottomSheetPresenter`), bukan di isi.

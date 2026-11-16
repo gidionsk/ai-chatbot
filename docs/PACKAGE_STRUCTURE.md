@@ -53,6 +53,8 @@ Contoh penempatan yang sudah diterapkan:
   `FieldFrame` (label, isi, error merah) yang dipakai bersama; kotak field di `ViewModifiers/FieldBox.swift` (padding
   di atas `cardStyle`).
 - `Components/Lists/OptionList/`: isi sheet daftar pilihan (`OptionList`), satu atau banyak pilihan, dengan state loading.
+- `Components/Inputs/PinEntry/`: isi sheet PIN (`PinEntry`): `Models/PinPadKey` susunan keypad dan aturan input,
+  `Views` titik, tombol keypad, dan `PinEntry`.
 - `Components/Actions/FilledButton.swift`: tombol selebar wadah; `.regular` (Konfirmasi, Pilih), `.outlined` (aksi
   kedua bergaris seukuran `.regular`, mis. Batalkan di form), dan `.link` (teks kecil bergaris bawah, mis. "Batalkan
   proses ini").
@@ -190,7 +192,7 @@ rancangan lama (view model per intent di host, coordinator PIN existing):
 - Selesai atau batal menjadi kartu status; di history cukup kartu "pernah request" dari `intent` pesan bot.
 
 Komponennya sudah ada di DesignKit (`SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`, `OptionList`,
-`.bottomSheet(item:)`); contoh susunannya di sandbox `--form-demo`. Tiga hal di bawah **belum punya pola di kode**,
+`PinEntry`, `.bottomSheet(item:)`); contoh susunannya di sandbox `--form-demo`, termasuk sheet PIN setelah Konfirmasi. Tiga hal di bawah **belum punya pola di kode**,
 karena `LiveAgent` tidak membutuhkannya. Ketiganya dirancang bersama intent form pertama, bukan disiapkan kosong:
 
 | Belum ada | Kenapa belum | Arah yang sudah disepakati |
@@ -218,7 +220,7 @@ TanyaAI/Bridging/
 TanyaAI/Features/Chat/Intents/Form/    // mesin bersama, bukan intent
 ├── Models/                            // jenis field, nilai form, state per instance, status
 ├── Extensions/                        // validasi saat Konfirmasi, dependensi dan reset field anak
-└── Views/                             // kartu form, isi sheet pilihan, keypad PIN, kartu selesai/batal
+└── Views/                             // kartu form, isi sheet (OptionList, PinEntry), kartu selesai/batal
 
 TanyaAI/Features/Chat/Session/
 └── TanyaAIBridge+Form.swift           // state form per id pesan, buka sheet, alur submit dan PIN

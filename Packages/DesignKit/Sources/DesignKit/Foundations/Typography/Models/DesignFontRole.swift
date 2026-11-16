@@ -31,12 +31,14 @@ public enum DesignFontRole: CaseIterable {
     case captionStrong
     /// Catatan kecil miring: gagal kirim, sedang mengetik. Italic 12.
     case captionItalic
+    /// Angka tombol keypad PIN (Figma `Base/bold_24`, weight 600). SemiBold 24.
+    case keypadDigit
 }
 
 public extension DesignFontRole {
     var face: FontFace {
         switch self {
-        case .title, .cardTitle, .bodyStrong, .captionStrong:
+        case .title, .cardTitle, .bodyStrong, .captionStrong, .keypadDigit:
             return .firaSansSemiBold
         case .headerTitle:
             return .firaSansBold
@@ -50,6 +52,8 @@ public extension DesignFontRole {
     /// Ukuran Figma sebelum di-scale ke layar.
     var size: CGFloat {
         switch self {
+        case .keypadDigit:
+            return FigmaSize.typographySizeHeadingMedium24
         case .title:
             return FigmaSize.typographySizeHeadingSmall20
         case .headerTitle, .cardTitle, .field:

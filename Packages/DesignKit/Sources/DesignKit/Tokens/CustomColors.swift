@@ -18,6 +18,13 @@ public enum CustomColors {
         public static let strong = CustomBasePaletteColor.glossySilver
     }
 
+    /// Tombol keypad `PinEntry`: garis Figma N200 Gray - Blush, dan latar saat ditekan.
+    /// TODO: Konfirmasi warna tombol yang sedang ditekan dengan Figma; sementara dari foto.
+    public enum Keypad {
+        public static let stroke = CustomBasePaletteColor.royalPastelBlue
+        public static let pressedFill = CustomBasePaletteColor.glossySilver
+    }
+
     public enum Button {
         /// Figma tombol batal di bawah kartu status.
         public static let muted = CustomBasePaletteColor.slateBlue

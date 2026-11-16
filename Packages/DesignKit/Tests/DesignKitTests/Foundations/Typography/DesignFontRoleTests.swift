@@ -33,6 +33,8 @@ struct DesignFontRoleTests {
         #expect(DesignFontRole.body.size == FigmaSize.typographySizeDisplaySmall14)
         #expect(DesignFontRole.captionItalic.face == .firaSansItalic)
         #expect(DesignFontRole.captionItalic.size == FigmaSize.typographySizeDisplayTiny12)
+        #expect(DesignFontRole.keypadDigit.face == .firaSansSemiBold)
+        #expect(DesignFontRole.keypadDigit.size == FigmaSize.typographySizeHeadingMedium24)
     }
 
     /// `.designFont` memberi ukuran teks yang sama dengan font peran itu sendiri.

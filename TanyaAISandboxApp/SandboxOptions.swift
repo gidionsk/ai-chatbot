@@ -46,6 +46,13 @@ struct SandboxOptions {
     /// Jeda seolah daftar rekening diambil dari service host, supaya state loading di sheet terlihat (juga oleh UI
     /// test, yang baru membaca layar setelah animasi sheet selesai).
     static let formLoadDelay: TimeInterval = 3
+    /// PIN tiruan yang diterima "service host" sandbox; bukan PIN nasabah. PIN lain ditolak.
+    static let formPin = "123456"
+    /// Panjang PIN transaksi, aturan host.
+    static let formPinLength = 6
+    /// Jeda seolah PIN diperiksa service host; selama itu keypad nonaktif dan sheet terkunci.
+    static let formVerifyDelay: TimeInterval = 1.5
+    static let formSubmittedIdentifier = "sandbox.form.submitted"
     /// Data dummy rekening nasabah.
     static let formAccounts = [
         OptionItem(id: "5262819128982", title: "Tanda 360 - 5262 8191 2892 82"),

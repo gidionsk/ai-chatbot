@@ -166,6 +166,11 @@ tersedia pada history/main.
 - Field form generik di DesignKit (`Components/Inputs/FormField`): `SelectField`, `TextInputField`, `ToggleRow`, semua
   dengan label dan `error` merah di bawah; nonaktif lewat `.disabled(...)`. Daftar pilihan di sheet memakai `OptionList` (satu atau banyak
   pilihan, `items` nil = loading). Komponen hanya menampilkan; validasi, dependensi, dan isi daftar milik pemakai.
+- PIN memakai `PinEntry` DesignKit (`Components/Inputs/PinEntry`) di dalam bottom sheet: titik per digit, `error`
+  merah, dan keypad angka sendiri (tanpa keyboard sistem). PIN dipegang pemakai lewat binding dan diteruskan sekali
+  lewat `onComplete`; jangan menyimpan, menampilkan, atau me-log angkanya. Selama host memeriksa, pemakai memasang
+  `.disabled(true)` pada `PinEntry` dan `isDismissable: false` pada sheet; PIN salah = pemakai mengosongkan `pin`
+  dan mengisi `error`.
 - Bottom sheet memakai `.bottomSheet(isPresented:closeLabel:content:)` dari DesignKit
   (`Components/Screen/BottomSheet`), dipasang di root halaman supaya latar gelap menutupi header dan composer.
   Halaman dengan beberapa jenis sheet memakai `.bottomSheet(item:closeLabel:content:)` dengan enum jenis sheet:

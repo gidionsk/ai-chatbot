@@ -42,5 +42,9 @@
 "sandbox.form.choose" = "Choose";
 "sandbox.form.confirm" = "Confirm";
 "sandbox.form.cancel" = "Cancel";
+"sandbox.form.pinTitle" = "Enter your 6-digit transaction PIN";
+"sandbox.form.pinDelete" = "Delete";
+"sandbox.form.pinWrong" = "Wrong PIN. Please try again.";
+"sandbox.form.submitted" = "Request sent";
 "sandbox.form.requiredText" = "Please fill this in";
 "sandbox.form.requiredChoice" = "Please choose one";

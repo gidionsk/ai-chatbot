@@ -42,5 +42,9 @@
 "sandbox.form.choose" = "Pilih";
 "sandbox.form.confirm" = "Konfirmasi";
 "sandbox.form.cancel" = "Batalkan";
+"sandbox.form.pinTitle" = "Masukkan 6 digit PIN Transaksi kamu";
+"sandbox.form.pinDelete" = "Hapus";
+"sandbox.form.pinWrong" = "PIN salah. Silakan coba lagi.";
+"sandbox.form.submitted" = "Permintaan terkirim";
 "sandbox.form.requiredText" = "Wajib diisi";
 "sandbox.form.requiredChoice" = "Wajib dipilih";

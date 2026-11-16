@@ -9,7 +9,7 @@ import DesignKit
 import SwiftUI
 
 /// Sandbox saja: isi bottom sheet form contoh. Format = satu pilihan; rekening = boleh lebih dari satu, daftarnya
-/// datang setelah jeda seolah dari service host.
+/// datang setelah jeda seolah dari service host; PIN = keypad, nonaktif selama PIN diperiksa.
 struct FormDemoSheetContent: View {
     @Environment(\.locale) private var locale
     @ObservedObject var model: FormDemoModel
@@ -34,6 +34,16 @@ struct FormDemoSheetContent: View {
                 confirmLabel: String(SandboxCopy.formChoose, locale: locale),
                 onSelect: model.selectAccounts
             )
+        case .pin:
+            PinEntry(
+                title: String(SandboxCopy.formPinTitle, locale: locale),
+                pin: $model.pin,
+                length: SandboxOptions.formPinLength,
+                error: model.isPinRejected ? String(SandboxCopy.formPinWrong, locale: locale) : nil,
+                deleteLabel: String(SandboxCopy.formPinDelete, locale: locale),
+                onComplete: model.verify
+            )
+            .disabled(model.isVerifying)
         }
     }
 

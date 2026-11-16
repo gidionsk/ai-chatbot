@@ -89,6 +89,20 @@ public enum CustomSizes {
         public static let loadingHeight: CGFloat = 120
     }
 
+    /// Sheet PIN `PinEntry`, dari Figma `_Input OTP PIN DEBIT TRANSACTION` dan `Device/Keyboard PIN Custom`: lebar
+    /// judul 335 (padding 20), gembok 48, titik 24 dengan padding 2, tombol lingkaran 60 bergaris 1.
+    /// TODO: `dotSpacing` dan `headerSpacing` diukur dari foto layar Figma; konfirmasi angkanya.
+    public enum PinEntry {
+        public static let horizontalPadding: CGFloat = 20
+        public static let lockSize: CGFloat = 48
+        public static let dotSize: CGFloat = 24
+        public static let dotInset: CGFloat = 2
+        public static let dotSpacing: CGFloat = 12
+        public static let headerSpacing: CGFloat = 44
+        public static let keySize: CGFloat = 60
+        public static let keyStroke: CGFloat = 1
+    }
+
     /// Jarak atas-bawah label tombol isi penuh, mis. Konfirmasi di form dan Pilih di daftar pilihan banyak.
     /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari foto.
     public enum FilledButton {

@@ -1046,3 +1046,28 @@ menerima `.disabled`. `BottomSheetFooterModifier` kini membawa `isEnabled` dari 
 `OptionList` tidak diubah: `.disabled(!isConfirmable)` pada tombol digabung SwiftUI dengan status nonaktif warisan
 (nonaktif dari mana pun tetap nonaktif). `BottomSheetFooterTests.aDisabledContentDisablesItsPinnedFooter` gagal
 sebelum perbaikan.
+
+## Sheet PIN: `PinEntry` (16 November 2026)
+
+`PinEntry` di DesignKit (`Components/Inputs/PinEntry`): judul, gembok, titik per digit, error merah, dan keypad
+lingkaran 1–9, 0, hapus. Tidak memakai keyboard sistem. PIN dipegang pemakai lewat binding; `onComplete` dipanggil
+sekali saat PIN sepanjang `length` (aturan host, tanpa nilai bawaan). Komponen tidak menampilkan, menyimpan, atau
+me-log angkanya; bagi VoiceOver titik adalah satu elemen berlabel judul dengan nilai jumlah digit terisi. Tempat
+error selalu setinggi satu baris, jadi keypad tidak bergeser saat error muncul.
+
+Ukuran dari properti Figma yang difoto user (`_Input OTP PIN DEBIT TRANSACTION`, `Device/Keyboard PIN Custom`):
+judul Regular 16 rata tengah lebar 335 (padding 20), gembok 48, titik 24 dengan padding 2, tombol lingkaran 60 garis
+1 pt #D3D8E5, angka SemiBold 24 (peran baru `keypadDigit`). Diukur dari foto, belum dari properti: jarak antar titik
+12, jarak judul–gembok–titik 44, jarak kolom tombol 48 dan baris 4, dan latar tombol yang ditekan (#BEC3D0). Angka di
+Figma #000000; dipakai `colorsTextPrimaryDark` (#202020) karena belum ada token hitam. Ikon `lock` dan `arrowLeft`
+masih PDF dummy.
+
+Sandbox `--form-demo`: Konfirmasi pada form yang valid membuka sheet PIN. "Service host" tiruan menerima
+`SandboxOptions.formPin` setelah jeda 1,5 detik; selama itu keypad nonaktif dan sheet terkunci (`isDismissable`).
+PIN salah mengosongkan titik dan menampilkan error yang hilang begitu nasabah mengetik lagi; PIN diterima menutup
+sheet dan menampilkan "Permintaan terkirim". PIN dikosongkan setelah diperiksa dan saat sheet ditutup.
+
+Tes: `PinPadKeyTests` (batas panjang, hapus, susunan keypad), `PinEntryTests` (lebar, tinggi tetap saat error, titik
+mengikuti panjang tanpa angka, nonaktif abu-abu), `DesignFontRoleTests` untuk `keypadDigit`, `AssetTests` untuk
+`lock` dan `arrowLeft`; UI test `PinEntryUITests` (titik dan hapus, PIN salah dengan sheet terkunci, PIN diterima).
+Pemeriksaan desain: `PinPadKey` masuk daftar metadata karena susunan angka keypad bukan nilai desain.

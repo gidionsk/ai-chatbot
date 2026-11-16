@@ -26,7 +26,7 @@ METADATA = {
     'Features/Chat/Intents/LiveAgent/Models/LiveAgentNoticeKind.swift',
     'Features/Chat/ConversationList/Formatting/ChatDateFormat.swift',
     'Features/Chat/ConversationList/Models/ChatDayIdentifier.swift',
-    'Components/Markdown/Parsing/MarkdownSyntax.swift',
+    'Components/Markdown/Parsing/MarkdownSyntax.swift', 'Components/Inputs/PinEntry/Models/PinPadKey.swift',
     'TanyaAISandboxApp/SandboxOptions.swift', 'TanyaAISandboxApp/SandboxCopy.swift',
     'TanyaAISandboxApp/SandboxFixtureFile.swift', 'TanyaAISandboxApp/TanyaAI/SandboxGatewayFrames.swift',
     'TanyaAISandboxApp/TanyaAI/SandboxWireMessage.swift'
