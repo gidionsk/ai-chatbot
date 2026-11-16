@@ -10,10 +10,8 @@ import SwiftUI
 /// Tiruan main coordinator host. Link tujuan dibuat lazy: hanya tujuan yang sedang aktif yang dirender.
 @MainActor
 struct MainCoordinator: View {
-    @State
-    private var destinationCoordinatorName: String?
-    @StateObject
-    private var viewModel = MainScreenViewModel()
+    @State private var destinationCoordinatorName: String?
+    @StateObject private var viewModel = MainScreenViewModel()
 
     var body: some View {
         NavigationView {

@@ -41,9 +41,9 @@ struct ChatListRow<Content: View>: View {
             FilledButton(
                 title: String(ChatCopy.leaveAgentQueue, locale: locale),
                 variant: .link,
-                isEnabled: isEnabled,
                 onTap: actions.onLeaveAgentQueue
             )
+            .disabled(!isEnabled)
             .accessibilityIdentifier(ChatElementIdentifier.leaveAgentQueue)
         case .agentTyping:
             AgentTypingIndicator()

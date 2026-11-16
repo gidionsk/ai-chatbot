@@ -8,7 +8,7 @@
 import UIKit
 
 public extension CGFloat {
-    /// Uses the host's uncapped formula: round(value / (referenceWidth / screenWidth)).
+    /// Rumus host tanpa batas atas: round(nilai / (lebar referensi / lebar layar)).
     var scaledToArtwork: CGFloat {
         scaledToArtwork(ratio: ArtworkScale.currentRatio)
     }

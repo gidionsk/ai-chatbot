@@ -11,10 +11,8 @@ import SwiftUI
 /// Tiruan blocker no internet host yang menutup seluruh halaman.
 @MainActor
 struct NetworkUnavailableView: View {
-    @Environment(\.locale)
-    private var locale
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.locale) private var locale
+    @Environment(\.designColors) private var colors
     let onRetry: () -> Void
 
     var body: some View {

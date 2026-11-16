@@ -7,7 +7,7 @@
 
 import UIKit
 
-/// A one-to-four-line editor; additional content scrolls inside the field.
+/// Editor satu sampai empat baris; isi yang lebih panjang di-scroll di dalam field.
 /// Perubahan lebar diukur otomatis. Pemilik memanggil `remeasure()` setelah mengubah
 /// teks atau style (`GrowingTextInput` sudah melakukannya), tanpa override `text: String!`.
 @MainActor

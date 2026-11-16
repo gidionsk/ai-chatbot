@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// A centered title with equal action slots. The caller owns scroll state and navigation.
+/// Judul di tengah dengan slot aksi sama lebar di kiri dan kanan. State scroll dan navigasi milik pemakai.
 /// Ukuran mengikuti navigation bar host: header mulai dari tepi atas layar (caller menaruhnya tanpa
 /// safe area atas), padding atas `CustomScreenInsets` tanpa scale, ikon 24, judul Fira Sans Bold 16.
 /// Saat diam transparan, sehingga latar screen tembus sampai status bar. Selama konten digulir, latar putih,
@@ -15,28 +15,28 @@ import SwiftUI
 /// sehingga header terangkat seperti kartu tanpa berganti mendadak.
 @MainActor
 public struct ScreenHeader<Trailing: View>: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     private let title: String
     private let backLabel: String
     private let scrollProgress: CGFloat
     private let isNotched: Bool
-    private let fontFace: FontFace
     private let onBack: () -> Void
     private let trailing: Trailing
 
     /// `scrollProgress` 0 (transparan, di posisi teratas) sampai 1 (solid penuh). `isNotched` dari
     /// `ScreenHeader.isNotched(safeAreaTop:)`; menentukan padding atas dari tepi layar.
     public init(
-        title: String, backLabel: String, scrollProgress: CGFloat, isNotched: Bool,
-        fontFace: FontFace = .firaSansBold, onBack: @escaping () -> Void,
+        title: String,
+        backLabel: String,
+        scrollProgress: CGFloat,
+        isNotched: Bool,
+        onBack: @escaping () -> Void,
         @ViewBuilder trailing: () -> Trailing
     ) {
         self.title = title
         self.backLabel = backLabel
         self.scrollProgress = scrollProgress
         self.isNotched = isNotched
-        self.fontFace = fontFace
         self.onBack = onBack
         self.trailing = trailing()
     }
@@ -63,7 +63,7 @@ public struct ScreenHeader<Trailing: View>: View {
 
     private var titleText: some View {
         Text(title)
-            .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplayNormal16.scaledToArtwork))
+            .designFont(.headerTitle)
             .foregroundColor(colors.colorsTextPrimaryDark)
             .multilineTextAlignment(.center)
             .lineLimit(CustomTextLines.headerTitle)
@@ -122,12 +122,19 @@ private extension ScreenHeader {
 
 extension ScreenHeader where Trailing == EmptyView {
     public init(
-        title: String, backLabel: String, scrollProgress: CGFloat, isNotched: Bool,
-        fontFace: FontFace = .firaSansBold, onBack: @escaping () -> Void
+        title: String,
+        backLabel: String,
+        scrollProgress: CGFloat,
+        isNotched: Bool,
+        onBack: @escaping () -> Void
     ) {
         self.init(
-            title: title, backLabel: backLabel, scrollProgress: scrollProgress, isNotched: isNotched,
-            fontFace: fontFace, onBack: onBack, trailing: { EmptyView() }
+            title: title,
+            backLabel: backLabel,
+            scrollProgress: scrollProgress,
+            isNotched: isNotched,
+            onBack: onBack,
+            trailing: { EmptyView() }
         )
     }
 

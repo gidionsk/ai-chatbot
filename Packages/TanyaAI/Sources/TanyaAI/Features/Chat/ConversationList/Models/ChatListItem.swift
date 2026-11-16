@@ -49,13 +49,14 @@ enum ChatListItem: Identifiable, Equatable {
     }
 
     /// Jarak dari tepi atas baris ke isinya; posisi parkir pertanyaan dihitung dari isinya, bukan dari tepi baris.
+    /// Tanpa `default`: baris baru wajib memilih jaraknya di sini.
     var topSpacing: CGFloat {
         switch self {
         case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping:
             return FigmaSize.spacingLarge.scaledToArtwork
         case .leaveAgentQueue:
             return FigmaSize.spacingMedium.scaledToArtwork
-        default:
+        case .date(_, isSpaced: false), .message(_, isSpaced: false), .welcome, .followUps, .content:
             return .zero
         }
     }

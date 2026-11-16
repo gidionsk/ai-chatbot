@@ -11,8 +11,7 @@ import SwiftUI
 @MainActor
 struct TanyaAICoordinator: View {
     static let named = String(describing: TanyaAICoordinator.self)
-    @Binding
-    var selectionCoordinatorName: String?
+    @Binding var selectionCoordinatorName: String?
     /// Hasil inquiry init dari output UseCase induk; nilai, bukan binding, karena dibaca sekali saat dibuka.
     let greeting: TanyaAIInitGreeting
     let shortcuts: [TanyaAIInitShortcut]

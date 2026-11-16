@@ -11,19 +11,16 @@ import SwiftUI
 /// Permukaan kartu tanpa bayangan. TODO: Konfirmasi warna teks dengan Figma; sementara dari screenshot.
 @MainActor
 public struct DateChip: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     private let text: String
-    private let fontFace: FontFace
 
-    public init(text: String, fontFace: FontFace = .firaSansRegular) {
+    public init(text: String) {
         self.text = text
-        self.fontFace = fontFace
     }
 
     public var body: some View {
         Text(text)
-            .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+            .designFont(.caption)
             .foregroundColor(colors.colorsTextSecondary)
             .lineLimit(CustomTextLines.dateChip)
             .padding(.horizontal, FigmaSize.spacingMedium.scaledToArtwork)

@@ -10,7 +10,8 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge), dan daftar
 - Utamakan reuse komponen DesignKit (pakai atau perluas lewat varian/parameter); buat baru hanya bila tampilan/
   perilakunya beda jauh, alasannya ditulis di PR. Tampilan yang dipakai di lebih dari satu tempat wajib di DesignKit;
   view sekali pakai boleh tetap di fitur. Daftar komponen bersama di AGENTS.md.
-- Semua teks memakai Fira Sans. Open Sans belum dipakai: jangan jadi default komponen atau dipakai di layar.
+- Semua teks memakai Fira Sans lewat `.designFont(role)` (`DesignFontRole`); jangan menyusun face dan ukuran sendiri.
+  Open Sans sudah dihapus dari package. Nonaktif selalu lewat `.disabled(...)`, bukan parameter `isEnabled`.
 - Ukuran dan area tap 1:1 Figma lewat `.scaledToArtwork`. Jangan menambahkan
   minimum touch target 44 atau hit frame tambahan; ini keputusan UI/UX.
 - Header = ukuran navigation bar host: dari tepi layar, padding atas 50/28 tanpa scale
@@ -39,9 +40,12 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge), dan daftar
   Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Field form DesignKit: `SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`, dan isi sheet `OptionList`
   (satu atau banyak pilihan, loading; pilihan sebelumnya tercentang dan langsung terlihat di daftar panjang). Contoh di sandbox `--form-demo`; mesin form intent menyusul di TanyaAI.
-- Bottom sheet: `.bottomSheet(isPresented:closeLabel:maxHeight:content:)` DesignKit di root halaman; wadah saja (latar
+- Bottom sheet: `.bottomSheet(isPresented:closeLabel:maxHeight:content:)` DesignKit di root halaman, atau
+  `.bottomSheet(item:...)` untuk beberapa jenis sheet (`docs/BOTTOM_SHEET.md`); wadah saja (latar
   gelap, grabber, tutup lewat ketuk di luar atau geser ke bawah). Tinggi mengikuti isi sampai batas (bawaan di bawah
   status bar, atau `.screenFraction(x)`); isi yang lebih panjang di-scroll. Isi membawa judul dan padding sendiri.
+  `isDismissable: false` = terkunci (PIN diperiksa host); `.bottomSheetFooter { }` pada isi = tombol menempel di
+  bawah; field teks di isi boleh, sheet naik ke atas keyboard; layar tanpa notch diberi jarak atas 16 pt.
   Belum ada pemicu di chat; contoh ada di sandbox `--sheet-demo`. Service untuk isi seperti PIN tetap di host.
   Swipe-back ditahan host selama sheet terbuka (milik navigasi host, bukan package).
 - Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
@@ -53,7 +57,7 @@ bridge host ke chat-gateway (init → history → SSE, retry, merge), dan daftar
   DesignKit: `Components/<Fungsi>`, `Foundations`, `Extensions`, `Tokens`, `Resources`.
   Kelompok beberapa file memakai Models/Views/Controllers/Extensions sesuai peran di dalam pemiliknya.
   Tests mencerminkan Sources. Intent di `Chat/Intents/<Nama>`; `LiveAgent` digerakkan event gateway.
-  Pola intent berbentuk flow host (form/PIN) dikonfirmasi saat flow pertama dimulai.
+  Langkah menambah intent dan bagian yang belum punya pola ada di "Pola intent" dokumen struktur.
 - Unit test memakai Swift Testing (`@Test`, `#expect`, `#require`); UI test tetap
   XCTest. Suite yang memakai window di sandbox masuk `HostWindowTests` (berurutan).
 - Sandbox meniru host Byon: coordinator menulis Input UseCase, UseCase mengolah ke Repository, view model

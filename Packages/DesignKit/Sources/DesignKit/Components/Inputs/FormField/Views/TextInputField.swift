@@ -9,7 +9,8 @@ import SwiftUI
 import UIKit
 
 /// Field teks satu baris dengan label di atas dan `error` merah di bawah. `placeholder` digambar sendiri supaya
-/// warnanya sama dengan field pilihan. Nonaktif = latar abu-abu dan tidak bisa diketik; isinya tetap terbaca.
+/// warnanya sama dengan field pilihan. Nonaktif lewat `.disabled(...)` dari pemakai: latar abu-abu dan tidak bisa
+/// diketik; isinya tetap terbaca.
 @MainActor
 public struct TextInputField: View {
     @Environment(\.designColors) private var colors
@@ -17,7 +18,6 @@ public struct TextInputField: View {
     private let label: String?
     private let placeholder: String
     private let error: String?
-    private let isEnabled: Bool
     private let keyboard: UIKeyboardType
 
     public init(
@@ -25,14 +25,12 @@ public struct TextInputField: View {
         text: Binding<String>,
         placeholder: String,
         error: String? = nil,
-        isEnabled: Bool = true,
         keyboard: UIKeyboardType = .default
     ) {
         self.label = label
         self._text = text
         self.placeholder = placeholder
         self.error = error
-        self.isEnabled = isEnabled
         self.keyboard = keyboard
     }
 
@@ -42,7 +40,7 @@ public struct TextInputField: View {
                 hint
                 input
             }
-            .fieldBox(isEnabled: isEnabled, isInvalid: error != nil)
+            .fieldBox(isInvalid: error != nil)
         }
     }
 
@@ -50,7 +48,7 @@ public struct TextInputField: View {
     private var hint: some View {
         if text.isEmpty {
             Text(placeholder)
-                .font(font)
+                .designFont(.field)
                 .foregroundColor(colors.colorsTextSecondary)
                 .lineLimit(CustomTextLines.fieldInput)
                 .accessibilityHidden(true)
@@ -60,14 +58,9 @@ public struct TextInputField: View {
 
     private var input: some View {
         TextField(String(), text: $text)
-            .font(font)
+            .designFont(.field)
             .foregroundColor(colors.colorsTextPrimaryDark)
             .keyboardType(keyboard)
-            .disabled(!isEnabled)
             .accessibilityLabel(label ?? placeholder)
-    }
-
-    private var font: Font {
-        FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplayNormal16.scaledToArtwork)
     }
 }

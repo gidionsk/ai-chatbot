@@ -12,18 +12,15 @@ import SwiftUI
 /// `failureNote` (hanya pesan keluar): bubble abu-abu dengan catatan merah miring di bawahnya.
 @MainActor
 public struct MessageBubble: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     private let text: String
     private let isOutgoing: Bool
     private let failureNote: String?
-    private let fontFace: FontFace
 
-    public init(text: String, isOutgoing: Bool, failureNote: String? = nil, fontFace: FontFace = .firaSansRegular) {
+    public init(text: String, isOutgoing: Bool, failureNote: String? = nil) {
         self.text = text
         self.isOutgoing = isOutgoing
         self.failureNote = isOutgoing ? failureNote : nil
-        self.fontFace = fontFace
     }
 
     public var body: some View {
@@ -39,7 +36,7 @@ public struct MessageBubble: View {
 
     private var message: some View {
         Text(text)
-            .font(fontFace.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork))
+            .designFont(.body)
             .foregroundColor(isOutgoing ? colors.colorsTextPrimaryLight : colors.colorsTextPrimaryDark)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, isOutgoing ? FigmaSize.spacingLarge.scaledToArtwork : .zero)
@@ -51,7 +48,7 @@ public struct MessageBubble: View {
     private var note: some View {
         if let failureNote {
             Text(failureNote)
-                .font(FontFace.firaSansItalic.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+                .designFont(.captionItalic)
                 .foregroundColor(colors.colorsTextNegative)
                 .multilineTextAlignment(.trailing)
                 .fixedSize(horizontal: false, vertical: true)

@@ -8,24 +8,26 @@
 import SwiftUI
 
 /// Kartu aksi satu ketukan: ikon di kotak, judul, deskripsi, dan chevron bulat.
-/// Ikon disuplai caller (gambar lokal atau `RemoteImage`); copy juga dari caller.
+/// TODO: Cocokkan peran teks judul dan deskripsi dengan Figma; sementara estimasi dari screenshot.
+/// Ikon disuplai caller (gambar lokal atau `RemoteImage`); copy juga dari caller. Nonaktif lewat `.disabled(...)`
+/// dari pemakai.
 @MainActor
 public struct ActionCard<Icon: View>: View {
     @Environment(\.designColors) private var colors
-    @Environment(\.isEnabled) private var isEnvironmentEnabled
+    @Environment(\.isEnabled) private var isEnabled
     private let title: String
     private let description: String
-    private let isEnabled: Bool
     private let onTap: () -> Void
     private let icon: Icon
 
     public init(
-        title: String, description: String, isEnabled: Bool = true, onTap: @escaping () -> Void,
+        title: String,
+        description: String,
+        onTap: @escaping () -> Void,
         @ViewBuilder icon: () -> Icon
     ) {
         self.title = title
         self.description = description
-        self.isEnabled = isEnabled
         self.onTap = onTap
         self.icon = icon()
     }
@@ -44,7 +46,6 @@ public struct ActionCard<Icon: View>: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!isEnabled)
         .accessibilityElement(children: .combine)
     }
 
@@ -59,10 +60,10 @@ public struct ActionCard<Icon: View>: View {
     private var texts: some View {
         VStack(alignment: .leading, spacing: FigmaSize.spacingSmall.scaledToArtwork) {
             Text(title)
-                .font(titleFont)
+                .designFont(.bodyStrong)
                 .foregroundColor(colors.colorsTextPrimaryDark)
             Text(description)
-                .font(descriptionFont)
+                .designFont(.caption)
                 .foregroundColor(colors.colorsTextSecondary)
         }
         .multilineTextAlignment(.leading)
@@ -70,12 +71,12 @@ public struct ActionCard<Icon: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Abu-abu saat nonaktif (juga karena `.disabled` dari parent) agar terlihat tidak bisa diketuk.
+    /// Abu-abu saat nonaktif agar terlihat tidak bisa diketuk.
     private var chevron: some View {
         Image(DesignIcon.chevronRight).resizable().scaledToFit()
             .foregroundColor(colors.colorsIconLight)
             .frame(width: chevronSize, height: chevronSize)
-            .background(Circle().fill(isInteractive ? colors.colorsButtonActive : colors.colorsIconDisabled))
+            .background(Circle().fill(isEnabled ? colors.colorsButtonActive : colors.colorsIconDisabled))
             .accessibilityHidden(true)
     }
 }
@@ -83,19 +84,7 @@ public struct ActionCard<Icon: View>: View {
 // MARK: - Helpers
 
 private extension ActionCard {
-    /// Parameter sendiri digabung dengan `.disabled` dari parent, supaya warnanya ikut nonaktif.
-    var isInteractive: Bool { isEnabled && isEnvironmentEnabled }
-
     var iconSize: CGFloat { FigmaSize.weightIconSmall.scaledToArtwork }
     var boxSize: CGFloat { CustomSizes.ActionCard.iconBox.scaledToArtwork }
     var chevronSize: CGFloat { CustomSizes.ActionCard.chevron.scaledToArtwork }
-
-    /// TODO: Cocokkan role tipografi dengan Figma; sementara estimasi dari screenshot.
-    var titleFont: Font {
-        FontFace.firaSansSemiBold.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
-    }
-
-    var descriptionFont: Font {
-        FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork)
-    }
 }

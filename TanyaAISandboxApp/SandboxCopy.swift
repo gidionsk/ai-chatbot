@@ -31,6 +31,8 @@ enum SandboxCopy: String, CaseIterable {
     case sheetTitle = "sandbox.sheet.title"
     case sheetOption = "sandbox.sheet.option"
     case sheetClose = "sandbox.sheet.close"
+    case sheetInput = "sandbox.sheet.input"
+    case sheetChoose = "sandbox.sheet.choose"
     case formTitle = "sandbox.form.title"
     case formFormat = "sandbox.form.format"
     case formFormatPlaceholder = "sandbox.form.formatPlaceholder"

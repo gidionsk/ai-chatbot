@@ -22,7 +22,6 @@ public enum DesignIcon: String, CaseIterable {
     /// TODO: Ganti PDF dummy dengan aset Figma ikon headset kartu status, nama tetap.
     case headset
     case lightbulb
-    case moreMenu
     /// TODO: Ganti PDF dummy dengan aset Figma `reply`, nama tetap.
     case reply
 }

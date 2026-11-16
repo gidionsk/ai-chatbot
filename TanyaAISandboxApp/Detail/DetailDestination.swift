@@ -11,10 +11,8 @@ import SwiftUI
 /// `@StateObject` dibuat sekali saat halaman di-push dan dilepas saat di-pop.
 @MainActor
 struct DetailDestination: View {
-    @StateObject
-    private var viewModel = DetailScreenViewModel()
-    @State
-    private var destinationCoordinatorName: String?
+    @StateObject private var viewModel = DetailScreenViewModel()
+    @State private var destinationCoordinatorName: String?
 
     var body: some View {
         ZStack {

@@ -28,12 +28,10 @@ public struct NoticeCard<Icon: View>: View {
                 .frame(width: iconSize, height: iconSize)
                 .accessibilityHidden(true)
             Text(title)
-                .font(
-                    FontFace.firaSansSemiBold.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
-                )
+                .designFont(.bodyStrong)
                 .foregroundColor(colors.colorsTextPrimaryDark)
             Text(message)
-                .font(FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+                .designFont(.caption)
                 .foregroundColor(colors.colorsTextSecondary)
         }
         .multilineTextAlignment(.leading)

@@ -8,7 +8,8 @@
 import SwiftUI
 
 public extension Color {
-    /// Accepts RGB, RRGGBB or AARRGGBB. Invalid input uses an explicit, nonoptional fallback.
+    /// Menerima RGB, RRGGBB, atau AARRGGBB. Input tidak valid memakai `fallback`, jadi hasilnya tidak pernah
+    /// optional.
     init(hex: String, fallback: Color = .clear) {
         guard let digits = HexFormat.normalizedDigits(hex),
             let alpha = HexFormat.value(of: .alpha, in: digits),

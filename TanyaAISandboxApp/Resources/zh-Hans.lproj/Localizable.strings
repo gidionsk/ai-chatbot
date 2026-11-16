@@ -25,6 +25,8 @@
 "sandbox.sheet.title" = "请选择一项";
 "sandbox.sheet.option" = "示例选项";
 "sandbox.sheet.close" = "关闭面板";
+"sandbox.sheet.input" = "备注";
+"sandbox.sheet.choose" = "选择";
 "sandbox.form.title" = "申请推荐信";
 "sandbox.form.format" = "所需格式";
 "sandbox.form.formatPlaceholder" = "选择格式";

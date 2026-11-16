@@ -13,10 +13,7 @@ import Testing
 /// Style inline menjadi atribut SwiftUI dari token; intent inline dilepas agar tidak ditebalkan dua kali.
 struct MarkdownStyleTests {
     private let colors = DefaultColorConstants()
-    private let style = MarkdownTextStyle(
-        fontFace: .firaSansRegular, boldFontFace: .firaSansBold, italicFontFace: .firaSansItalic,
-        boldItalicFontFace: .firaSansBoldItalic
-    )
+    private let style = MarkdownTextStyle()
 
     @Test
     func linkKeepsItsURLAndGetsTheHyperlinkColorAndUnderline() throws {

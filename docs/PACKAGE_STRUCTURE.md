@@ -59,9 +59,20 @@ Contoh penempatan yang sudah diterapkan:
 - `Components/Feedback/LoadingIndicator.swift`: spinner untuk semua loading.
 - `Components/Lists/SeparatorLine.swift`: garis pemisah 1 pt (daftar, tabel Markdown, di atas composer).
 - `Components/Screen/BottomSheet/Models/BottomSheetMaxHeight.swift`: batas tinggi, di bawah status bar atau bagian layar.
-- `Components/Screen/BottomSheet/Views/BottomSheet.swift`: permukaan sheet, grabber, dan scroll bila isi melewati batas.
-- `Components/Screen/BottomSheet/ViewModifiers/BottomSheetPresenter.swift`: latar gelap, posisi, dan animasi masuk.
-- `Components/Screen/BottomSheet/Extensions/View+BottomSheet.swift`: `.bottomSheet(...)`, satu-satunya pintu publiknya.
+- `Components/Screen/BottomSheet/Models/BottomSheetLayout.swift`: batas tinggi dan letak sheet dari safe area, layar
+  tanpa notch, dan keyboard.
+- `Components/Screen/BottomSheet/Views/BottomSheet.swift`: permukaan sheet, grabber, scroll bila isi melewati batas,
+  footer yang menempel, dan kunci tutup.
+- `Components/Screen/BottomSheet/ViewModifiers/BottomSheetPresenter.swift`: latar gelap, posisi, animasi masuk, dan
+  mengikuti keyboard (`Extensions/Notification+KeyboardTop.swift`).
+- `Components/Screen/BottomSheet/Extensions/View+BottomSheet.swift`: `.bottomSheet(isPresented:)`,
+  `.bottomSheet(item:)`, dan `.bottomSheetFooter`, satu-satunya pintu publiknya; `Binding+Presence.swift` mengubah
+  nilai optional menjadi ada/tidaknya sheet.
+- Footer yang menempel: `ViewModifiers/BottomSheetFooterModifier.swift` menitipkan footer lewat
+  `Models/BottomSheetFooterKey.swift`; `Models/BottomSheetFooterPlacement.swift` dan
+  `Extensions/EnvironmentValues+BottomSheet.swift` memberi tahu isi bahwa ia berada di dalam sheet.
+- `Foundations/Typography/Models/DesignFontRole.swift`: peran teks (face + ukuran);
+  `Extensions/View+DesignFont.swift` = `.designFont(role)`.
 
 `Foundations` berisi dukungan lintas komponen: `Typography`, `Iconography`,
 `Appearance`, dan `Accessibility`. `Extensions` pada root DesignKit hanya untuk
@@ -79,7 +90,7 @@ scroll progress. Service bisnis, validasi rekening, serta flow transfer milik ho
 | `Chat/FollowUps` | Saran pertanyaan berikutnya. |
 | `Chat/Messages` | `Models` nilai pesan, `Views` bubble, `Extensions` merge pesan. |
 | `Chat/ConversationList` | `Models` item/state/action/input/hari; `Views` baris dan table adapter; `Controllers` table/scroll; `Formatting` tanggal; `Extensions` penyusunan baris. |
-| `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi. |
+| `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi (`ChatTurn`, `UserTypingSignal`). |
 | `Chat/Gateway` | `Models` kontrak respons/event/history, `Decoding`, `Streaming`, serta metadata protokol. HTTP tetap host. |
 | `Chat/Keys` | Key copy, image, identifier, tautan, dan `Extensions` accessor-nya. |
 | `Chat/Intents` | `Models/ChatIntent` daftar intent dari gateway. |
@@ -135,36 +146,125 @@ TanyaAI/Features/Chat/Intents/LiveAgent/
 Komponen visualnya generik di DesignKit: `NoticeCard`, `SenderMessageCard`, dan `FilledButton` varian `.link`.
 Tombol lampiran adalah parameter `attachment` milik `MessageComposer`.
 
-Intent berbentuk flow host, misalnya surat referensi, masih **rancangan, belum keputusan**. Struktur dan
-pembagian state di bawah dikonfirmasi ulang saat Figma dan contract flow tersebut tersedia:
+### Menambah intent: langkah yang sudah punya pola
+
+Ikuti `LiveAgent`. Daftar ini urut dari data ke tampilan; hampir semuanya dijaga compiler karena berupa `switch`
+tanpa `default`, jadi case baru yang belum ditangani gagal di-build, bukan diam-diam tidak tampil.
+
+| # | Yang ditambah | Tempat | Contoh di `LiveAgent` |
+| --- | --- | --- | --- |
+| 1 | Case intent dengan nilai gateway-nya | `Intents/Models/ChatIntent.swift` | `liveAgent = "handover-to-agent"` |
+| 2 | Folder intent, nama sama dengan case | `Intents/<Nama>/{Models,Extensions,Views}` | `Intents/LiveAgent` |
+| 3 | Bentuk data dari gateway (bila ada event atau field baru) | `Gateway/Models` + case di `ChatEvent` | `WireSystemNotice`, `ChatEvent.notice` |
+| 4 | State dan aksi sesi | Satu file `Session/TanyaAIBridge+<Nama>.swift`; state-nya satu value type | `TanyaAIBridge+LiveAgent`, `UserTypingSignal` |
+| 5 | Endpoint chat-gateway baru (bila ada) | Method di `TanyaAIChatTransport`; service milik host tidak di sini (lihat intent form di bawah) | `leaveAgent`, `sendTyping` |
+| 6 | Baris di daftar chat | Case di `ChatListItem` dan `ChatListItemID`, jarak di `topSpacing`, tampilan di `ChatListRow` | `liveAgentNotice`, `leaveAgentQueue`, `agentTyping` |
+| 7 | Posisi baris di antara pesan | Extension di `Intents/<Nama>/Extensions`, dipanggil dari `ChatScreen.listItems` | `Array+LiveAgentNotice` |
+| 8 | Aksi dari baris | Closure di `ChatRowActions`, penerusnya di `ChatTableController.forwardingActions`, isinya di `ChatScreen.rowActions` | `onLeaveAgentQueue` |
+| 9 | Tampilan | `Intents/<Nama>/Views`, disusun dari komponen DesignKit | `LiveAgentNoticeCard` memakai `NoticeCard` |
+| 10 | Copy dan identifier | Case `ChatCopy` + tiga `Localizable.strings`; `ChatElementIdentifier` | `liveAgent.*` |
+| 11 | Test dan contoh | Test mencerminkan Sources; mode sandbox + UI test; frame di `Scripts/mock_gateway.py` | `--live-agent` |
+
+Aturan yang berlaku untuk semua intent:
+
+- State sesi berupa value type yang bisa dites sendiri (`ChatTurn`, `UserTypingSignal`); `TanyaAIBridge` hanya
+  memegang satu properti per state dan menjalankan efeknya (kirim, pewaktu). Jangan menambah deretan `Bool` lepas.
+- `seq` atau id dari gateway yang dijadikan id baris harus dijaga unik sebelum sampai ke table: table crash bila
+  menerima id ganda (lihat `visibleLiveAgentNotices` dan `[ChatListItem](rows:)`).
+- Tampilan intent tidak memegang state yang harus bertahan: sel table dipakai ulang, jadi state hidup di luar sel.
+- Komponen yang dipakai intent kedua pindah ke DesignKit dengan nama generik; yang sekali pakai tetap di folder intent.
+
+### Intent berbentuk form: yang sudah diputuskan dan yang belum dibangun
+
+Keputusan user 12 November 2026 untuk `request-bank-reference-letter` dan `buy-mutual-funds`; ini menggantikan
+rancangan lama (view model per intent di host, coordinator PIN existing):
+
+- Satu mesin form di TanyaAI untuk semua intent form; per intent hanya definisi field dan pemetaannya ke request
+  host. Jenis field: pilihan lewat bottom sheet (satu atau banyak), teks (termasuk nominal dan email), dan toggle.
+- Field bisa bergantung pada field lain; field yang disembunyikan di-reset. Field nonaktif bebas validasi.
+- Validasi hanya saat Konfirmasi: teks kosong = error merah di bawahnya; pilihan kosong paling atas = sheet-nya
+  langsung terbuka.
+- Daftar pilihan dan service (submit, PIN) milik host; sheet punya state loading selama host mengambil data.
+- Tombol Batalkan + Konfirmasi. Konfirmasi membuka sheet PIN: keypad di package, angkanya diteruskan ke host,
+  tidak disimpan atau di-log. PIN salah = sheet tetap terbuka dengan error dari host.
+- Selesai atau batal menjadi kartu status; di history cukup kartu "pernah request" dari `intent` pesan bot.
+
+Komponennya sudah ada di DesignKit (`SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`, `OptionList`,
+`.bottomSheet(item:)`); contoh susunannya di sandbox `--form-demo`. Tiga hal di bawah **belum punya pola di kode**,
+karena `LiveAgent` tidak membutuhkannya. Ketiganya dirancang bersama intent form pertama, bukan disiapkan kosong:
+
+| Belum ada | Kenapa belum | Arah yang sudah disepakati |
+| --- | --- | --- |
+| State form per instance | `LiveAgent` hanya punya satu state per percakapan | Di TanyaAI, di luar sel table, dengan id instance = id pesan pemicunya |
+| Sheet yang dibuka dari baris chat | Belum ada baris yang membuka sheet | `.bottomSheet(item:)` di root `ChatScreen`; package memberi tahu host saat sheet terbuka supaya swipe-back ditahan |
+| Data dan service dari host | Transport sekarang hanya untuk chat-gateway | Satu protocol per intent, terpisah dari `TanyaAIChatTransport`; rancangannya di bawah |
+
+### Rancangan struktur intent form
+
+Disepakati user 16 November 2026. Belum ada di kode: dibangun di PR intent form pertama (surat referensi), dan nama
+tipe boleh berubah saat itu. `LiveAgent` tidak mengikuti rancangan ini karena flow-nya digerakkan event gateway.
+
+**Service host tidak lewat `TanyaAIChatTransport`.** Transport hanya untuk endpoint chat-gateway: mengembalikan
+`Data` mentah yang di-decode TanyaAI, dan error koneksinya diulang otomatis. Service Byon (daftar rekening, submit,
+PIN) punya model dan error sendiri yang sudah ada di host, dan submit atau PIN tidak boleh diulang otomatis. Endpoint
+chat-gateway baru untuk sebuah intent (seperti `leaveAgent`) tetap masuk transport.
+
+Dibuat sekali, bersama intent form pertama:
+
+```text
+TanyaAI/Bridging/
+└── TanyaAIIntentServices.swift        // struct publik: satu properti opsional per service intent
+
+TanyaAI/Features/Chat/Intents/Form/    // mesin bersama, bukan intent
+├── Models/                            // jenis field, nilai form, state per instance, status
+├── Extensions/                        // validasi saat Konfirmasi, dependensi dan reset field anak
+└── Views/                             // kartu form, isi sheet pilihan, keypad PIN, kartu selesai/batal
+
+TanyaAI/Features/Chat/Session/
+└── TanyaAIBridge+Form.swift           // state form per id pesan, buka sheet, alur submit dan PIN
+```
+
+Bridge menerimanya lewat `TanyaAIBridge(transport:services:)` dengan `services` opsional, jadi host yang belum
+memakai intent form tidak berubah. Intent yang service-nya tidak diberikan host tidak menampilkan form.
+
+Per intent, contoh surat referensi:
 
 ```text
 TanyaAI/Features/Chat/Intents/ReferenceLetter/
+├── Protocols/
+│   └── ReferenceLetterService.swift            // publik, diimplementasikan host
 ├── Models/
-│   ├── ReferenceLetterState.swift
-│   ├── ReferenceLetterDraft.swift
-│   └── ReferenceLetterSummary.swift
-└── Views/
-    ├── ReferenceLetterView.swift
-    ├── ReferenceLetterFormView.swift
-    └── ReferenceLetterSummaryView.swift
+│   ├── ReferenceLetterFieldID.swift            // enum id field
+│   └── ReferenceLetterRequest.swift            // publik, nilai bertipe yang dikirim ke host
+└── Extensions/
+    ├── ReferenceLetterFieldID+Definition.swift // daftar field, jenis, default, dependensi
+    └── ReferenceLetterRequest+Values.swift     // nilai form menjadi request
 ```
 
-Host memiliki view model per instance intent yang memegang draft/state dan memakai
-use case/service serta coordinator PIN existing. Form mengirim aksi ke host;
-hasil final mengubah state instance yang sama menjadi summary. ID baris tetap.
-Jenis intent (`referenceLetter`) berbeda dari instance ID karena nasabah dapat
-menjalankan jenis flow yang sama beberapa kali.
+```swift
+public protocol ReferenceLetterService: AnyObject {
+    func accounts() async throws -> [ReferenceLetterAccount]
+    func submit(_ request: ReferenceLetterRequest, pin: String) async throws
+}
+```
 
-State hidup bersama owner host, bukan sel table yang dapat di-recycle. Respons
-terlambat dicocokkan ke instance/request aktif. Double submit, pembatalan PIN, dan
-retry mengikuti use case host. PIN tidak masuk payload TanyaAI atau history.
-Riwayat selesai menyimpan snapshot read-only dan tidak menjalankan ulang service.
+Di luar folder intent hanya beberapa baris: case `ChatIntent`, properti di `TanyaAIIntentServices`, copy di
+`ChatCopy` dan tiga `Localizable.strings`, lalu test, service tiruan sandbox, dan UI test. Folder `Views/` per intent
+hanya dibuat bila intent butuh tampilan yang tidak ada di mesin, misalnya kartu produk reksa dana.
 
-Slot `makeView { content }` saat ini hanya satu baris sisipan di akhir daftar,
-belum penyedia view per intent. Ketika flow pertama dibuat, kontrak item intent
-ber-ID stabil dan callback host dirancang bersama kebutuhan flow tersebut.
-Tidak perlu BaseIntent, generic flow engine, atau ViewModel untuk setiap komponen.
+Alasan bentuknya:
+
+- Protocol di folder intent, bukan di `Bridging`: menambah intent cukup menyalin satu folder. `public` tidak
+  bergantung pada letak folder, dan `Protocols/` sudah termasuk jenis folder yang diizinkan.
+- Protocol bertipe, bukan dictionary `[String: Any]`: pemetaan field ke request dicek compiler, dan host tinggal
+  memanggil service yang sudah ada.
+- Wadah `TanyaAIIntentServices`: init bridge tidak bertambah panjang setiap ada intent.
+- PIN hanya diteruskan ke host dalam satu pemanggilan, tidak disimpan atau di-log package.
+
+Diputuskan saat membangun, dari request surat referensi yang sebenarnya:
+
+- PIN ikut `submit` (seperti contoh di atas), atau service PIN bersama bila di host cek PIN adalah langkah terpisah.
+- Bentuk error dari host ke package, supaya pesan seperti "PIN salah" tampil di sheet.
 
 ## Panduan developer berikutnya
 

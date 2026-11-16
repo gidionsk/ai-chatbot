@@ -69,13 +69,15 @@ public enum CustomSizes {
         public static let imageMaxSide: CGFloat = 335
     }
 
-    /// Wadah bottom sheet: radius sudut atas, ukuran grabber, dan jarak geser ke bawah yang menutup sheet saat dilepas.
+    /// Wadah bottom sheet: radius sudut atas, ukuran grabber, jarak geser ke bawah yang menutup sheet saat dilepas,
+    /// dan jarak tambahan dari status bar pada layar tanpa notch.
     /// TODO: Cocokkan dengan nilai Figma; sementara estimasi dari foto.
     public enum BottomSheet {
         public static let cornerRadius: CGFloat = 20
         public static let handleWidth: CGFloat = 40
         public static let handleHeight: CGFloat = 4
         public static let dismissDistance: CGFloat = 80
+        public static let classicTopGap: CGFloat = 16
     }
 
     /// Indikator pilihan (radio dan centang) dan area loading pada daftar pilihan di bottom sheet.

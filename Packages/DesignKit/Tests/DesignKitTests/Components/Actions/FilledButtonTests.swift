@@ -13,7 +13,7 @@ import UIKit
 
 /// Tombol selebar wadah; tingginya teks ditambah padding atas-bawah varian masing-masing. Varian `.link`
 /// menggantikan `FilledLinkButton` dengan ukuran yang sama; `.outlined` seukuran `.regular` tanpa latar gelap.
-/// `.disabled` dari parent tampil sama dengan `isEnabled: false`.
+/// `.disabled` dari pemakai membuat tombol abu-abu.
 @MainActor
 struct FilledButtonTests {
     private let width: CGFloat = 343
@@ -49,27 +49,21 @@ struct FilledButtonTests {
     }
 
     @Test
-    func aDisabledParentGreysTheOutlinedButtonLikeItsOwnFlag() throws {
+    func disablingGreysTheOutlinedButton() throws {
         try FontFace.registerFonts()
-        let disabled = FilledButton(title: "Batalkan", variant: .outlined, isEnabled: false) {}
         let button = FilledButton(title: "Batalkan", variant: .outlined) {}
-        let own = RenderedImage.png(of: disabled, width: width)
-        let parent = RenderedImage.png(of: button.disabled(true), width: width)
-        let enabled = RenderedImage.png(of: button, width: width)
-        try #require(own != nil)
-        #expect(parent == own)
-        #expect(parent != enabled)
+        let disabled = RenderedImage.png(of: button.disabled(true), width: width)
+        try #require(disabled != nil)
+        #expect(RenderedImage.png(of: button, width: width) != disabled)
     }
 
     @Test
-    func aDisabledParentGreysTheButtonLikeItsOwnFlag() throws {
+    func disablingGreysTheButton() throws {
         try FontFace.registerFonts()
-        let own = RenderedImage.png(of: FilledButton(title: "Pilih", isEnabled: false) {}, width: width)
-        let parent = RenderedImage.png(of: FilledButton(title: "Pilih") {}.disabled(true), width: width)
-        let enabled = RenderedImage.png(of: FilledButton(title: "Pilih") {}, width: width)
-        try #require(own != nil)
-        #expect(parent == own)
-        #expect(parent != enabled)
+        let button = FilledButton(title: "Pilih") {}
+        let disabled = RenderedImage.png(of: button.disabled(true), width: width)
+        try #require(disabled != nil)
+        #expect(RenderedImage.png(of: button, width: width) != disabled)
     }
 }
 

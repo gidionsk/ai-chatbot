@@ -28,11 +28,11 @@ enum MarkdownParser {
             // Struktur blok sudah ada di pohon; teks cukup membawa atribut inline.
             var slice = AttributedString(text[run.range])
             slice.presentationIntent = nil
-            if let intent = run.presentationIntent {
-                insert(slice, path: Array(intent.components.reversed())[...], into: &roots)
-            } else {
+            guard let intent = run.presentationIntent else {
                 appendPlain(slice, to: &roots)
+                continue
             }
+            insert(slice, path: Array(intent.components.reversed())[...], into: &roots)
         }
         return roots
     }
@@ -60,10 +60,10 @@ private extension MarkdownParser {
             nodes.append(MarkdownNode(kind: intent.kind, identity: intent.identity))
         }
         let index = nodes.index(before: nodes.endIndex)
-        if path.dropFirst().isEmpty {
+        guard !path.dropFirst().isEmpty else {
             nodes[index].text.append(text)
-        } else {
-            insert(text, path: path.dropFirst(), into: &nodes[index].children)
+            return
         }
+        insert(text, path: path.dropFirst(), into: &nodes[index].children)
     }
 }

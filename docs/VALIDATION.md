@@ -963,3 +963,86 @@ latar gelap, garis tepi dan teks berwarna tombol, abu-abu saat nonaktif. Dipakai
 Konfirmasi; Batalkan mengosongkan form. Warna dan tebal garis dari foto, menunggu nilai Figma. `FilledButtonTests`
 memeriksa ukurannya sama dengan `.regular`, tampilannya berbeda, dan `.disabled` parent sama dengan `isEnabled: false`.
 `FormFieldsUITests.testCancelEmptiesTheForm`: pilihan, tanda wajib, dan field alamat kembali seperti baru dibuka.
+
+## Perapian hasil review seluruh package (14 November 2026)
+
+Review ulang DesignKit dan TanyaAI (170 file) atas permintaan user: bug, flag berlebih, kode berlebih, Big-O, dan
+keterbacaan. Perubahan di branch `refactor/review-cleanup`, di atas `feature/form-fields`.
+
+Bug: respons init/history yang tidak bisa di-decode dulu diulang selamanya (halaman loading tanpa akhir, host tidak
+diberi tahu); kini gagal permanen lewat `onConnectionFailed`, sedangkan koneksi putus tetap diulang
+(`TanyaAIBridgeUnreadableResponseTests`). Kartu live agent memakai `seq` sebagai id baris; kartu dari stream dan
+kartu turunan history bisa ber-`seq` sama bila `id:` SSE dan `seq` pesan beda urutan, dan id ganda membuat table
+crash. Kini satu `seq` satu kartu, dengan urutan kartu antre aktif, kartu stream, lalu kartu history
+(`TanyaAIBridgeNoticeIdentityTests`; urutan itu dari review LLM lain, yang menemukan kartu antre dan tombol batalnya
+kalah oleh kartu history). `OptionList` kini mengikuti `selectedIDs` baru dari pemakai selagi tampil
+(`OptionListSelectionTests`, gagal bila `onChange`-nya dicabut).
+
+Flag: sinyal mengetik nasabah di `TanyaAIBridge` dari empat `Bool` dan satu `Bool?` menjadi `UserTypingSignal`
+(antrean dan nilai terkirim); "sudah diminta" diturunkan dari keduanya dan "masih segar" dari pewaktunya.
+`UserTypingSignalTests` menguji antreannya tanpa bridge. Parameter `isEnabled` dihapus dari `FilledButton`,
+`ActionCard`, `SuggestionChip`, `SelectField`, `TextInputField`, dan `ToggleRow`: nonaktif hanya lewat `.disabled(...)`.
+Flag scroll `ChatTableController` tidak diubah: area itu stabil dan paling rawan regresi.
+
+Kode berlebih: 26 resep `FontFace` + ukuran menjadi `.designFont(role)` dengan sembilan peran (`DesignFontRoleTests`).
+Parameter `fontFace` yang tidak pernah diisi pemakai dihapus dari `ScreenHeader`, `MessageComposer`, `DateChip`,
+`MessageBubble`, dan `MarkdownContent`. Ikon `moreMenu` dan tiga font Open Sans beserta lisensinya dihapus; aturan
+font di AGENTS.md, CLAUDE.md, dan SOURCES.md diselaraskan. `UIImage(DesignIcon)` dan `defaultDesignColors()` tetap
+ada karena terdokumentasi untuk host.
+
+Bottom sheet: `.bottomSheet(item:)` untuk halaman dengan beberapa jenis sheet; nilai lain membangun sheet baru
+seutuhnya, jadi fokus scroll daftar baru ikut dijalankan (`BottomSheetItemTests`, gagal saat hanya isinya yang diberi
+identitas baru; temuan review LLM lain). Sandbox `--form-demo` memakainya. Isi yang didukung dan batasnya di
+`docs/BOTTOM_SHEET.md`.
+
+Hitungan: daftar kartu live agent dihitung sekali per render, dan salinan pertanyaan lokal dicari sekali, bukan dua
+kali. `latestSeq` tetap `max()`: test `latestSeqIsTheHighestNotTheLast` menjaga niat itu. Cache string lokalisasi,
+cache styling Markdown, dan cache `listItems` tidak dibuat: belum ada ukuran yang menunjukkan perlunya, dan daftar
+masih 30 pesan per halaman.
+
+Gaya: 52 atribut properti menjadi sebaris, delapan `if/else` di luar ViewBuilder menjadi early return, komentar
+bahasa Inggris diterjemahkan. `topSpacing` kini tanpa `default`, jadi baris baru wajib memilih jaraknya.
+
+Kesiapan struktur: langkah menambah intent dan tiga bagian yang belum punya pola (state form per instance, sheet
+dari baris chat, callback data/service host) ditulis di `docs/PACKAGE_STRUCTURE.md` bagian "Pola intent".
+
+## Bottom sheet: tombol menempel, keyboard, kunci tutup, layar tanpa notch (14 November 2026)
+
+Empat hal yang sebelumnya menunggu keputusan, dijawab user: tombol pilihan banyak sementara menempel di bawah, ada
+kemungkinan field pencarian di daftar panjang, sheet perlu bisa dikunci untuk PIN, dan jarak atas di iPhone SE boleh.
+
+Tombol menempel: isi memasang `.bottomSheetFooter { ... }`; footer dititipkan ke wadah lewat preference dan digambar
+di tepi bawah area isi, sedangkan salinan tak terlihat di ujung isi memesan tempatnya, jadi tinggi sheet dan ujung
+scroll tetap benar tanpa state ukuran tambahan. Di luar sheet footer tampil biasa. `OptionList` pilihan banyak
+memakainya untuk tombol konfirmasi. `BottomSheetFooterTests`: tinggi sheet ikut menghitung footer, footer di tepi
+bawah selagi daftar belum digeser, dan ujung isi memesan tempat setinggi footer. UI test
+`testTheConfirmButtonSticksToTheBottomWhileTheListScrolls`: tombol terlihat sebelum digeser, tidak berpindah selama
+20 baris di-scroll, dan baris terakhir berhenti di atasnya.
+
+Keyboard: presenter mengikuti `keyboardWillChangeFrame` hanya selama sheet tampil, lalu sheet duduk di atas keyboard
+dan batas tingginya mengecil (`BottomSheetLayout`). Keyboard halaman (mis. composer) yang sudah ada sebelum sheet
+dibuka tetap tidak mengangkat sheet. Selama keyboard tampil, `BottomSheetFocus` tidak digulir ke layar, supaya field
+di atas daftar tidak tergeser oleh pilihan lama. `BottomSheetKeyboardTests`, `BottomSheetLayoutTests`,
+`BottomSheetFocusTests.theFocusIsLeftAloneWhileRevealingIsOff`; UI test `testTheSheetRisesAboveTheKeyboard` dengan
+keyboard simulator sungguhan (`--sheet-input`). Field pencarian di `OptionList` belum dibuat: belum ada tampilannya.
+
+Kunci tutup: `isDismissable: false` pada kedua `.bottomSheet`. Latar gelap, geseran, dan aksi tutup VoiceOver tidak
+menutup, dan grabber tinggal gambar. UI test `testALockedSheetOnlyClosesFromItsContent` (`--sheet-locked`).
+`accessibilityHidden` pada grabber yang sudah menjadi elemen tombol tidak menyembunyikannya dari XCUITest, jadi
+grabber terkunci digambar tanpa elemen aksesibilitas sama sekali.
+
+Layar tanpa notch: batas bawaan 16 pt di bawah status bar (`CustomSizes.BottomSheet.classicTopGap`);
+`BottomSheetLayoutTests.aClassicScreenLeavesAGapBelowTheStatusBar`.
+
+Hasil: `./Scripts/verify.sh` exit 0 di iPhone 17 Pro (style 0 pelanggaran di 341 file, unit test DesignKit dan
+TanyaAI, test sandbox, seluruh UI test). 12 UI test sheet (`BottomSheetUITests`, `BottomSheetStateUITests`) juga
+lolos di simulator iPhone SE generasi ke-3. Screenshot dari UI test (tombol menempel, sheet di atas keyboard) dilihat
+di kedua perangkat. Tidak diuji: VoiceOver di perangkat, iOS 15, dan keyboard pihak ketiga atau keyboard iPad
+mengambang.
+
+Temuan review LLM lain (15 November 2026): `OptionList(...).disabled(true)` menonaktifkan baris, tetapi tombol
+konfirmasi yang menempel tetap aktif, karena footer dititipkan lewat preference dan digambar wadah di luar view yang
+menerima `.disabled`. `BottomSheetFooterModifier` kini membawa `isEnabled` dari isi ke footer yang ditempel.
+`OptionList` tidak diubah: `.disabled(!isConfirmable)` pada tombol digabung SwiftUI dengan status nonaktif warisan
+(nonaktif dari mana pun tetap nonaktif). `BottomSheetFooterTests.aDisabledContentDisablesItsPinnedFooter` gagal
+sebelum perbaikan.

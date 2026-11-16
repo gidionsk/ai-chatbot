@@ -24,7 +24,8 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
     let document: MarkdownDocument?
     /// Saran pertanyaan lanjutan dari `follow_up_questions`; yang tampil hanya milik jawaban terakhir.
     let followUps: [String]
-    /// Intent router dari gateway; disiapkan untuk intent berikutnya, belum ada tampilan yang membacanya.
+    /// Intent router dari gateway. `liveAgent` dibaca untuk kartu "tidak dilanjutkan" di history; intent lain
+    /// dibaca oleh fiturnya sendiri di `Intents/<Nama>`.
     let intent: ChatIntent?
 
     /// Nil bila `seq` bukan angka desimal: pesan tanpa urutan tidak bisa digabung dengan aman.

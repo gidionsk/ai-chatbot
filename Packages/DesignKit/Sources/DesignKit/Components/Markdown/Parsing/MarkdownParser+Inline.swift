@@ -14,13 +14,13 @@ extension MarkdownParser {
         var blocks: [MarkdownBlock] = []
         var pending = AttributedString()
         for run in text.runs {
-            if let url = run.imageURL {
-                appendParagraph(pending, to: &blocks)
-                pending = AttributedString()
-                blocks.append(.image(url: url, alt: String(text[run.range].characters)))
-            } else {
+            guard let url = run.imageURL else {
                 pending.append(text[run.range])
+                continue
             }
+            appendParagraph(pending, to: &blocks)
+            pending = AttributedString()
+            blocks.append(.image(url: url, alt: String(text[run.range].characters)))
         }
         appendParagraph(pending, to: &blocks)
         return blocks

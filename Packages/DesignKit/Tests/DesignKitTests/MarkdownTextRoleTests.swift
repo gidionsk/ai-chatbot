@@ -14,10 +14,7 @@ struct MarkdownTextRoleTests {
     private let colors = EnvironmentValues().designColors
 
     private func style(_ role: MarkdownTextRole) -> MarkdownTextStyle {
-        MarkdownTextStyle(
-            fontFace: .firaSansRegular, boldFontFace: .firaSansBold, italicFontFace: .firaSansItalic,
-            boldItalicFontFace: .firaSansBoldItalic, role: role
-        )
+        MarkdownTextStyle(role: role)
     }
 
     private func color(of run: AttributedString.Runs.Run) -> Color? {

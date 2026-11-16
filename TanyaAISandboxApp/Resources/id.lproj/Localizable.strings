@@ -25,6 +25,8 @@
 "sandbox.sheet.title" = "Pilih salah satu";
 "sandbox.sheet.option" = "Pilihan contoh";
 "sandbox.sheet.close" = "Tutup sheet";
+"sandbox.sheet.input" = "Catatan";
+"sandbox.sheet.choose" = "Pilih";
 "sandbox.form.title" = "Pesan Surat Referensi";
 "sandbox.form.format" = "Format yang diinginkan";
 "sandbox.form.formatPlaceholder" = "Pilih format";

@@ -8,18 +8,16 @@
 import SwiftUI
 
 /// Chip saran satu ketukan: ikon balas dan teks, selebar isinya. Teks panjang turun ke baris berikutnya supaya
-/// saran tidak terpotong. Copy dan aksi dari pemakai.
+/// saran tidak terpotong. Copy dan aksi dari pemakai. Nonaktif lewat `.disabled(...)` dari pemakai.
 @MainActor
 public struct SuggestionChip: View {
     @Environment(\.designColors) private var colors
-    @Environment(\.isEnabled) private var isEnvironmentEnabled
+    @Environment(\.isEnabled) private var isEnabled
     private let text: String
-    private let isEnabled: Bool
     private let onTap: () -> Void
 
-    public init(text: String, isEnabled: Bool = true, onTap: @escaping () -> Void) {
+    public init(text: String, onTap: @escaping () -> Void) {
         self.text = text
-        self.isEnabled = isEnabled
         self.onTap = onTap
     }
 
@@ -39,20 +37,19 @@ public struct SuggestionChip: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!isEnabled)
         .accessibilityElement(children: .combine)
     }
 
     private var icon: some View {
         Image(DesignIcon.reply).resizable().scaledToFit()
             .frame(width: iconSize, height: iconSize)
-            .foregroundColor(isEnabled && isEnvironmentEnabled ? colors.colorsIconColored : colors.colorsIconDisabled)
+            .foregroundColor(isEnabled ? colors.colorsIconColored : colors.colorsIconDisabled)
             .accessibilityHidden(true)
     }
 
     private var label: some View {
         Text(text)
-            .font(FontFace.firaSansSemiBold.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+            .designFont(.captionStrong)
             .foregroundColor(colors.colorsTextPrimaryDark)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)

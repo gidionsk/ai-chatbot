@@ -11,8 +11,7 @@ import SwiftUI
 /// rata dengan teks item, bukan penanda.
 @MainActor
 struct MarkdownListView: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     let list: MarkdownList
     let style: MarkdownTextStyle
 
@@ -47,7 +46,7 @@ private extension MarkdownListView {
 
     func markerText(ordinal: Int, task: MarkdownTaskState?) -> some View {
         Text(MarkdownSyntax.listMarker(ordinal: ordinal, isOrdered: list.isOrdered, depth: style.listDepth, task: task))
-            .font(style.fontFace.swiftUIFont(size: style.bodySize))
+            .font(style.bodyFont)
             .foregroundColor(colors.colorsTextPrimaryDark)
     }
 }

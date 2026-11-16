@@ -44,15 +44,15 @@ struct ChatRowTests {
         var question = LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1)
         let bot = ChatMessage(id: "m-2", seq: 2, author: .assistant, text: "x", status: .active, clientMessageID: "q")
         let other = ChatMessage(id: "m-3", seq: 3, author: .user, text: "lain", status: .active)
-        #expect(!question.isDelivered(in: [bot, other]))
+        #expect(question.copy(in: [bot, other]) == nil)
         question.seq = 3
-        #expect(question.isDelivered(in: [bot, other]))
+        #expect(question.copy(in: [bot, other]) != nil)
         let copy = ChatMessage(
             id: "m-4", seq: 4, author: .user, text: "Beli USD", status: .active, clientMessageID: "q")
-        #expect(LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1).isDelivered(in: [copy]))
+        #expect(LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1).copy(in: [copy]) != nil)
         let older = ChatMessage(
             id: "m-1", seq: 1, author: .user, text: "lama", status: .active, clientMessageID: "q")
-        #expect(!LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1).isDelivered(in: [older]))
+        #expect(LocalQuestion(id: "q", text: "Beli USD", afterSeq: 1).copy(in: [older]) == nil)
     }
 }
 

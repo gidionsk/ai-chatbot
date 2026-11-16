@@ -9,7 +9,7 @@ import SwiftUI
 
 extension View {
     /// Kotak isi field form; lihat `FieldBox`.
-    func fieldBox(isEnabled: Bool, isInvalid: Bool) -> some View {
-        modifier(FieldBox(isEnabled: isEnabled, isInvalid: isInvalid))
+    func fieldBox(isInvalid: Bool) -> some View {
+        modifier(FieldBox(isInvalid: isInvalid))
     }
 }

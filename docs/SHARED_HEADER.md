@@ -77,7 +77,8 @@ kanan tetap kosong selebar tombol back sehingga judul tetap di tengah.
 Jalankan `Scripts/run_sandbox.sh --language id --header-demo`, lalu buka feature.
 Mode ini memberi paragraf dummy yang cukup panjang untuk mencapai akhir, kembali
 ke atas, dan melihat teks di belakang header. Tanpa flag, area chat tetap kosong.
-Asset back/more/send masih PDF vector sementara (`moreMenu` disimpan untuk aksi kanan nanti), dengan TODO di xcassets.
+Asset back/send masih PDF vector sementara, dengan TODO di xcassets. Ikon `moreMenu` dihapus bersama menu titik
+tiga; tambahkan lagi imageset dan case `DesignIcon`-nya saat aksi kanan dibutuhkan.
 Localization dan nama asset dibaca melalui `ChatCopy`/`DesignIcon`; lihat
 [pola view dan resource](VIEW_TEMPLATE.md).
 

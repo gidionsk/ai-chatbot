@@ -7,12 +7,9 @@
 
 import SwiftUI
 
-/// Font dan peran Markdown milik pemakai, serta kedalaman list saat ini (penanda bullet berganti per level).
+/// Peran teks Markdown dan kedalaman list saat ini (penanda bullet berganti per level). Face selalu Fira Sans;
+/// tebal dan miring memilih face-nya sendiri, bukan ditebalkan sistem.
 struct MarkdownTextStyle {
-    let fontFace: FontFace
-    let boldFontFace: FontFace
-    let italicFontFace: FontFace
-    let boldItalicFontFace: FontFace
     var listDepth = Int.zero
     var role = MarkdownTextRole.body
 
@@ -45,16 +42,19 @@ struct MarkdownTextStyle {
         role == .caption ? colors.colorsTextBrand : colors.colorsTextHyperlink
     }
 
+    /// Font isi tanpa tebal atau miring, mis. penanda list dan teks alt gambar.
+    var bodyFont: Font { face(isStrong: false, isItalic: false).swiftUIFont(size: bodySize) }
+
     func face(isStrong: Bool, isItalic: Bool) -> FontFace {
         switch (isStrong, isItalic) {
         case (true, true):
-            return boldItalicFontFace
+            return .firaSansBoldItalic
         case (true, false):
-            return boldFontFace
+            return .firaSansBold
         case (false, true):
-            return italicFontFace
+            return .firaSansItalic
         case (false, false):
-            return fontFace
+            return .firaSansRegular
         }
     }
 

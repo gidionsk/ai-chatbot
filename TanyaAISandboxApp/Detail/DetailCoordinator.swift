@@ -11,8 +11,7 @@ import SwiftUI
 @MainActor
 struct DetailCoordinator: View {
     static let named = String(describing: DetailCoordinator.self)
-    @Binding
-    var selectionCoordinatorName: String?
+    @Binding var selectionCoordinatorName: String?
 
     var body: some View {
         NavigationLink(tag: Self.named, selection: $selectionCoordinatorName) {

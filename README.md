@@ -3,7 +3,7 @@
 Package UI iOS 15 untuk migrasi bertahap. DesignKit menyediakan komponen umum;
 TanyaAI menyusun welcome, chat, header, dan composer satu sampai empat baris.
 Transport HTTP/SSE diimplementasi host; package mengatur sesi chat-gateway dan render pesan Markdown.
-Font Fira Sans/Open Sans dan copy English, Bahasa Indonesia, serta 简体中文 tersedia dalam package.
+Font Fira Sans dan copy English, Bahasa Indonesia, serta 简体中文 tersedia dalam package.
 
 ```sh
 ./Scripts/run_sandbox.sh --language id

@@ -106,20 +106,27 @@ private extension TanyaAIBridge {
     }
 
     /// Nil = berhenti menyambung. 401 menyerahkan ke host; error lain yang `retryable:false` menutup percakapan
-    /// dan diteruskan ke host lewat `onConnectionFailed`.
+    /// dan diteruskan ke host lewat `onConnectionFailed`. Respons init atau history yang tidak terbaca
+    /// (`DecodingError`) juga gagal permanen: bentuknya tidak membaik dengan mengulang, dan tanpa ini halaman
+    /// loading tanpa akhir.
     func retryDelay(after error: Error, backoff: inout ChatBackoff) -> TimeInterval? {
+        guard !(error is DecodingError) else {
+            failConnection(error)
+            return nil
+        }
         guard case let .response(statusCode, body)? = error as? TanyaAITransportError else {
             return backoff.nextDelay()
         }
         let failure = try? JSONDecoder.wire.decode(WireError.self, from: body)
         guard failure?.isRetryable ?? ChatBackoff.isServerError(statusCode: statusCode) else {
-            if ChatBackoff.isUnauthorized(statusCode: statusCode) {
-                expireSession()
-            } else {
-                failConnection(error)
-            }
+            stopConnecting(after: error, statusCode: statusCode)
             return nil
         }
         return backoff.nextDelay(retryAfterMilliseconds: failure?.data?.retryAfterMs)
+    }
+
+    func stopConnecting(after error: Error, statusCode: Int) {
+        guard !ChatBackoff.isUnauthorized(statusCode: statusCode) else { return expireSession() }
+        failConnection(error)
     }
 }

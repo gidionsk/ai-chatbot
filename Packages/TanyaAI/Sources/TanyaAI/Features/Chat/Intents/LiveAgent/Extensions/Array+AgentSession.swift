@@ -13,11 +13,15 @@ extension Array where Element == ChatMessage {
         var sessions: [(lastAgentSeq: Int, nextSeq: Int)] = []
         var lastAgentSeq: Int?
         for message in self {
-            if message.author == .agent {
+            switch message.author {
+            case .agent:
                 lastAgentSeq = message.seq
-            } else if message.author == .assistant, let agentSeq = lastAgentSeq {
+            case .assistant:
+                guard let agentSeq = lastAgentSeq else { continue }
                 sessions.append((agentSeq, message.seq))
                 lastAgentSeq = nil
+            case .user, .unknown:
+                break
             }
         }
         if let agentSeq = lastAgentSeq, !isOngoing {

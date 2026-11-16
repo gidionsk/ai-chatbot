@@ -46,11 +46,9 @@ TanyaAI/Sources/TanyaAI/
    RGB, RRGGBB atau AARRGGBB dan memakai fallback nonoptional untuk input invalid.
 3. Daftarkan font dengan `FontFace.registerFonts()` saat bootstrap. `FontFace`
    memisahkan nama file dan nama PostScript; `FontLoader` memproses Bundle.module.
-   Package berisi Fira Sans Regular/Medium/SemiBold/Bold dan Open Sans
-   Regular/Medium/Bold beserta lisensinya. Gunakan nama eksplisit seperti
-   `.firaSansRegular` atau `.firaSansMedium`; `.regular/.medium` lama diganti.
-   Open Sans belum dipakai; semua teks memakai Fira Sans.
-   Composer default memakai `.firaSansRegular`. Chinese menggunakan fallback
+   Package berisi Fira Sans Regular/Medium/SemiBold/Bold/Italic/BoldItalic beserta lisensinya; Open Sans
+   sudah dihapus karena tidak pernah dipakai. Komponen memakai `.designFont(role)` (`DesignFontRole`), bukan
+   `FontFace` langsung. Composer memakai peran `body`. Chinese menggunakan fallback
    glyph iOS; font Chinese brand final masih dapat diganti kemudian. Pemetaan
    file/PostScript dan sumbernya ada pada [katalog font](../Packages/DesignKit/Sources/DesignKit/Resources/Fonts/SOURCES.md).
 4. Buat `BoundedTextView`, lalu bridge `GrowingTextInput`. Intrinsic width tidak

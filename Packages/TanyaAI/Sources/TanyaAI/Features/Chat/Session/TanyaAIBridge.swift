@@ -14,14 +14,11 @@ import Foundation
 @MainActor
 public final class TanyaAIBridge: ObservableObject {
     /// Pesan dari gateway, urut `seq` naik.
-    @Published
-    private(set) var messages: [ChatMessage] = []
+    @Published private(set) var messages: [ChatMessage] = []
     /// Pertanyaan yang sudah tampil tetapi belum datang dari stream, termasuk yang gagal dikirim (urut waktu kirim).
-    @Published
-    var localQuestions: [LocalQuestion] = []
+    @Published var localQuestions: [LocalQuestion] = []
     /// Pertanyaan yang sedang ditunggu jawabannya (lihat `ChatTurn`).
-    @Published
-    var turn = ChatTurn()
+    @Published var turn = ChatTurn()
     /// Pertanyaan terbaru yang dikirim dari halaman ini. Hanya berubah saat kirim, jadi salinan dari stream atau
     /// bubble gagal yang tersisa tidak dianggap kiriman baru.
     @Published var latestSentQuestionID: String?
@@ -32,10 +29,8 @@ public final class TanyaAIBridge: ObservableObject {
     /// turn, jadi hanya ini yang membedakan salinan kiriman sendiri dari pesan masuk.
     var sentMessageIDs: Set<String> = []
     /// True setelah history pertama selesai; sebelum itu halaman menampilkan loading, bukan sambutan.
-    @Published
-    private(set) var isHistoryLoaded = false
-    @Published
-    var connection = ChatConnection.connecting
+    @Published private(set) var isHistoryLoaded = false
+    @Published var connection = ChatConnection.connecting
     /// State dari init terakhir, diperbarui event `state`. `unknown` sebelum init pertama. Lewat init maupun stream,
     /// status mengetik kedua pihak ikut dibersihkan (lihat `didChangeConversationState`).
     @Published var conversationState = ConversationState.unknown {
@@ -49,16 +44,13 @@ public final class TanyaAIBridge: ObservableObject {
     @Published var isAgentTyping = false
     /// Penghapus indikator mengetik setelah batas waktunya; diganti setiap event `typing` baru.
     var agentTypingExpiry: Task<Void, Never>?
-    /// Agen sedang diberi tahu nasabah mengetik (`typing:true` terakhir yang dikirim); tidak di-publish.
-    var isUserTypingSent = false
-    /// `typing:true` terkirim kurang dari `ChatWire.typingRefresh` yang lalu, jadi ketikan berikutnya tidak dikirim.
-    var isUserTypingFresh = false
+    /// Sinyal mengetik nasabah yang menunggu dan yang terakhir terkirim (lihat `UserTypingSignal`); tidak di-publish.
+    var userTyping = UserTypingSignal()
+    /// Berjalan = nasabah masih dianggap mengetik; selesai tanpa ketikan baru = `typing:false`.
     var userTypingIdle: Task<Void, Never>?
+    /// Berjalan = `typing:true` terkirim kurang dari `ChatWire.typingRefresh` yang lalu, jadi ketikan berikutnya
+    /// tidak dikirim; nil = boleh dikirim lagi.
     var userTypingRefresh: Task<Void, Never>?
-    /// Sinyal terbaru yang belum dikirim (nil = tidak ada); sinyal yang menunggu digabung menjadi yang terbaru.
-    var isUserTypingQueued: Bool?
-    /// Nilai terakhir yang dikirim ke server; `false` tanpa `true` sebelumnya tidak perlu dikirim.
-    var isUserTypingDelivered = false
     /// Satu-satunya pengirim `typing` yang berjalan; selesai saat tidak ada sinyal yang menunggu.
     var userTypingDelivery: Task<Void, Never>?
     /// Percakapan dari `/v1/chat/init` terakhir; nil sebelum init pertama berhasil.
@@ -74,7 +66,8 @@ public final class TanyaAIBridge: ObservableObject {
 
     /// `onSessionExpired` dipanggil sekali saat gateway menjawab 401 (sesi OMNI habis); stream tidak dibuka lagi.
     /// `onConnectionFailed` dipanggil sekali saat error yang tidak bisa di-retry (`retryable:false`) menghentikan
-    /// sambungan; host menampilkan error sesuai polanya. Error berupa `TanyaAITransportError` dari transport.
+    /// sambungan; host menampilkan error sesuai polanya. Error berupa `TanyaAITransportError` dari transport, atau
+    /// `DecodingError` bila respons init/history tidak terbaca.
     public convenience init(
         transport: TanyaAIChatTransport, onSessionExpired: (() -> Void)? = nil,
         onConnectionFailed: ((Error) -> Void)? = nil

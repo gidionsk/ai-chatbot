@@ -11,8 +11,7 @@ import SwiftUI
 /// teks alt tampil bila unduhan gagal dan menjadi label VoiceOver.
 @MainActor
 struct MarkdownImageView: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     let url: URL
     let alt: String
     let style: MarkdownTextStyle
@@ -22,7 +21,7 @@ struct MarkdownImageView: View {
             colors.colorsSurfaceSelected
         } fallback: {
             Text(alt)
-                .font(style.fontFace.swiftUIFont(size: style.bodySize))
+                .font(style.bodyFont)
                 .foregroundColor(colors.colorsTextSecondary)
         }
         .clipShape(RoundedRectangle(cornerRadius: CustomSizes.Markdown.cornerRadius.scaledToArtwork))

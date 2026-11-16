@@ -13,16 +13,11 @@ import SwiftUI
 struct FormDemoSheetContent: View {
     @Environment(\.locale) private var locale
     @ObservedObject var model: FormDemoModel
+    /// Daftar yang sedang dibuka; `.bottomSheet(item:)` membangun isi baru untuk nilai lain.
+    let sheet: FormDemoSheet
 
     var body: some View {
-        list
-            // Daftar lain = state centang baru.
-            .id(model.sheet)
-    }
-
-    @ViewBuilder
-    private var list: some View {
-        switch model.sheet {
+        switch sheet {
         case .format:
             OptionList(
                 title: String(SandboxCopy.formFormat, locale: locale),
@@ -39,8 +34,6 @@ struct FormDemoSheetContent: View {
                 confirmLabel: String(SandboxCopy.formChoose, locale: locale),
                 onSelect: model.selectAccounts
             )
-        case nil:
-            EmptyView()
         }
     }
 

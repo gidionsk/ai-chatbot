@@ -9,34 +9,32 @@ import SwiftUI
 
 /// Tombol selebar wadah. `.regular` = latar gelap untuk aksi utama (Konfirmasi, Pilih); `.outlined` = ukuran sama,
 /// hanya garis tepi, untuk aksi kedua di sampingnya (Batalkan); `.link` = teks kecil bergaris bawah, mis. "Batalkan
-/// proses ini" di bawah kartu status. Copy dan aksi dari pemakai.
+/// proses ini" di bawah kartu status. Copy dan aksi dari pemakai. Nonaktif lewat `.disabled(...)` dari pemakai.
 /// TODO: Konfirmasi warna, ukuran teks, tinggi, dan garis `.outlined` dengan Figma; sementara dari foto.
 @MainActor
 public struct FilledButton: View {
     @Environment(\.designColors) private var colors
-    @Environment(\.isEnabled) private var isEnvironmentEnabled
+    @Environment(\.isEnabled) private var isEnabled
     private let title: String
     private let variant: FilledButtonVariant
-    private let isEnabled: Bool
     private let onTap: () -> Void
 
     public init(
         title: String,
         variant: FilledButtonVariant = .regular,
-        isEnabled: Bool = true,
         onTap: @escaping () -> Void
     ) {
         self.title = title
         self.variant = variant
-        self.isEnabled = isEnabled
         self.onTap = onTap
     }
 
     public var body: some View {
         Button(action: onTap) {
             Text(title)
-                .font(FontFace.firaSansSemiBold.swiftUIFont(size: fontSize))
+                // `underline` milik `Text` (iOS 15); setelah `.designFont` yang tersisa versi View milik iOS 16.
                 .underline(variant == .link)
+                .designFont(fontRole)
                 .foregroundColor(variant == .outlined ? accentColor : colors.colorsTextPrimaryLight)
                 .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, verticalPadding)
@@ -50,29 +48,23 @@ public struct FilledButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!isEnabled)
     }
 }
 
 // MARK: - Helpers
 
 private extension FilledButton {
-    /// Parameter sendiri digabung dengan `.disabled` dari parent, supaya warnanya ikut nonaktif.
-    var isInteractive: Bool {
-        isEnabled && isEnvironmentEnabled
-    }
-
     /// Latar `.regular`/`.link`, atau garis dan teks `.outlined`; abu-abu saat nonaktif.
     var accentColor: Color {
-        isInteractive ? CustomColors.Button.muted : disabledColor
+        isEnabled ? CustomColors.Button.muted : disabledColor
     }
 
-    var fontSize: CGFloat {
+    var fontRole: DesignFontRole {
         switch variant {
         case .regular, .outlined:
-            return FigmaSize.typographySizeDisplaySmall14.scaledToArtwork
+            return .bodyStrong
         case .link:
-            return FigmaSize.typographySizeDisplayTiny12.scaledToArtwork
+            return .captionStrong
         }
     }
 

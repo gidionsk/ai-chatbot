@@ -11,8 +11,7 @@ import SwiftUI
 /// Tombol sederhana halaman tiruan host.
 @MainActor
 struct HostButton: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     let title: String
     let identifier: String
     let action: () -> Void
@@ -20,9 +19,7 @@ struct HostButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(
-                    Font(FontFace.firaSansSemiBold.font(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork))
-                )
+                .designFont(.bodyStrong)
                 .foregroundColor(colors.colorsTextBrand)
         }
         .accessibilityIdentifier(identifier)

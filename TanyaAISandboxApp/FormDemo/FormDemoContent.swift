@@ -18,9 +18,7 @@ struct FormDemoContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
             Text(String(SandboxCopy.formTitle, locale: locale))
-                .font(
-                    FontFace.firaSansSemiBold.swiftUIFont(size: FigmaSize.typographySizeDisplayNormal16.scaledToArtwork)
-                )
+                .designFont(.cardTitle)
                 .foregroundColor(colors.colorsTextPrimaryDark)
             formatField
             accountsField
@@ -78,9 +76,9 @@ struct FormDemoContent: View {
             TextInputField(
                 label: String(SandboxCopy.formEmail, locale: locale),
                 text: .constant(SandboxOptions.formEmail),
-                placeholder: String(SandboxCopy.formEmail, locale: locale),
-                isEnabled: false
+                placeholder: String(SandboxCopy.formEmail, locale: locale)
             )
+            .disabled(true)
             .accessibilityIdentifier(SandboxOptions.formEmailIdentifier)
         }
     }

@@ -7,20 +7,16 @@
 
 import SwiftUI
 
-/// Inner spacing and appearance belong here; the screen owns outer margins.
+/// Composer pesan: field yang tumbuh sampai empat baris dan satu tombol kirim/stop. Jarak dalam dan tampilan milik
+/// komponen ini; margin luar milik screen.
 @MainActor
 public struct MessageComposer: View {
-    @Environment(\.designColors)
-    private var colors
-    @Binding
-    private var text: String
-    // Figma typography follows artwork scaling only, independent of the user's text size setting.
-    private let fontSize = FigmaSize.typographySizeDisplaySmall14.scaledToArtwork
+    @Environment(\.designColors) private var colors
+    @Binding private var text: String
     private let placeholder: String
     private let actionLabel: String
     private let isEnabled: Bool
     private let action: MessageComposerAction
-    private let fontFace: FontFace
     private let attachment: MessageComposerAttachment?
     private let onSend: () -> Void
     private let onStop: () -> Void
@@ -28,16 +24,20 @@ public struct MessageComposer: View {
     /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol;
     /// draft selalu bisa diketik. `attachment` nil = tanpa tombol lampiran.
     public init(
-        text: Binding<String>, placeholder: String, actionLabel: String,
-        isEnabled: Bool = true, action: MessageComposerAction = .send, fontFace: FontFace = .firaSansRegular,
-        attachment: MessageComposerAttachment? = nil, onSend: @escaping () -> Void, onStop: @escaping () -> Void = {}
+        text: Binding<String>,
+        placeholder: String,
+        actionLabel: String,
+        isEnabled: Bool = true,
+        action: MessageComposerAction = .send,
+        attachment: MessageComposerAttachment? = nil,
+        onSend: @escaping () -> Void,
+        onStop: @escaping () -> Void = {}
     ) {
         self._text = text
         self.placeholder = placeholder
         self.actionLabel = actionLabel
         self.isEnabled = isEnabled
         self.action = action
-        self.fontFace = fontFace
         self.attachment = attachment
         self.onSend = onSend
         self.onStop = onStop
@@ -132,9 +132,11 @@ public struct MessageComposer: View {
 // MARK: - Helpers
 
 private extension MessageComposer {
-    var inputFont: UIFont { fontFace.font(size: fontSize) }
+    /// Ukuran mengikuti artwork saja, tidak mengikuti pengaturan ukuran teks pengguna.
+    var inputFont: UIFont { DesignFontRole.body.uiFont }
 
-    /// Equal single-line rows center the field/button; a taller field keeps the button at its bottom.
+    /// Baris satu-baris sama tinggi, jadi field dan tombol sejajar tengah; field yang lebih tinggi membiarkan tombol di
+    /// bawah.
     var singleLineRowHeight: CGFloat {
         max(CustomSizes.Composer.sendButton.scaledToArtwork, ceil(inputFont.lineHeight + lineSpacing))
     }
@@ -156,10 +158,7 @@ private extension MessageComposer {
     }
 
     func tapAction() {
-        if action == .stop {
-            onStop()
-        } else {
-            onSend()
-        }
+        guard action == .stop else { return onSend() }
+        onStop()
     }
 }

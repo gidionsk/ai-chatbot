@@ -10,8 +10,7 @@ import SwiftUI
 /// Tiruan base screen host: membungkus setiap halaman agar blocker host (no internet) berlaku.
 @MainActor
 struct Screen<Content: ScreenContent>: View {
-    @ObservedObject
-    private var contentViewModel: ScreenContentViewModel
+    @ObservedObject private var contentViewModel: ScreenContentViewModel
     private let content: Content
 
     init(_ content: () -> Content) {

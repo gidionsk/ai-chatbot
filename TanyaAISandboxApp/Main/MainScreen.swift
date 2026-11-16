@@ -11,22 +11,18 @@ import SwiftUI
 /// Tiruan main host. Aksi navigasi diteruskan ke coordinator lewat callback.
 @MainActor
 struct MainScreen: ScreenContent {
-    @Environment(\.locale)
-    private var locale
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.locale) private var locale
+    @Environment(\.designColors) private var colors
     @EnvironmentObject
     private var appState: AppState
-    @ObservedObject
-    var viewModel: MainScreenViewModel
+    @ObservedObject var viewModel: MainScreenViewModel
     let onOpenDetail: () -> Void
     let onOpenTanyaAI: () -> Void
 
     var body: some View {
         VStack(spacing: FigmaSize.spacingLarge.scaledToArtwork) {
             Text(String(SandboxCopy.mainTitle, locale: locale))
-                .font(
-                    Font(FontFace.firaSansSemiBold.font(size: FigmaSize.typographySizeDisplayNormal16.scaledToArtwork)))
+                .designFont(.cardTitle)
             actions
         }
         .foregroundColor(colors.colorsTextPrimaryDark)

@@ -41,10 +41,10 @@ extension TanyaAIBridge {
     /// berubah, supaya pesan lain tidak memicu render ulang.
     /// ID salinannya dicatat: salinan kiriman sendiri bukan pesan masuk (lihat `sentMessageIDs`).
     func removeDeliveredQuestions() {
-        let copies = localQuestions.compactMap { $0.copy(in: messages)?.id }
-        guard !copies.isEmpty else { return }
-        sentMessageIDs.formUnion(copies)
-        localQuestions.removeAll { $0.isDelivered(in: messages) }
+        let copies = localQuestions.map { $0.copy(in: messages)?.id }
+        guard copies.contains(where: { $0 != nil }) else { return }
+        sentMessageIDs.formUnion(copies.compactMap { $0 })
+        localQuestions = zip(localQuestions, copies).filter { $0.1 == nil }.map(\.0)
     }
 }
 

@@ -11,10 +11,8 @@ import SwiftUI
 /// Draft hidup di sini agar setiap ketikan hanya me-render composer, bukan seluruh screen/daftar pesan.
 @MainActor
 struct ComposerSection: View {
-    @Environment(\.locale)
-    private var locale
-    @State
-    private var draft = String()
+    @Environment(\.locale) private var locale
+    @State private var draft = String()
     private let isEnabled: Bool
     private let phase: ChatTurnPhase
     private let onSend: (String) -> Bool

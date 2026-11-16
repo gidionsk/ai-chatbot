@@ -26,13 +26,15 @@ struct ServerSentEventParser {
         }
         if let value = Self.value(of: line, field: ChatWire.idField) {
             eventID = value
-        } else if let value = Self.value(of: line, field: ChatWire.eventField) {
-            name = value
-        } else if let value = Self.value(of: line, field: ChatWire.dataField) {
-            data = value
-            return flush()
+            return nil
         }
-        return nil
+        if let value = Self.value(of: line, field: ChatWire.eventField) {
+            name = value
+            return nil
+        }
+        guard let value = Self.value(of: line, field: ChatWire.dataField) else { return nil }
+        data = value
+        return flush()
     }
 
     /// Menutup frame yang sedang disusun; nil bila belum ada `data:`.

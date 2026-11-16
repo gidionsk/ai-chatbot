@@ -15,6 +15,5 @@ final class AppState: ObservableObject {
         case loggedIn
     }
 
-    @Published
-    var state = State.loggedIn
+    @Published var state = State.loggedIn
 }

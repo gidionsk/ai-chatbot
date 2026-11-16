@@ -10,8 +10,7 @@ import SwiftUI
 /// Satu blok Markdown. Teks memakai warna/font token; ukuran garis dan radius di `CustomSizes.Markdown`.
 @MainActor
 struct MarkdownBlockView: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     let block: MarkdownBlock
     let style: MarkdownTextStyle
 

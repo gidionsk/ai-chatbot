@@ -70,7 +70,7 @@ struct TanyaAIBridgeUserTypingTests {
         await bridge.userTypingDelivery?.value
         transport.drop()
         await waitUntil { bridge.conversationState == .assistantActive }
-        #expect(!bridge.isUserTypingSent)
+        #expect(!bridge.userTyping.isTyping)
         bridge.userTypingChanged(false)
         #expect(bridge.userTypingDelivery == nil)
     }
@@ -107,7 +107,7 @@ struct TanyaAIBridgeUserTypingTests {
         let (transport, bridge) = await connectedBridge(pausing: [ChatWire.typingRefresh])
         defer { bridge.connectionTask?.cancel() }
         bridge.userTypingChanged(true)
-        await waitUntil { !bridge.isUserTypingSent }
+        await waitUntil { !bridge.userTyping.isTyping }
         await bridge.userTypingDelivery?.value
         #expect(transport.typingCalls == ["typing:true", "typing:false"])
     }
@@ -119,7 +119,7 @@ struct TanyaAIBridgeUserTypingTests {
         defer { bridge.connectionTask?.cancel() }
         bridge.userTypingChanged(true)
         await bridge.userTypingDelivery?.value
-        await waitUntil { !bridge.isUserTypingFresh }
+        await waitUntil { bridge.userTypingRefresh == nil }
         bridge.userTypingChanged(true)
         await bridge.userTypingDelivery?.value
         #expect(transport.typingCalls == ["typing:true", "typing:true"])
@@ -137,7 +137,7 @@ struct TanyaAIBridgeUserTypingTests {
         bridge.userTypingChanged(false)
         await bridge.userTypingDelivery?.value
         #expect(transport.typingCalls == ["typing:true"])
-        #expect(!bridge.isUserTypingSent)
+        #expect(!bridge.userTyping.isTyping)
     }
 
     /// Gagal kirim sinyal diabaikan; hanya 401 yang mengakhiri sesi.

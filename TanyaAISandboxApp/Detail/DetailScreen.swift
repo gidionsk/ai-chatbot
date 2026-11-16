@@ -11,12 +11,9 @@ import SwiftUI
 /// Halaman host level kedua; membuka Tanya AI lewat coordinator miliknya sendiri.
 @MainActor
 struct DetailScreen: ScreenContent {
-    @Environment(\.locale)
-    private var locale
-    @Environment(\.dismiss)
-    private var dismiss
-    @ObservedObject
-    var viewModel: DetailScreenViewModel
+    @Environment(\.locale) private var locale
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var viewModel: DetailScreenViewModel
     let onOpenTanyaAI: () -> Void
 
     var body: some View {

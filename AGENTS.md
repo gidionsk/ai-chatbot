@@ -90,17 +90,20 @@ tersedia pada history/main.
 ## Font, resource, copy
 
 - Font berada di `Resources/Fonts`; filename dan PostScript di `FontFace`.
-  SwiftUI memakai `face.swiftUIFont(size:)`; `font(size:)` (`UIFont`) hanya untuk UIKit/editor.
   Register sekali saat bootstrap melalui CoreText/`Bundle.module`, idempotent.
-- Nama case menyertakan family dan weight: `firaSansRegular/Medium/SemiBold/Bold`
-  dan `openSansRegular/Medium/Bold`. Jangan memakai case `.regular/.medium` yang
-  ambigu antar-family. Tambahkan file asli beserta lisensi dan nama PostScript
-  yang dibaca dari metadata; jangan menyamakan nama file dengan PostScript.
-- Semua teks memakai Fira Sans. Open Sans belum dipakai: case dan file-nya hanya
-  cadangan, jangan menjadi default komponen atau dipakai di layar.
+- Teks memakai peran: `.designFont(role)` dengan `DesignFontRole` (`title`, `headerTitle`, `cardTitle`, `field`,
+  `body`, `bodyStrong`, `caption`, `captionStrong`, `captionItalic`). Jangan menyusun `FontFace` dan ukuran sendiri
+  di komponen; tambah peran baru hanya bila Figma punya pasangan face dan ukuran baru. `role.uiFont` untuk editor
+  UIKit. Pengecualian: Markdown memilih face per tebal/miring lewat `MarkdownTextStyle`. Modifier milik `Text`
+  seperti `underline` ditulis sebelum `.designFont`, karena setelahnya hanya versi View (iOS 16) yang tersedia.
+- Nama case `FontFace` menyertakan family dan weight: `firaSansRegular/Medium/SemiBold/Bold/Italic/BoldItalic`.
+  Jangan memakai case `.regular/.medium` yang ambigu antar-family. Tambahkan file asli beserta lisensi dan nama
+  PostScript yang dibaca dari metadata; jangan menyamakan nama file dengan PostScript.
+- Semua teks memakai Fira Sans, dan hanya Fira Sans yang ada di package. Open Sans (tiga file, lisensi, dan
+  case-nya) dihapus pada perapian 14 November 2026 karena tidak pernah dipakai; bila kelak dibutuhkan, tambahkan
+  lagi file, lisensi, case, dan barisnya di `SOURCES.md` bersama pemakainya.
 - Typography memakai token `FigmaSize` yang sudah berpasangan per role, misalnya
-  `typographySizeDisplaySmall14` dengan `typographyLineHeightDisplaySmall14`, dan
-  `FontFace` eksplisit. Composer memakai Display Small 14/21, hanya dengan `.scaledToArtwork`. Ukuran font/leading tidak mengikuti
+  `typographySizeDisplaySmall14` dengan `typographyLineHeightDisplaySmall14`, lewat `DesignFontRole`. Composer memakai Display Small 14/21, hanya dengan `.scaledToArtwork`. Ukuran font/leading tidak mengikuti
   pengaturan Dynamic Type pengguna; jangan menambahkan `@ScaledMetric` atau
   UIFontMetrics. Editor dan placeholder menerima UIFont fixed yang sama.
   Glyph Chinese yang tidak ada di Fira Sans menggunakan fallback native iOS.
@@ -135,6 +138,9 @@ tersedia pada history/main.
   bergaris seperti Batalkan, `.link` untuk teks kecil bergaris bawah), permukaan berisi/bergaris = `cardStyle`
   (`fillColor` untuk latar lain), spinner = `LoadingIndicator`,
   garis pemisah = `SeparatorLine`.
+  Nonaktif selalu lewat `.disabled(...)` dari pemakai; komponen membaca `@Environment(\.isEnabled)` untuk warnanya.
+  Jangan menambah parameter `isEnabled` pada komponen: dua jalur untuk hal yang sama harus digabung lagi di setiap
+  komponen. Pengecualian: `MessageComposer(isEnabled:)`, yang hanya mengunci tombol sementara draft tetap bisa diketik.
   Komponen beberapa file memakai subfolder sendiri; satu file langsung di kelompok fungsinya.
   Bagian beberapa file dikelompokkan ke `Models`, `Views`, `Controllers`, `Protocols`, `Extensions` sesuai peran.
   Helper/model/extension khusus komponen tetap dalam pemilik itu, seperti `Markdown/Models` dan `Markdown/Views`.
@@ -150,10 +156,17 @@ tersedia pada history/main.
 - TanyaAI dipisah per tanggung jawab (lihat "Struktur TanyaAI"). Folder intent baru dibuat saat file
   pertamanya ada, bukan lebih awal.
 - Field form generik di DesignKit (`Components/Inputs/FormField`): `SelectField`, `TextInputField`, `ToggleRow`, semua
-  dengan label, `error` merah di bawah, dan `isEnabled`. Daftar pilihan di sheet memakai `OptionList` (satu atau banyak
+  dengan label dan `error` merah di bawah; nonaktif lewat `.disabled(...)`. Daftar pilihan di sheet memakai `OptionList` (satu atau banyak
   pilihan, `items` nil = loading). Komponen hanya menampilkan; validasi, dependensi, dan isi daftar milik pemakai.
 - Bottom sheet memakai `.bottomSheet(isPresented:closeLabel:content:)` dari DesignKit
-  (`Components/Screen/BottomSheet`), dipasang di root halaman supaya latar gelap menutupi header dan composer. Wadah
+  (`Components/Screen/BottomSheet`), dipasang di root halaman supaya latar gelap menutupi header dan composer.
+  Halaman dengan beberapa jenis sheet memakai `.bottomSheet(item:closeLabel:content:)` dengan enum jenis sheet:
+  satu pemasangan, dan nilai lain membangun sheet baru (state isi dan posisi scroll tidak terbawa). Cara pakai, isi
+  yang sudah didukung, dan batasnya ada di [docs/BOTTOM_SHEET.md](docs/BOTTOM_SHEET.md).
+  `isDismissable: false` mengunci sheet (hanya pemakai yang menutup, mis. selama PIN diperiksa host). Tombol yang
+  harus selalu terlihat dipasang dari isi lewat `.bottomSheetFooter { ... }` dan menempel di bawah sheet;
+  `OptionList` pilihan banyak sudah memakainya. Field teks di isi boleh: sheet naik ke atas keyboard. Di layar
+  tanpa notch batas bawaan 16 pt di bawah status bar. Wadah
   hanya memberi latar gelap, permukaan bersudut atas membulat, grabber, dan cara menutup (ketuk di luar, geser ke
   bawah). Tinggi mengikuti isi sampai batasnya: bawaan tepat di bawah status bar, atau `maxHeight: .screenFraction(0.6)`
   (bagian dari tinggi layar). Isi yang lebih panjang dari batas di-scroll wadah tanpa indikator dan tanpa bounce (jembatan

@@ -12,8 +12,7 @@ import SwiftUI
 /// TODO: Tabel lebih dari tiga kolom belum punya pola Figma; sementara tetap dibagi rata.
 @MainActor
 struct MarkdownTableView: View {
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.designColors) private var colors
     let table: MarkdownTable
     let style: MarkdownTextStyle
 

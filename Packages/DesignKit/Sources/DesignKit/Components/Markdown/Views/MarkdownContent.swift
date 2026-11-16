@@ -18,16 +18,9 @@ public struct MarkdownContent: View {
     private let style: MarkdownTextStyle
     private let onOpenLink: (String) -> Void
 
-    public init(
-        document: MarkdownDocument, fontFace: FontFace = .firaSansRegular, boldFontFace: FontFace = .firaSansBold,
-        italicFontFace: FontFace = .firaSansItalic, boldItalicFontFace: FontFace = .firaSansBoldItalic,
-        role: MarkdownTextRole = .body, onOpenLink: @escaping (String) -> Void
-    ) {
+    public init(document: MarkdownDocument, role: MarkdownTextRole = .body, onOpenLink: @escaping (String) -> Void) {
         self.document = document
-        self.style = MarkdownTextStyle(
-            fontFace: fontFace, boldFontFace: boldFontFace, italicFontFace: italicFontFace,
-            boldItalicFontFace: boldItalicFontFace, role: role
-        )
+        self.style = MarkdownTextStyle(role: role)
         self.onOpenLink = onOpenLink
     }
 

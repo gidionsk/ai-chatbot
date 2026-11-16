@@ -10,7 +10,7 @@ import XCTest
 /// `--sheet-demo`: bottom sheet contoh di atas halaman Tanya AI. Sheet menempel di bawah, setinggi isinya, menutupi
 /// header dengan latar gelap, dan menutup lewat ketuk di luar, geser ke bawah, atau pilihan di dalamnya.
 /// `--with-history` membuat tombol contoh langsung tampak di ujung daftar. Swipe-back ditahan host selama sheet
-/// terbuka.
+/// terbuka. Tombol yang menempel, sheet terkunci, dan keyboard ada di `BottomSheetStateUITests`.
 final class BottomSheetUITests: XCTestCase {
     private let application = XCUIApplication()
 

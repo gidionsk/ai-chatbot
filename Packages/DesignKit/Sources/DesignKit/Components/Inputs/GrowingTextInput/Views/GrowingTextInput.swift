@@ -8,11 +8,10 @@
 import SwiftUI
 import UIKit
 
-/// The UIKit bridge owns measurement and selection; the caller owns the draft and font.
+/// Jembatan ke editor UIKit: pengukuran dan seleksi di sini; draft dan font milik pemakai.
 @MainActor
 public struct GrowingTextInput: UIViewRepresentable {
-    @Binding
-    private var text: String
+    @Binding private var text: String
     private let font: UIFont
     private let textColor: UIColor
     private let lineSpacing: CGFloat

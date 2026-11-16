@@ -25,6 +25,8 @@
 "sandbox.sheet.title" = "Choose an option";
 "sandbox.sheet.option" = "Sample option";
 "sandbox.sheet.close" = "Close sheet";
+"sandbox.sheet.input" = "Note";
+"sandbox.sheet.choose" = "Choose";
 "sandbox.form.title" = "Reference Letter Request";
 "sandbox.form.format" = "Preferred format";
 "sandbox.form.formatPlaceholder" = "Choose format";

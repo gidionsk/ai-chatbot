@@ -14,10 +14,8 @@ import SwiftUI
 /// TODO: Cocokkan jarak dan role tipografi dengan Figma; sementara estimasi dari screenshot.
 @MainActor
 struct WelcomeSection: View {
-    @Environment(\.locale)
-    private var locale
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.locale) private var locale
+    @Environment(\.designColors) private var colors
     private let content: WelcomeContent
     private let isEnabled: Bool
     private let onSelect: (WelcomeShortcut) -> Void
@@ -50,11 +48,11 @@ struct WelcomeSection: View {
                 .accessibilityHidden(true)
             VStack(spacing: FigmaSize.spacingSmall.scaledToArtwork) {
                 Text(content.greetings.title)
-                    .font(titleFont)
+                    .designFont(.title)
                     .foregroundColor(colors.colorsTextPrimaryDark)
                     .accessibilityAddTraits(.isHeader)
                 Text(content.greetings.description)
-                    .font(bodyFont)
+                    .designFont(.body)
                     .foregroundColor(colors.colorsTextSecondary)
             }
         }
@@ -68,7 +66,8 @@ struct WelcomeSection: View {
             shortcutsTitle
             ForEach(Array(content.shortcuts.enumerated()), id: \.offset) { index, shortcut in
                 ActionCard(
-                    title: shortcut.title, description: shortcut.description, isEnabled: isEnabled,
+                    title: shortcut.title,
+                    description: shortcut.description,
                     onTap: { onSelect(shortcut) },
                     icon: {
                         RemoteImage(
@@ -77,6 +76,7 @@ struct WelcomeSection: View {
                         )
                     }
                 )
+                .disabled(!isEnabled)
                 .accessibilityIdentifier(ChatElementIdentifier.shortcut(index))
             }
             terms
@@ -112,7 +112,7 @@ struct WelcomeSection: View {
                 .foregroundColor(colors.colorsIconColored)
                 .accessibilityHidden(true)
             Text(String(ChatCopy.shortcutsTitle, locale: locale))
-                .font(sectionFont)
+                .designFont(.bodyStrong)
                 .foregroundColor(colors.colorsTextPrimaryDark)
                 .accessibilityAddTraits(.isHeader)
         }
@@ -123,16 +123,4 @@ struct WelcomeSection: View {
 
 private extension WelcomeSection {
     var iconSize: CGFloat { FigmaSize.weightIconSmall.scaledToArtwork }
-
-    var titleFont: Font {
-        FontFace.firaSansSemiBold.swiftUIFont(size: FigmaSize.typographySizeHeadingSmall20.scaledToArtwork)
-    }
-
-    var sectionFont: Font {
-        FontFace.firaSansSemiBold.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
-    }
-
-    var bodyFont: Font {
-        FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
-    }
 }

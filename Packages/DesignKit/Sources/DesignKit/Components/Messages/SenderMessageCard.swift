@@ -36,14 +36,10 @@ public struct SenderMessageCard<Avatar: View>: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: FigmaSize.spacingSmall.scaledToArtwork) {
             Text(sender)
-                .font(
-                    FontFace.firaSansSemiBold.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork)
-                )
+                .designFont(.captionStrong)
                 .foregroundColor(colors.colorsTextBrand)
             Text(text)
-                .font(
-                    FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
-                )
+                .designFont(.body)
                 .foregroundColor(colors.colorsTextPrimaryDark)
         }
         .multilineTextAlignment(.leading)

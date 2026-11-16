@@ -23,6 +23,8 @@ struct SandboxOptions {
     static let demoEndIdentifier = "sandbox.demo.end"
     static let demoParagraphCount = 12
     static let sheetOpenIdentifier = "sandbox.sheet.open"
+    /// `--sheet-input`: identifier field teks di dalam sheet contoh.
+    static let sheetInputIdentifier = "sandbox.sheet.input"
     /// `--sheet-demo`: jumlah baris contoh di dalam bottom sheet.
     static let sheetOptionCount = 4
     /// `--sheet-max`: batas tinggi sheet contoh, bagian dari tinggi layar.
@@ -75,6 +77,9 @@ struct SandboxOptions {
     private static let sheetDemoFlag = "--sheet-demo"
     private static let sheetMaxFlag = "--sheet-max"
     private static let sheetLongFlag = "--sheet-long"
+    private static let sheetMultiFlag = "--sheet-multi"
+    private static let sheetLockedFlag = "--sheet-locked"
+    private static let sheetInputFlag = "--sheet-input"
     private static let formDemoFlag = "--form-demo"
     private static let offlineFlag = "--offline"
     private static let brokenIconsFlag = "--broken-icons"
@@ -111,6 +116,12 @@ struct SandboxOptions {
     let isSheetMaxSet: Bool
     /// `--sheet-long` (bersama `--sheet-demo`): baris contoh lebih panjang dari layar, jadi isinya di-scroll.
     let isSheetLong: Bool
+    /// `--sheet-multi` (bersama `--sheet-demo`): pilihan banyak; tombol konfirmasinya menempel di bawah sheet.
+    let isSheetMulti: Bool
+    /// `--sheet-locked` (bersama `--sheet-demo`): sheet contoh dikunci, hanya memilih yang menutupnya.
+    let isSheetLocked: Bool
+    /// `--sheet-input` (bersama `--sheet-demo`): field teks di atas daftar, untuk mencoba sheet bersama keyboard.
+    let isSheetInput: Bool
     /// `--form-demo`: area scroll berisi form contoh (pilihan, field bergantung, field nonaktif, toggle, validasi).
     let isFormDemo: Bool
     let isOffline: Bool
@@ -131,6 +142,9 @@ struct SandboxOptions {
         isSheetDemo = arguments.contains(Self.sheetDemoFlag)
         isSheetMaxSet = arguments.contains(Self.sheetMaxFlag)
         isSheetLong = arguments.contains(Self.sheetLongFlag)
+        isSheetMulti = arguments.contains(Self.sheetMultiFlag)
+        isSheetLocked = arguments.contains(Self.sheetLockedFlag)
+        isSheetInput = arguments.contains(Self.sheetInputFlag)
         isFormDemo = arguments.contains(Self.formDemoFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {

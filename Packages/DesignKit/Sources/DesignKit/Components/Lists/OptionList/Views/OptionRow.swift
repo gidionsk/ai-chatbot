@@ -20,10 +20,7 @@ struct OptionRow: View {
         Button(action: onTap) {
             HStack(spacing: FigmaSize.spacingMedium.scaledToArtwork) {
                 Text(item.title)
-                    .font(
-                        FontFace.firaSansRegular.swiftUIFont(
-                            size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
-                    )
+                    .designFont(.body)
                     .foregroundColor(colors.colorsTextPrimaryDark)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)

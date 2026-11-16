@@ -35,9 +35,7 @@ struct FieldFrame<Content: View>: View {
     private var title: some View {
         if let label {
             Text(label)
-                .font(
-                    FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplaySmall14.scaledToArtwork)
-                )
+                .designFont(.body)
                 .foregroundColor(colors.colorsTextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -47,7 +45,7 @@ struct FieldFrame<Content: View>: View {
     private var message: some View {
         if let error {
             Text(error)
-                .font(FontFace.firaSansRegular.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+                .designFont(.caption)
                 .foregroundColor(colors.colorsTextNegative)
                 .fixedSize(horizontal: false, vertical: true)
         }

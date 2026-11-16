@@ -20,9 +20,7 @@ struct FontTests {
         let expected: [(FontFace, String)] = [
             (.firaSansRegular, "FiraSans-Regular"), (.firaSansMedium, "FiraSans-Medium"),
             (.firaSansSemiBold, "FiraSans-SemiBold"), (.firaSansBold, "FiraSans-Bold"),
-            (.firaSansItalic, "FiraSans-Italic"), (.firaSansBoldItalic, "FiraSans-BoldItalic"),
-            (.openSansRegular, "OpenSansRoman-Regular"), (.openSansMedium, "OpenSansRoman-Medium"),
-            (.openSansBold, "OpenSans-Bold")
+            (.firaSansItalic, "FiraSans-Italic"), (.firaSansBoldItalic, "FiraSans-BoldItalic")
         ]
         #expect(Set(FontFace.allCases) == Set(expected.map(\.0)))
         for (face, postScriptName) in expected {

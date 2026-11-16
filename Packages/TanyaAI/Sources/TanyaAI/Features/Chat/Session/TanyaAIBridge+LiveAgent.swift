@@ -35,27 +35,36 @@ extension TanyaAIBridge {
     /// Kartu yang tampil di daftar. Kartu antre hanya selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir
     /// daftar bila event-nya tidak ikut replay. Dari history ditambahkan kartu selesai untuk sesi agen dan kartu
     /// "tidak dilanjutkan" untuk serah terima tanpa agen, bila stream tidak memberi kartu penutupnya. Kartu antre
-    /// bukan penutup: setelah antre selesai kartunya tersembunyi.
+    /// bukan penutup: setelah antre selesai kartunya tersembunyi. `seq` menjadi id baris, jadi kartu ber-`seq` sama
+    /// hanya tampil sekali: table crash bila menerima id ganda, dan itu terjadi bila `id:` SSE dan `seq` pesan tidak
+    /// berasal dari satu urutan. Yang dipertahankan urut kepentingannya: kartu antre yang sedang aktif (tombol
+    /// batalnya ikut kartu ini), lalu kartu dari stream, baru kartu turunan history.
     var visibleLiveAgentNotices: [LiveAgentNotice] {
         let closing = liveAgentNotices.filter { $0.kind != .connecting }
         let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
-        var notices = closing
+        var notices = activeQueueNotices + closing
         notices += messages.endedAgentSessions(isOngoing: conversationState == .agentActive, closedBy: closing)
         notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: closing)
-        if conversationState == .agentQueued {
-            let latest = liveAgentNotices.last { $0.kind == .connecting }
-            notices.append(latest ?? LiveAgentNotice(kind: .connecting, seq: .max))
-        }
-        return notices.sorted { $0.seq < $1.seq }
+        var seenSeqs = Set<Int>()
+        return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
+    }
+
+    /// Kartu antre selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir daftar bila event-nya tidak ikut
+    /// replay. Kosong di luar antre.
+    private var activeQueueNotices: [LiveAgentNotice] {
+        guard conversationState == .agentQueued else { return [] }
+        let latest = liveAgentNotices.last { $0.kind == .connecting }
+        return [latest ?? LiveAgentNotice(kind: .connecting, seq: .max)]
     }
 
     /// Pemicu ikut ke bawah bila pembaca di ujung daftar: pesan masuk terbaru, kartu live agent terbaru yang tampil,
     /// atau indikator mengetik. Hanya perubahannya yang dipakai, bukan isinya; nil selama belum ada apa pun.
     /// Kartu antre (dan tombol batalnya) baru tampil saat event `state` tiba setelah event `system`-nya, jadi yang
-    /// dipakai kartu yang tampil, bukan kartu terakhir dari stream.
-    var latestIncomingContentID: String? {
+    /// dipakai kartu yang tampil, bukan kartu terakhir dari stream: `latestNotice` = `visibleLiveAgentNotices.last`,
+    /// diberikan pemanggil supaya daftar kartu cukup dihitung sekali per render.
+    func incomingContentID(latestNotice: LiveAgentNotice?) -> String? {
         let typing = isAgentTyping ? isAgentTyping.description : nil
-        let notice = visibleLiveAgentNotices.last.map { $0.kind.rawValue + String($0.seq) }
+        let notice = latestNotice.map { $0.kind.rawValue + String($0.seq) }
         let parts = [latestIncomingMessageID, notice, typing].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined()
     }
@@ -104,35 +113,26 @@ extension TanyaAIBridge {
             guard (try? await sleep(ChatWire.typingIdle)) != nil, !Task.isCancelled else { return }
             self?.stopUserTyping()
         }
-        guard !isUserTypingFresh else { return }
-        isUserTypingSent = true
-        isUserTypingFresh = true
+        guard userTypingRefresh == nil else { return }
         deliverUserTyping(true)
         userTypingRefresh = Task { [weak self, sleep] in
             guard (try? await sleep(ChatWire.typingRefresh)) != nil, !Task.isCancelled else { return }
-            self?.isUserTypingFresh = false
+            self?.userTypingRefresh = nil
         }
     }
 
     /// Berhenti mengetik selagi masih dengan agen: kabarkan `false` bila `true` pernah dikirim.
     func stopUserTyping() {
-        userTypingIdle?.cancel()
-        userTypingRefresh?.cancel()
-        isUserTypingFresh = false
-        guard isUserTypingSent else { return }
-        isUserTypingSent = false
+        cancelUserTypingTimers()
+        guard userTyping.isTyping else { return }
         deliverUserTyping(false)
     }
 
     /// Agen selesai, percakapan berganti, atau sesi berakhir: lupakan status dan sinyal yang menunggu tanpa kiriman,
     /// karena tidak ada lagi yang menerimanya.
     func resetUserTyping() {
-        userTypingIdle?.cancel()
-        userTypingRefresh?.cancel()
-        isUserTypingFresh = false
-        isUserTypingSent = false
-        isUserTypingQueued = nil
-        isUserTypingDelivered = false
+        cancelUserTypingTimers()
+        userTyping = UserTypingSignal()
     }
 }
 
@@ -141,7 +141,7 @@ private extension TanyaAIBridge {
     /// digabung menjadi yang terbaru. Sinyal ini tidak disimpan server, jadi gagal diabaikan; hanya 401 yang
     /// mengakhiri sesi seperti jalur lain.
     func deliverUserTyping(_ isTyping: Bool) {
-        isUserTypingQueued = isTyping
+        userTyping.queue(isTyping)
         guard userTypingDelivery == nil else { return }
         userTypingDelivery = Task { [weak self] in
             while let signal = self?.nextUserTypingSignal(), let transport = self?.transport {
@@ -158,12 +158,16 @@ private extension TanyaAIBridge {
     /// Diperiksa tepat sebelum dikirim: masih dengan agen dan sesi hidup. Percakapannya yang terbaru, karena
     /// pergantian percakapan sudah membuang sinyal yang menunggu.
     func nextUserTypingSignal() -> (conversationID: String, isTyping: Bool)? {
-        guard let isTyping = isUserTypingQueued else { return nil }
-        isUserTypingQueued = nil
-        guard isReady, conversationState == .agentActive, let conversationID, isTyping || isUserTypingDelivered
-        else { return nil }
-        isUserTypingDelivered = isTyping
+        let isDeliverable = isReady && conversationState == .agentActive
+        guard let isTyping = userTyping.takeNext(isDeliverable: isDeliverable), let conversationID else { return nil }
         return (conversationID, isTyping)
+    }
+
+    /// Pewaktu yang dibatalkan tidak mengubah apa pun lagi, jadi penandanya dikosongkan di sini.
+    func cancelUserTypingTimers() {
+        userTypingIdle?.cancel()
+        userTypingRefresh?.cancel()
+        userTypingRefresh = nil
     }
 
     func didFailUserTyping(_ error: Error) {

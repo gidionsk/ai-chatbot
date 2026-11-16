@@ -7,7 +7,7 @@
 
 import UIKit
 
-/// Resource filenames and PostScript names are separate font metadata.
+/// Face Fira Sans di bundle. Nama file resource dan nama PostScript adalah metadata font yang berbeda.
 public enum FontFace: String, CaseIterable {
     case firaSansRegular = "FiraSans-Regular.ttf"
     case firaSansMedium = "FiraSans-Medium.ttf"
@@ -15,9 +15,6 @@ public enum FontFace: String, CaseIterable {
     case firaSansBold = "FiraSans-Bold.ttf"
     case firaSansItalic = "FiraSans-Italic.ttf"
     case firaSansBoldItalic = "FiraSans-BoldItalic.ttf"
-    case openSansRegular = "OpenSans-Regular.ttf"
-    case openSansMedium = "OpenSans-Medium.ttf"
-    case openSansBold = "OpenSans-Bold.ttf"
 
     private static let directoryName = "Fonts"
 
@@ -29,9 +26,6 @@ public enum FontFace: String, CaseIterable {
         case .firaSansBold: return "FiraSans-Bold"
         case .firaSansItalic: return "FiraSans-Italic"
         case .firaSansBoldItalic: return "FiraSans-BoldItalic"
-        case .openSansRegular: return "OpenSansRoman-Regular"
-        case .openSansMedium: return "OpenSansRoman-Medium"
-        case .openSansBold: return "OpenSans-Bold"
         }
     }
 
@@ -39,7 +33,7 @@ public enum FontFace: String, CaseIterable {
         UIFont(name: postScriptName, size: size) ?? UIFont.systemFont(ofSize: size)
     }
 
-    /// Call during bootstrap before presenting components; registration is process-scoped and idempotent.
+    /// Panggil saat bootstrap sebelum menampilkan komponen; registrasi berlaku satu proses dan boleh diulang.
     public static func registerFonts() throws {
         _ = try FontLoader.register(
             fileNames: allCases.map(\.rawValue), bundle: .module, subdirectory: directoryName

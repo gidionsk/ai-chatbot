@@ -19,7 +19,8 @@ struct FollowUpsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: FigmaSize.spacingMedium.scaledToArtwork) {
             ForEach(Array(questions.enumerated()), id: \.offset) { index, question in
-                SuggestionChip(text: question, isEnabled: isEnabled) { onSelect(question) }
+                SuggestionChip(text: question) { onSelect(question) }
+                    .disabled(!isEnabled)
                     .accessibilityIdentifier(ChatElementIdentifier.followUp(index))
             }
         }

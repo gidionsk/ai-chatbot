@@ -36,10 +36,10 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
         await waitUntil { bridge.eventCursor == 3 }
-        let beforeState = bridge.latestIncomingContentID
+        let beforeState = bridge.incomingContentID(latestNotice: bridge.visibleLiveAgentNotices.last)
         transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
         await waitUntil { bridge.conversationState == .agentQueued }
-        #expect(bridge.latestIncomingContentID != beforeState)
+        #expect(bridge.incomingContentID(latestNotice: bridge.visibleLiveAgentNotices.last) != beforeState)
     }
 
     /// Dibuka lagi saat masih antre tetapi event antre tidak ikut replay: kartu antre di akhir daftar.

@@ -37,8 +37,8 @@ Limits, list conversations, close, dan `success-id` belum dipakai.
   teks biasa adalah Markdown yang valid. `html` tampil sebagai teks, karena tidak ada HTML renderer.
   Payload objek (`interaction`, `json`) belum punya tampilan dan disembunyikan.
 - `intent` dibaca ke `ChatMessage.intent` (`ChatIntent`, daftar intent di `Intents/Models`): `handover-to-agent` =
-  `liveAgent`, kosong atau tidak ada = nil, nilai lain = `unknown`. Belum ada tampilan yang membacanya;
-  intent baru ditambah sebagai case saat ada fitur yang memakainya.
+  `liveAgent`, kosong atau tidak ada = nil, nilai lain = `unknown`. `liveAgent` dibaca untuk kartu "tidak
+  dilanjutkan" di history; intent baru ditambah sebagai case saat ada fitur yang memakainya.
 
 ## Saran lanjutan
 
@@ -75,6 +75,8 @@ dibuka lagi saat masih antre tanpa event yang ikut replay. Kartu selesai dari hi
 terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau di akhir bila agen tidak sedang melayani), kecuali
 stream sudah memberi kartu penutup untuk sesi itu. Waktu antre habis dan agen tidak tersedia memakai kartu yang sama.
 Kartu dari history memakai `seq` pesan yang ditutupnya dan disisipkan dengan `<=`, jadi tepat setelah pesan itu.
+`seq` kartu menjadi id baris table. Bila gateway memberi `id:` SSE dari urutan lain sehingga kartu ber-`seq` sama,
+hanya satu yang tampil: kartu antre yang sedang aktif, lalu kartu dari stream, baru kartu turunan history.
 
 Pesan bot ber-intent `handover-to-agent` yang tidak diikuti pesan agen (sampai bot menjawab lagi, atau sampai akhir
 daftar bila sudah tidak antre/dilayani dan turn-nya selesai) diberi kartu "tidak dilanjutkan" tepat setelahnya.
@@ -123,7 +125,8 @@ mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
 3. Berhenti: halaman ditutup (task dibatalkan), init mengembalikan `CLOSED` (history tetap tampil; sejak
    contract 1.4 init resume membuka lagi percakapan `CLOSED`, jadi ini hanya pengaman),
    401 (`onSessionExpired`, sekali), atau error lain dengan `retryable:false` (`onConnectionFailed`, sekali,
-   dengan `TanyaAITransportError`). Loading awal ikut berhenti. 401 dan gagal permanen dari jalur mana pun
+   dengan `TanyaAITransportError`). Respons init atau history yang tidak bisa di-decode juga berhenti di sini
+   (`onConnectionFailed` dengan `DecodingError`): bentuknya tidak membaik dengan mengulang. Loading awal ikut berhenti. 401 dan gagal permanen dari jalur mana pun
    (termasuk kirim) menutup stream yang sedang terbuka dan bersifat final selama bridge hidup: halaman yang
    tampil lagi (`.task` jalan ulang) tidak menyambung ulang; host membuka halaman baru untuk mencoba lagi.
    Halaman yang hanya tertutup halaman lain lalu tampil lagi tetap menyambung ulang.

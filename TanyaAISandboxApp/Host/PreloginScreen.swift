@@ -11,10 +11,8 @@ import SwiftUI
 /// Tiruan prelogin: cukup untuk membuktikan logout menutup Tanya AI.
 @MainActor
 struct PreloginScreen: View {
-    @Environment(\.locale)
-    private var locale
-    @Environment(\.designColors)
-    private var colors
+    @Environment(\.locale) private var locale
+    @Environment(\.designColors) private var colors
     @EnvironmentObject
     private var appState: AppState
 

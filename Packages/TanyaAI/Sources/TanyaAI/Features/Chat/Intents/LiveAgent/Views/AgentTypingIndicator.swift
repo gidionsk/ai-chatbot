@@ -16,7 +16,7 @@ struct AgentTypingIndicator: View {
 
     var body: some View {
         Text(String(ChatCopy.liveAgentTyping, locale: locale))
-            .font(FontFace.firaSansItalic.swiftUIFont(size: FigmaSize.typographySizeDisplayTiny12.scaledToArtwork))
+            .designFont(.captionItalic)
             .foregroundColor(colors.colorsTextSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityIdentifier(ChatElementIdentifier.agentTyping)
