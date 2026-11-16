@@ -32,3 +32,20 @@
 "liveAgent.unavailable.message" = "客服目前无法为您服务，请稍后再试。Tanya AI 随时为您服务。";
 "liveAgent.notContinued.title" = "客服请求未继续";
 "liveAgent.notContinued.message" = "您曾请求连接客服，但对话未继续。Tanya AI 随时为您服务。";
+
+"referenceLetter.title" = "申请银行资信证明";
+"referenceLetter.purpose" = "证明用途";
+"referenceLetter.format" = "文件格式";
+"referenceLetter.destination" = "使馆／收件机构";
+"referenceLetter.accounts" = "附加账户";
+"referenceLetter.currency" = "显示币种";
+"referenceLetter.language" = "证明语言";
+"referenceLetter.balance" = "显示余额信息";
+"referenceLetter.investment" = "显示投资资金";
+"referenceLetter.email" = "接收电子邮箱";
+"referenceLetter.address" = "邮寄地址";
+"referenceLetter.send" = "发送";
+"referenceLetter.choose" = "选择";
+"referenceLetter.placeholder" = "请选择";
+"referenceLetter.required" = "请填写此项";
+"referenceLetter.separator" = "、";

@@ -32,3 +32,20 @@
 "liveAgent.unavailable.message" = "A Customer Assistant cannot serve you right now. Please try again later; Tanya AI is ready to help you again.";
 "liveAgent.notContinued.title" = "Agent Request Not Continued";
 "liveAgent.notContinued.message" = "You requested to connect with a Customer Assistant, but the conversation did not continue. Tanya AI is ready to help you again.";
+
+"referenceLetter.title" = "Request a Reference Letter";
+"referenceLetter.purpose" = "Purpose of the letter";
+"referenceLetter.format" = "Document format";
+"referenceLetter.destination" = "Embassy / destination institution";
+"referenceLetter.accounts" = "Accounts to include";
+"referenceLetter.currency" = "Display currency";
+"referenceLetter.language" = "Letter language";
+"referenceLetter.balance" = "Show balance information";
+"referenceLetter.investment" = "Show investment funds";
+"referenceLetter.email" = "Delivery email";
+"referenceLetter.address" = "Delivery address";
+"referenceLetter.send" = "Send";
+"referenceLetter.choose" = "Choose";
+"referenceLetter.placeholder" = "Choose an option";
+"referenceLetter.required" = "Please complete this field";
+"referenceLetter.separator" = ", ";

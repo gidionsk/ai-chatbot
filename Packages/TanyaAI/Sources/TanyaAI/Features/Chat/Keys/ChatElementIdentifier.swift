@@ -25,4 +25,12 @@ enum ChatElementIdentifier {
 
     /// Kartu shortcut ke-`index` (mulai 0) sesuai urutan dari BE.
     static func shortcut(_ index: Int) -> String { "welcome.shortcut.\(index)" }
+    static let referenceDestination = "referenceLetter.destination"
+    static let referenceEmail = "referenceLetter.email"
+    static let referenceAddress = "referenceLetter.address"
+    static let referenceSend = "referenceLetter.send"
+
+    static func referenceField(_ field: ReferenceLetterFieldID) -> String {
+        "referenceLetter.\(field.rawValue)"
+    }
 }
