@@ -49,3 +49,9 @@
 "referenceLetter.placeholder" = "Choose an option";
 "referenceLetter.required" = "Please complete this field";
 "referenceLetter.separator" = ", ";
+"referenceLetter.loadFailed" = "Unable to load reference letter details. Please try again.";
+"referenceLetter.retry" = "Try again";
+"referenceLetter.cancel" = "Cancel";
+"referenceLetter.cancelled" = "The reference letter request was cancelled.";
+"referenceLetter.history" = "You previously requested a reference letter.";
+"referenceLetter.close" = "Close";

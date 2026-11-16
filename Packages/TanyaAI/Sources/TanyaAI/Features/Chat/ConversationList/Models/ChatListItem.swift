@@ -21,6 +21,7 @@ enum ChatListItem: Identifiable, Equatable {
     case agentTyping
     /// Konten yang disisipkan pemakai `ChatScreen`.
     case content
+    case referenceLetter(String)
 
     var id: ChatListItemID {
         switch self {
@@ -40,6 +41,8 @@ enum ChatListItem: Identifiable, Equatable {
             return .agentTyping
         case .content:
             return .content
+        case .referenceLetter(let id):
+            return .referenceLetter(id)
         }
     }
 
@@ -52,7 +55,7 @@ enum ChatListItem: Identifiable, Equatable {
     /// Tanpa `default`: baris baru wajib memilih jaraknya di sini.
     var topSpacing: CGFloat {
         switch self {
-        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping:
+        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping, .referenceLetter:
             return FigmaSize.spacingLarge.scaledToArtwork
         case .leaveAgentQueue:
             return FigmaSize.spacingMedium.scaledToArtwork

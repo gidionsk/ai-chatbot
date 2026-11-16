@@ -49,3 +49,9 @@
 "referenceLetter.placeholder" = "请选择";
 "referenceLetter.required" = "请填写此项";
 "referenceLetter.separator" = "、";
+"referenceLetter.loadFailed" = "无法加载资信证明信息，请重试。";
+"referenceLetter.retry" = "重试";
+"referenceLetter.cancel" = "取消";
+"referenceLetter.cancelled" = "资信证明申请已取消。";
+"referenceLetter.history" = "您曾申请过资信证明。";
+"referenceLetter.close" = "关闭";

@@ -28,6 +28,7 @@ enum ChatElementIdentifier {
     static let referenceDestination = "referenceLetter.destination"
     static let referenceEmail = "referenceLetter.email"
     static let referenceAddress = "referenceLetter.address"
+    static let referenceResult = "referenceLetter.result"
     static let referenceSend = "referenceLetter.send"
 
     static func referenceField(_ field: ReferenceLetterFieldID) -> String {

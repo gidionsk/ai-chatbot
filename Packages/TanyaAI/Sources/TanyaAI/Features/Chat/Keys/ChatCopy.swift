@@ -54,4 +54,10 @@ enum ChatCopy: String, CaseIterable {
     case referencePlaceholder = "referenceLetter.placeholder"
     case referenceRequired = "referenceLetter.required"
     case referenceSeparator = "referenceLetter.separator"
+    case referenceLoadFailed = "referenceLetter.loadFailed"
+    case referenceRetry = "referenceLetter.retry"
+    case referenceCancel = "referenceLetter.cancel"
+    case referenceCancelled = "referenceLetter.cancelled"
+    case referenceHistory = "referenceLetter.history"
+    case referenceClose = "referenceLetter.close"
 }

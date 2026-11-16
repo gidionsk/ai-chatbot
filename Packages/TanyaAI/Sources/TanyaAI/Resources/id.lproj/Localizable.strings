@@ -49,3 +49,9 @@
 "referenceLetter.placeholder" = "Pilih salah satu";
 "referenceLetter.required" = "Mohon lengkapi field ini";
 "referenceLetter.separator" = ", ";
+"referenceLetter.loadFailed" = "Data surat referensi belum dapat dimuat. Silakan coba lagi.";
+"referenceLetter.retry" = "Coba lagi";
+"referenceLetter.cancel" = "Batalkan";
+"referenceLetter.cancelled" = "Pemesanan surat referensi dibatalkan.";
+"referenceLetter.history" = "Kamu pernah mengajukan surat referensi.";
+"referenceLetter.close" = "Tutup";

@@ -17,4 +17,5 @@ enum ChatListItemID: Hashable {
     case leaveAgentQueue
     case agentTyping
     case content
+    case referenceLetter(String)
 }

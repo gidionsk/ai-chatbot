@@ -23,6 +23,8 @@ public struct ChatScreen<Content: View>: View {
     @State private var scrollProgress = CGFloat.zero
     @State private var isLatestVisible = true
     @State private var latestJumpID: UUID?
+    @State private var formSheet: IntentFormSheet?
+    private let onSheetPresented: (Bool) -> Void
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
@@ -32,6 +34,7 @@ public struct ChatScreen<Content: View>: View {
     public init(
         isEnabled: Bool = true, welcome: WelcomeContent? = nil, bridge: TanyaAIBridge,
         onBack: (() -> Void)? = nil, onOpenLink: @escaping (String) -> Void = { _ in },
+        onSheetPresented: @escaping (Bool) -> Void = { _ in },
         @ViewBuilder content: () -> Content
     ) {
         _bridge = ObservedObject(wrappedValue: bridge)
@@ -40,6 +43,7 @@ public struct ChatScreen<Content: View>: View {
         self.onBack = onBack
         self.onOpenLink = onOpenLink
         self.content = content()
+        self.onSheetPresented = onSheetPresented
     }
 
     public var body: some View {
@@ -52,6 +56,9 @@ public struct ChatScreen<Content: View>: View {
             background: { backgroundImage }
         )
         .overlay { loadingIndicator }
+        .modifier(
+            IntentFormPresenter(sessions: bridge.referenceLetters, sheet: $formSheet, onPresented: onSheetPresented)
+        )
         // Dibatalkan otomatis saat halaman hilang; tampil lagi = init ulang dan mengejar history.
         .task { await bridge.run() }
     }
@@ -80,10 +87,13 @@ public struct ChatScreen<Content: View>: View {
     /// Baris table tidak mewarisi environment halaman, jadi nilainya dipasang di sini. `id` mencegah state view
     /// terbawa saat sel dipakai ulang untuk pesan lain.
     private func listRow(_ item: ChatListItem, actions: ChatRowActions) -> some View {
-        ChatListRow(item: item, welcome: welcome, content: content, actions: actions)
-            .id(item.id)
-            .designColors(colors)
-            .environment(\.locale, locale)
+        ChatListRow(
+            item: item, welcome: welcome, content: content, actions: actions,
+            referenceLetter: referenceSession(for: item)
+        )
+        .id(item.id)
+        .designColors(colors)
+        .environment(\.locale, locale)
     }
 
     /// Hanya saat pertama dibuka; menyambung ulang tidak menutupi pesan yang sudah tampil. Gagal permanen
@@ -116,12 +126,18 @@ public struct ChatScreen<Content: View>: View {
 // MARK: - Helpers
 
 private extension ChatScreen {
+    func referenceSession(for item: ChatListItem) -> ReferenceLetterSession? {
+        guard case .referenceLetter(let id) = item else { return nil }
+        return bridge.referenceLetters[id]
+    }
+
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
 
     var rowActions: ChatRowActions {
         ChatRowActions(
             onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp,
-            onLeaveAgentQueue: leaveAgentQueue
+            onLeaveAgentQueue: leaveAgentQueue,
+            onOpenFormSheet: { formSheet = $0 }
         )
     }
 
@@ -150,7 +166,7 @@ private extension ChatScreen {
         if Content.self != EmptyView.self {
             items.append(.content)
         }
-        return items
+        return items.insertingReferenceLetters(Set(bridge.referenceLetters.keys))
     }
 }
 

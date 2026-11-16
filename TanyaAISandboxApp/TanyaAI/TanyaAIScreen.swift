@@ -59,7 +59,7 @@ struct TanyaAIScreen: ScreenContent {
         } else if SandboxOptions.current.isSheetDemo {
             host.makeView(onBack: onBack, onOpenLink: openLink) { SheetDemoContent(onOpen: openSheet) }
         } else {
-            host.makeView(onBack: onBack, onOpenLink: openLink)
+            host.makeView(onBack: onBack, onOpenLink: openLink, onSheetPresented: formSheetPresented)
         }
     }
 
@@ -84,5 +84,9 @@ struct TanyaAIScreen: ScreenContent {
     private func choose(_ ids: [String]) {
         sheetChoiceIDs = ids
         isSheetPresented = false
+    }
+
+    private func formSheetPresented(_ isPresented: Bool) {
+        UINavigationController.setPopGestureEnabled(!isPresented)
     }
 }

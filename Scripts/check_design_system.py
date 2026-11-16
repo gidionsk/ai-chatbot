@@ -21,9 +21,10 @@ METADATA = {
     'Features/Chat/Keys/TanyaAILink.swift',
     # Kode SOFTCOPY/HARDCOPY berasal dari kontrak inquiry host.
     'Features/Chat/Intents/ReferenceLetter/Models/ReferenceLetterFieldID.swift',
+    'Features/Chat/Intents/ReferenceLetter/Models/ReferenceLetterSymbols.swift',
     'TanyaAISandboxApp/ReferenceLetter/Models/ReferenceLetterEndpoint.swift',
     'TanyaAISandboxApp/ReferenceLetter/Models/ReferenceLetterWire.swift',
-    'Features/Chat/Intents/Models/ChatIntent.swift',
+    'TanyaAISandboxApp/ReferenceLetter/SandboxReferenceLetterService.swift', 'Features/Chat/Intents/Models/ChatIntent.swift',
     'Features/Chat/Gateway/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
     'Features/Chat/Gateway/Models/ConversationState.swift', 'Features/Chat/Gateway/Models/WireError.swift',
     'Features/Chat/Gateway/Models/WireCancel.swift', 'Features/Chat/Gateway/Models/WireLeaveAgent.swift',
