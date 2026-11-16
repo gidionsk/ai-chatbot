@@ -7,9 +7,9 @@
 
 import DesignKit
 
-/// Body POST /user/tanya-ai/reference-letter/ack. Label dan description disalin persis dari inquiry BE.
-public struct ReferenceLetterRequest: Encodable, Equatable {
-    public struct Choice: Encodable, Equatable {
+/// Snapshot pilihan form untuk host. Encoding request jaringan dan route BE adalah tanggung jawab project host.
+public struct ReferenceLetterRequest: Equatable {
+    public struct Choice: Equatable {
         public let code: String
         public let value: String
         public let description: String?
@@ -32,7 +32,6 @@ public struct ReferenceLetterRequest: Encodable, Equatable {
     public let email: String
     public let language: Choice
     public let onlineSessionId: String
-    public private(set) var responseCodeOTP = String()
 
     /// Snapshot immutable sebelum PIN dibuka. Tidak membuat label atau rekening yang tidak berasal dari inquiry.
     public init?(inquiry: ReferenceLetterInquiry, draft: ReferenceLetterDraft) {
@@ -56,9 +55,4 @@ public struct ReferenceLetterRequest: Encodable, Equatable {
         onlineSessionId = inquiry.onlineSessionID
     }
 
-    func authorized(with verification: ReferenceLetterVerification) -> Self {
-        var request = self
-        request.responseCodeOTP = verification.responseCodeOTP
-        return request
-    }
 }

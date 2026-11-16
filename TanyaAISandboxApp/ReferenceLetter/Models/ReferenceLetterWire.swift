@@ -1,12 +1,13 @@
 //
 //  ReferenceLetterWire.swift
-//  TanyaAI
+//  TanyaAISandboxApp
 //
 //  Created by Wendra on 16/11/26.
 //
 
 import DesignKit
 import Foundation
+import TanyaAI
 
 enum ReferenceLetterWire {
     struct Envelope<Payload: Decodable>: Decodable {

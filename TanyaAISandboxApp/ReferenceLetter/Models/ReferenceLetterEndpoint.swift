@@ -1,26 +1,21 @@
 //
 //  ReferenceLetterEndpoint.swift
-//  TanyaAI
+//  TanyaAISandboxApp
 //
 //  Created by Wendra on 16/11/26.
 //
 
-/// Kontrak route BE. Base URL, header, autentikasi, dan implementasi HTTP tetap milik host.
-public enum ReferenceLetterEndpoint: String {
+/// Route BE milik project host; tidak diekspor melalui SDK TanyaAI.
+enum ReferenceLetterEndpoint: String {
     case inquiry = "/user/tanya-ai/reference-letter/inquiry"
     case verifyPIN = "/token/v4/verify/pin/otp"
     case acknowledge = "/user/tanya-ai/reference-letter/ack"
 
-    public var method: String { self == .inquiry ? "GET" : "POST" }
+    var method: String { self == .inquiry ? "GET" : "POST" }
 }
 
 enum ReferenceLetterResponseCode: String {
     case success = "00000"
     case invalidPIN = "05516"
     case blockedPIN = "05005"
-}
-
-/// Placeholder simbol native sampai aset Figma tersedia; tidak menambah binary gambar dummy.
-enum ReferenceLetterSymbols {
-    static let receipt = "doc.text"
 }

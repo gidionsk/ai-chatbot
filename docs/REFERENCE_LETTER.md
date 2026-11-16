@@ -41,7 +41,11 @@ mengubah alamat/email dari BE. Toggle awal mengikuti foto: saldo aktif, investas
 menjadi nilai pilihan yang dikarang. ID kosong/ganda dinormalisasi sekali saat inquiry dipetakan; urutan pertama BE
 dipertahankan. Field pilihan menyimpan kode, dan ACK mengirim objek code/value/description dari inquiry.
 
-## Adapter host
+## Service di project host
+
+Route endpoint, DTO BE, encoding/decoding, dan adapter pada contoh di bawah berada di
+`TanyaAISandboxApp/ReferenceLetter`, bukan di package TanyaAI. SDK hanya bergantung pada protocol
+`ReferenceLetterService` dan model form yang sudah dipetakan, seperti batas jaringan pada live agent existing.
 
 ```swift
 let referenceLetter = ReferenceLetterServiceAdapter(
@@ -79,7 +83,9 @@ host.makeView(onSheetPresented: { isPresented in
 
 Nama `userService`, `tokenService`, `existingCrypto`, dan properti token di contoh adalah titik pemetaan, bukan API
 Byon yang tersedia di repo ini. Signature/generator asli, konfigurasi jaringan, header dan credential tidak diberikan
-dalam handoff. Package menyediakan protocol bertipe dan adapter contract, tanpa menebak implementasi kriptografi.
+dalam handoff. Package menyediakan protocol bertipe dan snapshot form; project host mengimplementasikan adapter contract,
+tanpa menebak implementasi kriptografi. Snapshot form tidak mengimplementasikan `Encodable`: body ACK dibuat
+oleh model wire host dari snapshot serta hasil verifikasi yang diteruskan terpisah.
 Host juga dapat mengimplementasikan `ReferenceLetterService` langsung bila model/service Byon sudah tersedia.
 
 `TransactionPINEntry` adalah isi keypad reusable baru di DesignKit; komponen PIN belum ada pada baseline. Ia tidak
@@ -97,7 +103,7 @@ tidak menambah DSL field, mesin jaringan, atau coordinator navigasi baru untuk s
 ```
 
 Buka TanyaAI dan kirim satu pertanyaan. Gateway fixture memberi intent Surat Referensi. Demo menjalankan adapter dan
-decoder yang sama dengan production memakai JSON fixture. Enam angka apa pun diterima mock token; flag pin-error
+decoder project host memakai JSON fixture, melalui protocol SDK yang sama untuk service produksi. Enam angka apa pun diterima mock token; flag pin-error
 mengembalikan 05516 pada percobaan pertama, lalu sukses. Stub OTP dan lookup email fixture bukan kriptografi produksi.
 Tidak ada request ke bank atau pencatatan PIN/body request. `ReferenceLetterInquiry.json` berisi data contoh dan marker
 email fixture; `ReferenceLetterACK.json` berisi catatan hasil seperti foto kontrak BE.
@@ -108,6 +114,6 @@ history read-only, dan respons lama setelah pergantian percakapan. UI test menca
 PIN salah lalu sukses, serta pesan ACK. Jalankan `Scripts/verify.sh` di macOS/Xcode sebelum integrasi.
 
 Pemeriksaan lokal di Linux mencakup guard design system, konsistensi localization, Swift-format 6.2.1 dengan config
-repo, syntax parser, dan diff/ukuran file. Model serta adapter pure Swift: 13 test dalam 3 suite lulus melalui
-harness terisolasi yang memakai source/test asli; manifest repository tidak diubah. Ini bukan build iOS.
+repo, syntax parser, dan diff/ukuran file. Model SDK serta adapter host pure Swift: 13 test dalam 3 suite lulus melalui harness Linux terisolasi dengan
+module SDK dan host terpisah, memakai source/test asli; manifest repository tidak diubah. Ini bukan build iOS.
 SwiftLint, formatter Xcode, unit test package lengkap, UI test, VoiceOver dan layout iOS 15 belum dijalankan.
