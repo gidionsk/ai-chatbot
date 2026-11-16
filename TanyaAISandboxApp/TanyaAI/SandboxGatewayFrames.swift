@@ -82,11 +82,13 @@ struct SandboxGatewayFrames {
     }
 
     /// Pesan baru dengan seq berikutnya; dikirim lewat `frame(_:)`.
-    mutating func newMessage(direction: String, text: String, clientMessageID: String? = nil) -> SandboxWireMessage {
+    mutating func newMessage(
+        direction: String, text: String, clientMessageID: String? = nil, intent: String? = nil
+    ) -> SandboxWireMessage {
         seq += 1
         return SandboxWireMessage(
             messageId: UUID().uuidString, seq: String(seq), direction: direction, payload: text,
-            status: SandboxWireMessage.active, clientMsgId: clientMessageID
+            status: SandboxWireMessage.active, clientMsgId: clientMessageID, intent: intent
         )
     }
 
@@ -95,8 +97,10 @@ struct SandboxGatewayFrames {
         ["id: \(message.seq)", "event: message", "data: \(Self.json(message))", ""]
     }
 
-    mutating func message(direction: String, text: String, clientMessageID: String? = nil) -> [String] {
-        frame(newMessage(direction: direction, text: text, clientMessageID: clientMessageID))
+    mutating func message(
+        direction: String, text: String, clientMessageID: String? = nil, intent: String? = nil
+    ) -> [String] {
+        frame(newMessage(direction: direction, text: text, clientMessageID: clientMessageID, intent: intent))
     }
 
     /// Pertanyaan yang dihentikan dikirim ulang utuh dengan status `canceled`; `id:` frame memakai seq baru.

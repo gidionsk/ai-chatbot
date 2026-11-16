@@ -10,6 +10,11 @@ import Foundation
 
 /// Developer-only launch metadata. Gateway tiruan (`SandboxChatTransport`) menjawab tanpa backend.
 struct SandboxOptions {
+    static let referenceIntent = "request-bank-reference-letter"
+    static let referenceReply = "Silakan lengkapi formulir surat referensi."
+    static let referenceEncryptedEmail = "sandbox-encrypted-email"
+    static let referenceDecryptedEmail = "sample@example.com"
+    private static let referenceFlag = "--reference-letter-demo"
     static let fontFailure = "Font registration failed: "
     static let openIdentifier = "sandbox.open"
     static let detailOpenIdentifier = "sandbox.detail.open"
@@ -124,6 +129,7 @@ struct SandboxOptions {
     let isSheetInput: Bool
     /// `--form-demo`: area scroll berisi form contoh (pilihan, field bergantung, field nonaktif, toggle, validasi).
     let isFormDemo: Bool
+    let isReferenceLetterDemo: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
     /// `--slow-icons` (tidak menjawab, cek loading). Nil = URL dari fixture.
@@ -146,6 +152,7 @@ struct SandboxOptions {
         isSheetLocked = arguments.contains(Self.sheetLockedFlag)
         isSheetInput = arguments.contains(Self.sheetInputFlag)
         isFormDemo = arguments.contains(Self.formDemoFlag)
+        isReferenceLetterDemo = arguments.contains(Self.referenceFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {
             iconOverrideURL = Self.brokenIconURL

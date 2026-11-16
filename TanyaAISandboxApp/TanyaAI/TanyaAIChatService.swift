@@ -163,8 +163,14 @@ extension TanyaAIChatService {
         schedule(after: SandboxOptions.echoDelay) { $0.emit($0.frames.frame(question)) }
         if !options.isHoldingReply {
             schedule(after: SandboxOptions.echoDelay + SandboxOptions.replyDelay) { service in
-                let reply = SandboxGatewayFrames.reply(to: text)
-                service.emit(service.frames.message(direction: SandboxWireMessage.assistant, text: reply))
+                let isReference = service.options.isReferenceLetterDemo
+                let reply = isReference ? SandboxOptions.referenceReply : SandboxGatewayFrames.reply(to: text)
+                service.emit(
+                    service.frames.message(
+                        direction: SandboxWireMessage.assistant, text: reply,
+                        intent: isReference ? SandboxOptions.referenceIntent : nil
+                    )
+                )
                 service.finishTurn()
             }
         }

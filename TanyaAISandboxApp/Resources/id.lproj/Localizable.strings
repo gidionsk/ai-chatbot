@@ -44,3 +44,5 @@
 "sandbox.form.cancel" = "Batalkan";
 "sandbox.form.requiredText" = "Wajib diisi";
 "sandbox.form.requiredChoice" = "Wajib dipilih";
+
+"sandbox.reference.serviceFailed" = "Layanan belum dapat memproses permintaan ini.";

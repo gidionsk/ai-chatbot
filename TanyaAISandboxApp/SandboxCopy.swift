@@ -51,6 +51,8 @@ enum SandboxCopy: String, CaseIterable {
     case formCancel = "sandbox.form.cancel"
     case formRequiredText = "sandbox.form.requiredText"
     case formRequiredChoice = "sandbox.form.requiredChoice"
+    case referenceServiceFailed = "sandbox.reference.serviceFailed"
+
 }
 
 extension String {
