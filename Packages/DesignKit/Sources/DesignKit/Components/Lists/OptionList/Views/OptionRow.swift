@@ -19,12 +19,7 @@ struct OptionRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: FigmaSize.spacingMedium.scaledToArtwork) {
-                Text(item.title)
-                    .designFont(.body)
-                    .foregroundColor(colors.colorsTextPrimaryDark)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                label
                 SelectionIndicator(mode: mode, isSelected: isSelected)
             }
             .padding(.vertical, FigmaSize.spacingLarge.scaledToArtwork)
@@ -32,6 +27,25 @@ struct OptionRow: View {
         }
         .buttonStyle(.plain)
         .overlay(alignment: .bottom) { SeparatorLine() }
+        .accessibilityLabel(item.title)
+        .accessibilityValue(item.subtitle ?? String())
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    // TODO: Typography, warna dan jarak subtitle sementara; menunggu spesifikasi Figma.
+    private var label: some View {
+        VStack(alignment: .leading, spacing: FigmaSize.spacingSmall.scaledToArtwork) {
+            Text(item.title)
+                .designFont(.body)
+                .foregroundColor(colors.colorsTextPrimaryDark)
+            if let subtitle = item.subtitle {
+                Text(subtitle)
+                    .designFont(.caption)
+                    .foregroundColor(colors.colorsTextSecondary)
+            }
+        }
+        .multilineTextAlignment(.leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -48,6 +48,19 @@ final class FormFieldsUITests: XCTestCase {
         XCTAssertEqual(application.buttons["sandbox.form.accounts"].value as? String, "2 accounts selected")
     }
 
+    func testAccountOptionsExposeTitleAndBalanceForAccessibility() {
+        launchDemo()
+        application.buttons["sandbox.form.accounts"].tap()
+        let account = application.buttons["Tanda 360 - 5262 8191 2892 82"]
+        XCTAssertTrue(account.waitForExistence(timeout: 5))
+        XCTAssertEqual(account.label, "Tanda 360 - 5262 8191 2892 82")
+        XCTAssertEqual(account.value as? String, "IDR 1.000.000")
+        let plain = application.buttons["Giro Bisnis - 7781 2003 4551 9"]
+        XCTAssertTrue(plain.exists)
+        XCTAssertEqual(plain.label, "Giro Bisnis - 7781 2003 4551 9")
+        XCTAssertTrue((plain.value as? String)?.isEmpty ?? true)
+    }
+
     func testConfirmMarksEmptyFieldsAndOpensTheTopmostEmptyChoice() {
         launchDemo()
         let confirm = application.buttons["sandbox.form.confirm"]

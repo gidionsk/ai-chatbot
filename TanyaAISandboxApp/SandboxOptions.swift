@@ -55,7 +55,8 @@ struct SandboxOptions {
     static let formSubmittedIdentifier = "sandbox.form.submitted"
     /// Data dummy rekening nasabah.
     static let formAccounts = [
-        OptionItem(id: "5262819128982", title: "Tanda 360 - 5262 8191 2892 82"),
+        // Saldo dummy untuk contoh subtitle rekening, bukan respons service BE.
+        OptionItem(id: "5262819128982", title: "Tanda 360 - 5262 8191 2892 82", subtitle: "IDR 1.000.000"),
         OptionItem(id: "6930112045571", title: "Tabungan Taka - 6930 1120 4557 1"),
         OptionItem(id: "7781200345519", title: "Giro Bisnis - 7781 2003 4551 9")
     ]
