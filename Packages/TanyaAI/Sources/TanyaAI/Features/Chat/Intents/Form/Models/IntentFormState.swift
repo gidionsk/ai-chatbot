@@ -9,12 +9,12 @@
 /// Tidak memegang service, sheet, atau aturan validasi khusus satu intent.
 struct IntentFormState<FieldID: Hashable> {
     let fields: [FormField<FieldID>]
-    var values: [FieldID: FormFieldValue] = [:]
-    var invalidFieldIDs: Set<FieldID> = []
+    private(set) var values: [FieldID: FormFieldValue] = [:]
+    private(set) var invalidFieldIDs: Set<FieldID> = []
 
     init(fields: [FormField<FieldID>]) {
         self.fields = fields
-        refreshValues()
+        values = refreshedValues()
     }
 
     var visibleFields: [FormField<FieldID>] { fields.filter { values[$0.id] != nil } }
@@ -27,13 +27,19 @@ struct IntentFormState<FieldID: Hashable> {
             values[fieldID] != nil, let normalized = normalizedValue(value, for: field)
         else { return }
         values[fieldID] = normalized
-        refreshValues()
+        values = refreshedValues()
         invalidFieldIDs.formIntersection(invalidRequiredFields())
+    }
+
+    /// Dipanggil pemakai ketika Konfirmasi. Urutan definisi menentukan pilihan kosong paling atas.
+    mutating func validate() -> Bool {
+        invalidFieldIDs = invalidRequiredFields()
+        return invalidFieldIDs.isEmpty
     }
 
     mutating func reset() {
         values = [:]
         invalidFieldIDs = []
-        refreshValues()
+        values = refreshedValues()
     }
 }

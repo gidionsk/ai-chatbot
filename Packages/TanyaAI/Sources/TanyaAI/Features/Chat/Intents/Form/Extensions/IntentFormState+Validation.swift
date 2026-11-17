@@ -20,12 +20,6 @@ extension IntentFormState {
         return nil
     }
 
-    /// Dipanggil pemakai ketika Konfirmasi. Urutan definisi menentukan pilihan kosong paling atas.
-    mutating func validate() -> Bool {
-        invalidFieldIDs = invalidRequiredFields()
-        return invalidFieldIDs.isEmpty
-    }
-
     func invalidRequiredFields() -> Set<FieldID> {
         var invalid: Set<FieldID> = []
         for field in fields where field.isRequired && field.isEnabled {

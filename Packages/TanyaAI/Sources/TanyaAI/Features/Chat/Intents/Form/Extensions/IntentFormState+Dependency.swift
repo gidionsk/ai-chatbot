@@ -8,13 +8,13 @@
 extension IntentFormState {
     /// Hanya field terlihat yang mempunyai nilai draft. Field yang tampil kembali memakai nilai awalnya,
     /// sehingga input lama yang sudah disembunyikan tidak terbawa ke permintaan berikutnya.
-    mutating func refreshValues() {
+    func refreshedValues() -> [FieldID: FormFieldValue] {
         let previous = values
         var visibleValues: [FieldID: FormFieldValue] = [:]
         for field in fields {
             visibleValues[field.id] = resolvedValue(for: field.id, source: previous, visited: [])
         }
-        values = visibleValues
+        return visibleValues
     }
 
     func resolvedValue(
