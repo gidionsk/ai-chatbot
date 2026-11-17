@@ -26,8 +26,11 @@ struct ReferenceLetterInquiryTests {
             onlineSessionID: String()
         )
         for options in [
-            inquiry.purposes, inquiry.documentFormats, inquiry.sourceAccounts,
-            inquiry.currencies, inquiry.languages
+            inquiry.purposes,
+            inquiry.documentFormats,
+            inquiry.sourceAccounts,
+            inquiry.currencies,
+            inquiry.languages
         ] {
             #expect(options.map(\.code) == ["choice-z", "choice-a"])
         }
