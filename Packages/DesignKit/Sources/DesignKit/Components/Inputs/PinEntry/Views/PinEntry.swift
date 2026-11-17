@@ -47,13 +47,12 @@ public struct PinEntry: View {
         VStack(spacing: .zero) {
             heading
             lockIcon
-            PinDots(label: title, filledCount: pin.count, length: length)
-            errorText
+            dotContainer
             keypad
         }
         .frame(maxWidth: .infinity)
         .padding(.top, FigmaSize.spacingLarge.scaledToArtwork)
-        .padding(.horizontal, CustomSizes.PinEntry.horizontalPadding.scaledToArtwork)
+        .padding(.horizontal, CustomSizes.PinEntry.padding.scaledToArtwork)
         .padding(.bottom, FigmaSize.spacingLarge.scaledToArtwork)
     }
 
@@ -64,7 +63,7 @@ public struct PinEntry: View {
             .foregroundColor(colors.colorsTextPrimaryDark)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.bottom, headerSpacing)
+            .padding(.bottom, FigmaSize.spacingDoubleExtraLarge.scaledToArtwork)
             .accessibilityHidden(true)
     }
 
@@ -72,10 +71,26 @@ public struct PinEntry: View {
         Image(DesignIcon.lock)
             .resizable()
             .scaledToFit()
-            .frame(width: lockSize, height: lockSize)
+            .frame(
+                width: CustomSizes.PinEntry.lockSize.scaledToArtwork,
+                height: CustomSizes.PinEntry.lockSize.scaledToArtwork
+            )
             .foregroundColor(colors.colorsIconDark)
-            .padding(.bottom, headerSpacing)
+            .padding(.bottom, FigmaSize.spacingDoubleExtraLarge.scaledToArtwork)
             .accessibilityHidden(true)
+    }
+
+    /// Titik PIN dengan `error` tepat di bawahnya.
+    private var dotContainer: some View {
+        VStack(spacing: FigmaSize.spacingSmall.scaledToArtwork) {
+            PinDots(
+                label: title,
+                filledCount: pin.count,
+                length: length
+            )
+            errorText
+        }
+        .padding(.bottom, FigmaSize.spacingExtraLarge.scaledToArtwork)
     }
 
     /// Tempatnya selalu setinggi satu baris, supaya keypad tidak bergeser saat error muncul atau hilang.
@@ -86,17 +101,19 @@ public struct PinEntry: View {
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
             .frame(minHeight: FigmaSize.typographyLineHeightDisplayTiny12.scaledToArtwork)
-            .padding(.vertical, FigmaSize.spacingSmall.scaledToArtwork)
             .accessibilityHidden(error == nil)
             .accessibilityIdentifier(ComponentIdentifier.PinEntry.error)
     }
 
+    /// Tombol tiap baris dibagi rata selebar sheet: `Spacer` di kiri, di antara, dan di kanan tombol.
     private var keypad: some View {
-        VStack(spacing: FigmaSize.spacingSmall.scaledToArtwork) {
+        VStack(spacing: CustomSizes.PinEntry.padding.scaledToArtwork) {
             ForEach(PinPadKey.rows.indices, id: \.self) { row in
-                HStack(spacing: FigmaSize.spacingDoubleExtraLarge.scaledToArtwork) {
+                HStack(spacing: .zero) {
+                    Spacer()
                     ForEach(PinPadKey.rows[row].indices, id: \.self) { column in
                         slot(PinPadKey.rows[row][column])
+                        Spacer()
                     }
                 }
             }
@@ -107,9 +124,6 @@ public struct PinEntry: View {
 // MARK: - Helpers
 
 private extension PinEntry {
-    var headerSpacing: CGFloat { CustomSizes.PinEntry.headerSpacing.scaledToArtwork }
-    var lockSize: CGFloat { CustomSizes.PinEntry.lockSize.scaledToArtwork }
-
     @ViewBuilder
     func slot(_ key: PinPadKey?) -> some View {
         if let key {
