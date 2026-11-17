@@ -60,6 +60,16 @@ extension TanyaAIUseCase: TanyaAIChatTransport {
         }
     }
 
+    func attachSuccessID(messageID: String, successID: String) async throws -> Data {
+        try await withCheckedThrowingContinuation { continuation in
+            chatService.attachSuccessID(
+                messageID: messageID, successID: successID,
+                onSuccess: { continuation.resume(returning: $0) },
+                onFailed: { continuation.resume(throwing: $0) }
+            )
+        }
+    }
+
     func sendTyping(conversationID: String, isTyping: Bool) async throws {
         try await withCheckedThrowingContinuation { continuation in
             chatService.sendTyping(

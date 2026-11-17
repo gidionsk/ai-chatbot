@@ -19,6 +19,7 @@ final class FakeChatTransport: TanyaAIChatTransport {
     var sendResult: Result<Data, Error> = .success(WireFixture.ack())
     var cancelResult: Result<Data, Error> = .success(WireFixture.cancel(isCanceled: true))
     var leaveResult: Result<Data, Error> = .success(WireFixture.leave(isLeft: true))
+    var successIDResult: Result<Data, Error> = .success(WireFixture.successID(isDeduplicated: false))
     var typingError: Error?
     /// `client_msg_id` kirim terakhir, untuk memancarkan pertanyaan yang sama dari stream.
     private(set) var lastClientMessageID: String?
@@ -79,6 +80,11 @@ final class FakeChatTransport: TanyaAIChatTransport {
             await withCheckedContinuation { heldAck = $0 }
         }
         return try result.get()
+    }
+
+    func attachSuccessID(messageID: String, successID: String) async throws -> Data {
+        calls.append("success:\(messageID):\(successID)")
+        return try successIDResult.get()
     }
 
     func sendTyping(conversationID: String, isTyping: Bool) async throws {

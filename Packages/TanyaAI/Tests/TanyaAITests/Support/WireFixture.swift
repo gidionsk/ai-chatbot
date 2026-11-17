@@ -42,6 +42,10 @@ enum WireFixture {
         Data(#"{"success":true,"data":{"left":\#(isLeft)}}"#.utf8)
     }
 
+    static func successID(isDeduplicated: Bool) -> Data {
+        Data(#"{"success":true,"data":{"deduplicated":\#(isDeduplicated)}}"#.utf8)
+    }
+
     static func ack(seq: Int = 2) -> Data {
         Data(#"{"success":true,"data":{"message_id":"b1b2c3d4-0002","seq":"\#(seq)"}}"#.utf8)
     }
@@ -58,14 +62,15 @@ enum WireFixture {
     /// Objek `Message` lengkap; `direction` assistant untuk seq genap, user untuk ganjil kecuali ditentukan.
     static func message(
         seq: Int, direction: String? = nil, payload: String? = nil, status: String = "active",
-        clientMessageID: String? = nil, followUps: String = "null", intent: String = ""
+        clientMessageID: String? = nil, followUps: String = "null", intent: String = "", successID: String? = nil
     ) -> String {
         let author = direction ?? (seq.isMultiple(of: 2) ? "assistant" : "user")
         let clientID = clientMessageID.map { "\"\($0)\"" } ?? "null"
+        let receipt = successID.map { "\"\($0)\"" } ?? "null"
         return #"""
             {"message_id":"m-\#(seq)","seq":"\#(seq)","direction":"\#(author)","type":"text",\#
             "payload":"\#(payload ?? "pesan \(seq)")","intent":"\#(intent)","action":"","source":"","params":{},\#
-            "success_id":null,"success_at":null,"follow_up_questions":\#(followUps),"interaction":null,\#
+            "success_id":\#(receipt),"success_at":null,"follow_up_questions":\#(followUps),"interaction":null,\#
             "client_msg_id":\#(clientID),"status":"\#(status)",\#
             "created_at":"2026-10-23T15:00:00+07:00"}
             """#

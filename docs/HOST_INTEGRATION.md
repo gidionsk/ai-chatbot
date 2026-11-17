@@ -177,6 +177,10 @@ Mulai 10 November 2026 transport juga mewajibkan `leaveAgent(conversationID:)`
 (`POST /v1/chat/conversations/{id}/leave-agent`, tanpa body) untuk tombol batal antrean live agent. Polanya
 sama dengan `cancelTurn`: satu fungsi service callback dan satu fungsi continuation di `TanyaAIUseCase+Chat`.
 
+Mulai 18 November 2026 transport juga mewajibkan `attachSuccessID(messageID:successID:)`
+(`POST /v1/chat/messages/{message_id}/success-id`, body `{"success_id": "..."}`) untuk menandai pesan intent
+selesai setelah transaksinya berhasil. Polanya sama dengan `leaveAgent`, dengan body JSON seperti `sendMessage`.
+
 ```swift
 TanyaAIHost(locale: locale, colors: colors, welcome: welcome, bridge: bridge)
 ```

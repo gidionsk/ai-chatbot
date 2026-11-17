@@ -25,9 +25,20 @@ di-decode TanyaAI karena khusus Tanya AI dan sama di semua host.
 | `sendMessage(conversationID:clientMessageID:text:)` | `POST /v1/chat/messages`, body `{conversation_id, client_msg_id, type:"text", payload}` → 202 |
 | `cancelTurn(conversationID:)` | `POST /v1/chat/conversations/{id}/cancel`, tanpa body → 200 `{canceled}` |
 | `leaveAgent(conversationID:)` | `POST /v1/chat/conversations/{id}/leave-agent`, tanpa body → 200 `{left}`, 409 bila agen sudah bergabung |
+| `attachSuccessID(messageID:successID:)` | `POST /v1/chat/messages/{message_id}/success-id`, body `{"success_id"}` → 200 `{deduplicated}`, 409 bila nilai lain sudah tercatat |
 | `events(conversationID:lastEventID:)` | `GET /v1/chat/conversations/{id}/events`, `Accept: text/event-stream`, `Last-Event-ID` bila ada |
 
-Limits, list conversations, close, dan `success-id` belum dipakai.
+Limits, list conversations, dan close belum dipakai.
+
+## Bukti transaksi intent (`success-id`)
+
+`TanyaAIBridge.attachSuccessID(_:toMessageID:)` dipanggil fitur intent setelah transaksinya berhasil di host.
+Gateway hanya menerima pesan assistant dengan `action` tidak kosong (selain itu 404), jadi BE harus mengisi `action`
+pada pesan intent yang memakainya. Respons 200 langsung menandai pesan (`ChatMessage.successID`) tanpa menunggu
+frame dikirim ulang: kiriman ulang tidak ada untuk nilai yang sama dan terlewat bila stream putus setelah
+`Last-Event-ID` melewati `seq` pesan. Frame yang dikirim ulang (seq lama) mengganti pesan berdasarkan `message_id`.
+History yang dibuka lagi membawa `success_id`, jadi fitur intent membaca `successID` untuk menampilkan kartu
+sukses. 401 mengakhiri sesi; error lain dilempar ke pemanggil tanpa menutup percakapan.
 
 ## Nilai contract yang dipakai iOS
 
@@ -111,7 +122,7 @@ mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
 - Reconnect selalu lewat init, jadi percakapan yang ditutup admin atau perangkat lain terbuka lagi.
 - Pesan `agent` tampil sebagai bubble polos, bukan Markdown.
 - 401 langsung ke `onSessionExpired`, sedangkan contract menyarankan init ulang.
-- CTA `action` dan `success-id` belum tampil. Copy kartu live agent selain kartu antre masih placeholder.
+- CTA `action` belum tampil; `success_id` sudah dibaca, tetapi kartu suksesnya ikut fitur intent. Copy kartu live agent selain kartu antre masih placeholder.
 
 ## Alur
 

@@ -55,7 +55,7 @@ struct ChatEventTests {
         #expect(event == .message(expected))
     }
 
-    /// Contoh §4 contract 1.5.0, termasuk pasangan bukti transaksi yang belum dipakai UI.
+    /// Contoh §4 contract 1.5.0, termasuk pasangan bukti transaksi (`success_id` dibaca, `success_at` tidak).
     @Test
     func contractMessageWithAReceiptDecodesAsAnAssistantAnswer() throws {
         let data = #"""
@@ -71,6 +71,7 @@ struct ChatEventTests {
         #expect(message.author == .assistant)
         #expect(message.document == MarkdownDocument("Halo **Lara**"))
         #expect(message.followUps == ["Lanjut?"])
+        #expect(message.successID == "SUC-1")
         #expect(ChatRow.message(message).isVisible)
     }
 

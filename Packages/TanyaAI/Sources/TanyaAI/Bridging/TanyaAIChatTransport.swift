@@ -32,6 +32,11 @@ public protocol TanyaAIChatTransport: AnyObject {
     /// Respons 200 `{left}`; 409 bila agen sudah bergabung (hanya agen yang bisa menutup).
     func leaveAgent(conversationID: String) async throws -> Data
 
+    /// `POST /v1/chat/messages/{message_id}/success-id` dengan body `{"success_id": "..."}`: menandai pesan intent
+    /// assistant (`action` tidak kosong) sudah selesai ditransaksikan. Respons 200 `{deduplicated}`: nilai yang sama
+    /// boleh dikirim ulang, nilai berbeda = 409.
+    func attachSuccessID(messageID: String, successID: String) async throws -> Data
+
     /// `POST /v1/chat/conversations/{id}/typing` dengan body `{"typing": true|false}`: nasabah sedang mengetik,
     /// diteruskan ke agen. Respons 204 tanpa body. Hanya dipanggil selama dilayani agen.
     func sendTyping(conversationID: String, isTyping: Bool) async throws
