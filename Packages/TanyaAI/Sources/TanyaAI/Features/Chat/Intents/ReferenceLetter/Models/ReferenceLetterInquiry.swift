@@ -16,7 +16,8 @@ public struct ReferenceLetterInquiry: Equatable {
     public let languages: [FormOption]
     public let address: String
     public let decryptedEmail: String
-    /// Email terenkripsi asli, dikirim kembali pada ACK. Tidak pernah dipakai sebagai teks tampilan.
+    /// Email terenkripsi asli, disimpan untuk dikirim kembali ke host.
+    /// Tidak pernah dipakai sebagai teks tampilan.
     public let encryptedEmail: String
     public let onlineSessionID: String
 

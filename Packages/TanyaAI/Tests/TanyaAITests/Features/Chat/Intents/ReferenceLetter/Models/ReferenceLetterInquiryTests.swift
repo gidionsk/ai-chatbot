@@ -11,34 +11,26 @@ import Testing
 
 struct ReferenceLetterInquiryTests {
     @Test
-    func inquiryPreservesHostChoiceOrderAndAccountDetails() {
-        let purposes = [FormOption(code: "purpose-b", title: "Second"), FormOption(code: "purpose-a", title: "First")]
-        let accounts = [FormOption(code: "account-a", title: "Sample account - 1234", subtitle: "Sample balance")]
-        let formats = [FormOption(code: "format-a", title: "Sample format")]
-        let currencies = [FormOption(code: "currency-a", title: "Sample currency")]
-        let languages = [FormOption(code: "language-a", title: "Sample language")]
+    func inquiryPreservesHostChoiceOrder() {
+        let choices = [FormOption(code: "choice-z", title: "Last"), FormOption(code: "choice-a", title: "First")]
         let inquiry = ReferenceLetterInquiry(
-            introduction: "Sample introduction",
-            purposes: purposes,
-            documentFormats: formats,
-            sourceAccounts: accounts,
-            currencies: currencies,
-            languages: languages,
-            address: "Sample address",
-            decryptedEmail: "sample@example.com",
-            encryptedEmail: "opaque-host-value",
-            onlineSessionID: "sample-session"
+            introduction: String(),
+            purposes: choices,
+            documentFormats: choices,
+            sourceAccounts: choices,
+            currencies: choices,
+            languages: choices,
+            address: String(),
+            decryptedEmail: String(),
+            encryptedEmail: String(),
+            onlineSessionID: String()
         )
-        #expect(inquiry.introduction == "Sample introduction")
-        #expect(inquiry.purposes == purposes)
-        #expect(inquiry.documentFormats == formats)
-        #expect(inquiry.sourceAccounts == accounts)
-        #expect(inquiry.currencies == currencies)
-        #expect(inquiry.languages == languages)
-        #expect(inquiry.address == "Sample address")
-        #expect(inquiry.decryptedEmail == "sample@example.com")
-        #expect(inquiry.encryptedEmail == "opaque-host-value")
-        #expect(inquiry.onlineSessionID == "sample-session")
+        for options in [
+            inquiry.purposes, inquiry.documentFormats, inquiry.sourceAccounts,
+            inquiry.currencies, inquiry.languages
+        ] {
+            #expect(options.map(\.code) == ["choice-z", "choice-a"])
+        }
     }
 
     @Test

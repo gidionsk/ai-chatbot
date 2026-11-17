@@ -50,19 +50,22 @@ private extension OptionRowTests {
     /// Reference rendering from the title-only row before subtitle support.
     func legacyRow(isSelected: Bool) -> some View {
         let colors = EnvironmentValues().designColors
-        return Button(action: {}) {
-            HStack(spacing: FigmaSize.spacingMedium.scaledToArtwork) {
-                Text("Sample account - 1234")
-                    .designFont(.body)
-                    .foregroundColor(colors.colorsTextPrimaryDark)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                SelectionIndicator(mode: .single, isSelected: isSelected)
+        return Button(
+            action: {},
+            label: {
+                HStack(spacing: FigmaSize.spacingMedium.scaledToArtwork) {
+                    Text("Sample account - 1234")
+                        .designFont(.body)
+                        .foregroundColor(colors.colorsTextPrimaryDark)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    SelectionIndicator(mode: .single, isSelected: isSelected)
+                }
+                .padding(.vertical, FigmaSize.spacingLarge.scaledToArtwork)
+                .contentShape(Rectangle())
             }
-            .padding(.vertical, FigmaSize.spacingLarge.scaledToArtwork)
-            .contentShape(Rectangle())
-        }
+        )
         .buttonStyle(.plain)
         .overlay(alignment: .bottom) { SeparatorLine() }
         .accessibilityAddTraits(isSelected ? .isSelected : [])
