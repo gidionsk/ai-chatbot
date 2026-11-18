@@ -21,8 +21,8 @@ extension Array where Element == ChatMessage {
         for message in self {
             switch message.author {
             case .agent:
-                let isOpenedByStream = joinedSeqs.contains { $0 > boundarySeq && $0 < message.seq }
-                if !isInSession, !isOpenedByStream {
+                // Event stream hanya dicari di awal sesi, bukan di setiap balasan agen berikutnya.
+                if !isInSession, !joinedSeqs.contains(where: { $0 > boundarySeq && $0 < message.seq }) {
                     chips.append(LiveAgentNotice(kind: .joined, seq: previousSeq))
                 }
                 isInSession = true
