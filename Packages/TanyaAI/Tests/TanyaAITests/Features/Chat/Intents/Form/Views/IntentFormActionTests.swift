@@ -1,5 +1,5 @@
 //
-//  FormActionBindingTests.swift
+//  IntentFormActionTests.swift
 //  TanyaAITests
 //
 //  Created by Wendra on 18/11/26.
@@ -11,7 +11,7 @@ import Testing
 @testable import TanyaAI
 
 @MainActor
-struct FormActionBindingTests {
+struct IntentFormActionTests {
     @Test
     func confirmationStoresAllErrorsBeforeOpeningTheFirstInvalidChoice() {
         var state = IntentFormState<TestFormFieldID>(fields: [
@@ -22,13 +22,15 @@ struct FormActionBindingTests {
         let binding = Binding(get: { state }, set: { state = $0 })
         var opened: [TestFormFieldID] = []
         var isConfirmed = false
-        binding.confirmForm(
-            onInvalidChoice: { fieldID in
+        let content = makeForm(
+            binding,
+            onOpenChoices: { fieldID in
                 #expect(state.invalidFieldIDs == [.requiredText, .secondChoice, .firstChoice])
                 opened.append(fieldID)
             },
-            onValid: { isConfirmed = true }
+            onConfirm: { isConfirmed = true }
         )
+        content.confirm()
         #expect(opened == [.secondChoice])
         #expect(!isConfirmed)
     }
@@ -42,7 +44,12 @@ struct FormActionBindingTests {
         let binding = Binding(get: { state }, set: { state = $0 })
         var opened: [TestFormFieldID] = []
         var isConfirmed = false
-        binding.confirmForm(onInvalidChoice: { opened.append($0) }, onValid: { isConfirmed = true })
+        let content = makeForm(
+            binding,
+            onOpenChoices: { opened.append($0) },
+            onConfirm: { isConfirmed = true }
+        )
+        content.confirm()
         #expect(state.invalidFieldIDs == [.requiredText])
         #expect(opened.isEmpty)
         #expect(!isConfirmed)
@@ -56,16 +63,18 @@ struct FormActionBindingTests {
         let binding = Binding(get: { state }, set: { state = $0 })
         let isInitiallyValid = state.validate()
         #expect(!isInitiallyValid)
-        binding.formValue(for: .requiredText).formText.wrappedValue = "Complete"
+        state[text: .requiredText] = "Complete"
         var confirmed = 0
-        binding.confirmForm(
-            onInvalidChoice: { _ in Issue.record("A complete form must not open a choice") },
-            onValid: {
+        let content = makeForm(
+            binding,
+            onOpenChoices: { _ in Issue.record("A complete form must not open a choice") },
+            onConfirm: {
                 #expect(state.invalidFieldIDs.isEmpty)
                 #expect(state.value(for: .requiredText) == .text("Complete"))
                 confirmed += 1
             }
         )
+        content.confirm()
         #expect(confirmed == 1)
     }
 
@@ -76,15 +85,39 @@ struct FormActionBindingTests {
             FormField(id: .toggle, initialValue: .toggle(false))
         ])
         let binding = Binding(get: { state }, set: { state = $0 })
-        binding.formValue(for: .toggle).formToggle.wrappedValue = true
+        state[toggle: .toggle] = true
         let isValid = state.validate()
         #expect(!isValid)
         var isCancelled = false
-        binding.resetForm {
+        let content = makeForm(binding, onOpenChoices: { _ in }, onConfirm: {}) {
             #expect(state.value(for: .toggle) == .toggle(false))
             #expect(state.invalidFieldIDs.isEmpty)
             isCancelled = true
         }
+        content.cancel()
         #expect(isCancelled)
+    }
+}
+
+// MARK: - Helpers
+
+private extension IntentFormActionTests {
+    func makeForm(
+        _ state: Binding<IntentFormState<TestFormFieldID>>,
+        onOpenChoices: @escaping (TestFormFieldID) -> Void,
+        onConfirm: @escaping () -> Void,
+        onCancel: @escaping () -> Void = {}
+    ) -> IntentFormView<TestFormFieldID> {
+        IntentFormView(
+            state: state,
+            title: "Form",
+            confirmLabel: "Confirm",
+            cancelLabel: "Cancel",
+            presentation: { _ in FormFieldPresentation(label: "Field", requiredError: "Required") },
+            selectionSummary: { _, options in options.map(\.title).joined(separator: ", ") },
+            onOpenChoices: onOpenChoices,
+            onConfirm: onConfirm,
+            onCancel: onCancel
+        )
     }
 }

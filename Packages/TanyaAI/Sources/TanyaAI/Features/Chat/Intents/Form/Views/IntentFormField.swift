@@ -10,19 +10,20 @@ import SwiftUI
 
 /// Satu field merender komponen DesignKit sesuai jenis nilainya, tanpa menyimpan draft kedua.
 @MainActor
-struct IntentFormField: View {
-    @Binding var value: FormFieldValue?
+struct IntentFormField<FieldID: Hashable>: View {
+    @Binding var state: IntentFormState<FieldID>
+    let fieldID: FieldID
     let presentation: FormFieldPresentation
     let selectionText: String?
     let error: String?
     let onOpenChoices: () -> Void
 
     var body: some View {
-        switch value {
+        switch state.value(for: fieldID) {
         case .text:
             TextInputField(
                 label: presentation.label,
-                text: $value.formText,
+                text: $state[text: fieldID],
                 placeholder: presentation.placeholder,
                 error: error,
                 keyboard: presentation.keyboard
@@ -36,7 +37,7 @@ struct IntentFormField: View {
                 onTap: onOpenChoices
             )
         case .toggle:
-            ToggleRow(label: presentation.label, isOn: $value.formToggle)
+            ToggleRow(label: presentation.label, isOn: $state[toggle: fieldID])
         case nil:
             EmptyView()
         }

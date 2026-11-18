@@ -49,7 +49,8 @@ struct IntentFormViewTests {
     @Test
     func aMissingFieldRendersNoInput() {
         let field = IntentFormField(
-            value: .constant(nil),
+            state: .constant(IntentFormState<TestFormFieldID>(fields: [])),
+            fieldID: .requiredText,
             presentation: presentation,
             selectionText: nil,
             error: nil,

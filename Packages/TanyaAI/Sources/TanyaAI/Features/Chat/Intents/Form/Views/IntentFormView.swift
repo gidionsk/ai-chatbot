@@ -30,7 +30,8 @@ struct IntentFormView<FieldID: Hashable>: View {
                 .accessibilityAddTraits(.isHeader)
             ForEach(state.visibleFields, id: \.id) { field in
                 IntentFormField(
-                    value: $state.formValue(for: field.id),
+                    state: $state,
+                    fieldID: field.id,
                     presentation: presentation(field.id),
                     selectionText: selectionText(for: field),
                     error: state.invalidFieldIDs.contains(field.id) ? presentation(field.id).requiredError : nil,
@@ -46,10 +47,8 @@ struct IntentFormView<FieldID: Hashable>: View {
 
     private var actions: some View {
         HStack(spacing: FigmaSize.spacingLarge.scaledToArtwork) {
-            FilledButton(title: cancelLabel, variant: .outlined) { $state.resetForm(onCancel: onCancel) }
-            FilledButton(title: confirmLabel) {
-                $state.confirmForm(onInvalidChoice: onOpenChoices, onValid: onConfirm)
-            }
+            FilledButton(title: cancelLabel, variant: .outlined, onTap: cancel)
+            FilledButton(title: confirmLabel, onTap: confirm)
         }
     }
 }
@@ -62,5 +61,24 @@ private extension IntentFormView {
         let options = field.options.filter { codes.contains($0.code) }
         guard !options.isEmpty else { return nil }
         return selectionSummary(field.id, options)
+    }
+}
+
+// MARK: - Actions
+
+extension IntentFormView {
+    /// Error ditulis dulu agar tetap tampil saat sheet pilihan kosong pertama terbuka.
+    func confirm() {
+        guard state.validate() else {
+            state.firstInvalidChoiceID.map(onOpenChoices)
+            return
+        }
+        onConfirm()
+    }
+
+    /// Draft kembali ke nilai awal sebelum pemilik diberi tahu.
+    func cancel() {
+        state.reset()
+        onCancel()
     }
 }

@@ -1,35 +1,35 @@
 //
-//  FormInputBindingTests.swift
+//  IntentFormInputTests.swift
 //  TanyaAITests
 //
 //  Created by Wendra on 18/11/26.
 //
 
-import SwiftUI
 import Testing
 
 @testable import TanyaAI
 
-@MainActor
-struct FormInputBindingTests {
+struct IntentFormInputTests {
     @Test
-    func inputBindingsReadCurrentStateAndWriteThroughItsUpdateAPI() {
+    func typedInputsReadCurrentStateAndWriteThroughItsUpdateAPI() {
         var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text("Initial")),
+            FormField(id: .requiredText, initialValue: .text("Initial"), isRequired: true),
             FormField(id: .toggle, initialValue: .toggle(false))
         ])
-        let binding = Binding(get: { state }, set: { state = $0 })
-        let text = binding.formValue(for: .requiredText).formText
-        let toggle = binding.formValue(for: .toggle).formToggle
-        #expect(text.wrappedValue == "Initial")
-        #expect(!toggle.wrappedValue)
-        text.wrappedValue = "Edited"
-        toggle.wrappedValue = true
+        #expect(state[text: .requiredText] == "Initial")
+        #expect(!state[toggle: .toggle])
+        state[text: .requiredText] = String()
+        let isValid = state.validate()
+        #expect(!isValid)
+        #expect(state.invalidFieldIDs == [.requiredText])
+        state[text: .requiredText] = "Edited"
+        state[toggle: .toggle] = true
         #expect(state.value(for: .requiredText) == .text("Edited"))
         #expect(state.value(for: .toggle) == .toggle(true))
+        #expect(state.invalidFieldIDs.isEmpty)
         state.reset()
-        #expect(text.wrappedValue == "Initial")
-        #expect(!toggle.wrappedValue)
+        #expect(state[text: .requiredText] == "Initial")
+        #expect(!state[toggle: .toggle])
     }
 
     @Test
@@ -43,11 +43,12 @@ struct FormInputBindingTests {
                 condition: FormFieldCondition(fieldID: .parentToggle, value: .toggle(true))
             )
         ])
-        let binding = Binding(get: { state }, set: { state = $0 })
-        binding.formValue(for: .disabledText).formText.wrappedValue = "Ignored"
-        binding.formValue(for: .childText).formText.wrappedValue = "Hidden"
-        binding.formValue(for: .parentToggle).formText.wrappedValue = "Wrong kind"
-        binding.formValue(for: .parentToggle).wrappedValue = nil
+        state[text: .disabledText] = "Ignored"
+        state[text: .childText] = "Hidden"
+        state[text: .parentToggle] = "Wrong kind"
+        state[toggle: .disabledText] = true
+        #expect(state[text: .childText].isEmpty)
+        #expect(!state[toggle: .disabledText])
         #expect(state.value(for: .disabledText) == .text("Stored"))
         #expect(state.value(for: .childText) == nil)
         #expect(state.value(for: .parentToggle) == .toggle(false))
@@ -61,15 +62,14 @@ struct FormInputBindingTests {
             FormField(id: .secondChoice, initialValue: .multipleSelection([]), options: options),
             FormField(id: .requiredText, initialValue: .text("Text"))
         ])
-        let binding = Binding(get: { state }, set: { state = $0 })
-        binding.selectFormOptions(["02", "01"], for: .firstChoice)
-        binding.selectFormOptions(["02", "unknown", "01", "02"], for: .secondChoice)
-        binding.selectFormOptions(["01"], for: .requiredText)
+        state.select(["02", "01"], for: .firstChoice)
+        state.select(["02", "unknown", "01", "02"], for: .secondChoice)
+        state.select(["01"], for: .requiredText)
         #expect(state.value(for: .firstChoice) == .singleSelection("02"))
         #expect(state.value(for: .secondChoice) == .multipleSelection(["01", "02"]))
         #expect(state.value(for: .requiredText) == .text("Text"))
-        binding.selectFormOptions([], for: .firstChoice)
-        binding.selectFormOptions([], for: .secondChoice)
+        state.select([], for: .firstChoice)
+        state.select([], for: .secondChoice)
         #expect(state.value(for: .firstChoice) == .singleSelection(nil))
         #expect(state.value(for: .secondChoice) == .multipleSelection([]))
     }

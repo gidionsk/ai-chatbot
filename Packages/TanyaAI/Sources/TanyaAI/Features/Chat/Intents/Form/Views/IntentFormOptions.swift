@@ -27,7 +27,7 @@ struct IntentFormOptions<FieldID: Hashable>: View {
                 confirmLabel: confirmLabel,
                 isEmptyAllowed: true
             ) { codes in
-                $state.selectFormOptions(codes, for: fieldID)
+                state.select(codes, for: fieldID)
                 onSelect()
             }
             .disabled(!field.isEnabled)
