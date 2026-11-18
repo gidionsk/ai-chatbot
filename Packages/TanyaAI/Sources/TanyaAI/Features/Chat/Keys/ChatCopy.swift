@@ -25,12 +25,13 @@ enum ChatCopy: String, CaseIterable {
     case leaveAgentQueue = "liveAgent.leaveQueue"
     /// Label aksesibilitas tombol lampiran saat dilayani agen.
     case liveAgentAttachment = "liveAgent.attachment"
+    /// Chip abu saat agen bergabung dan saat sesi agen berakhir.
+    case agentStartedChip = "liveAgent.started.chip"
+    case agentEndedChip = "liveAgent.ended.chip"
     case agentConnectingTitle = "liveAgent.connecting.title"
     case agentConnectingMessage = "liveAgent.connecting.message"
     case agentEndedTitle = "liveAgent.ended.title"
     case agentEndedMessage = "liveAgent.ended.message"
-    case agentIdleTitle = "liveAgent.idle.title"
-    case agentIdleMessage = "liveAgent.idle.message"
     case agentCanceledTitle = "liveAgent.canceled.title"
     case agentCanceledMessage = "liveAgent.canceled.message"
     case agentUnavailableTitle = "liveAgent.unavailable.title"

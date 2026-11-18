@@ -32,19 +32,22 @@ extension TanyaAIBridge {
 // MARK: - Notices
 
 extension TanyaAIBridge {
-    /// Kartu yang tampil di daftar. Kartu antre hanya selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir
-    /// daftar bila event-nya tidak ikut replay. Dari history ditambahkan kartu selesai untuk sesi agen dan kartu
-    /// "tidak dilanjutkan" untuk serah terima tanpa agen, bila stream tidak memberi kartu penutupnya. Kartu antre
-    /// bukan penutup: setelah antre selesai kartunya tersembunyi. `seq` menjadi id baris, jadi kartu ber-`seq` sama
-    /// hanya tampil sekali: table crash bila menerima id ganda, dan itu terjadi bila `id:` SSE dan `seq` pesan tidak
-    /// berasal dari satu urutan. Yang dipertahankan urut kepentingannya: kartu antre yang sedang aktif (tombol
-    /// batalnya ikut kartu ini), lalu kartu dari stream, baru kartu turunan history.
+    /// Chip dan kartu yang tampil di daftar. Kartu antre hanya selama `AGENT_QUEUED`: yang terbaru dari stream, atau
+    /// di akhir daftar bila event-nya tidak ikut replay. Dari history ditambahkan chip awal sesi agen, kartu selesai
+    /// untuk sesi agen, dan kartu "tidak dilanjutkan" untuk serah terima tanpa agen, bila stream tidak memberi chip
+    /// atau kartu penutupnya. Kartu antre bukan penutup: setelah antre selesai kartunya tersembunyi. Chip awal sesi
+    /// juga bukan penutup sesi, tetapi menandai serah terima yang dilanjutkan. `seq` menjadi id baris, jadi kartu
+    /// ber-`seq` sama hanya tampil sekali: table crash bila menerima id ganda, dan itu terjadi bila `id:` SSE dan `seq`
+    /// pesan tidak berasal dari satu urutan. Yang dipertahankan urut kepentingannya: kartu antre yang sedang aktif
+    /// (tombol batalnya ikut kartu ini), lalu kartu dari stream, baru kartu turunan history.
     var visibleLiveAgentNotices: [LiveAgentNotice] {
-        let closing = liveAgentNotices.filter { $0.kind != .connecting }
+        let streamNotices = liveAgentNotices.filter { $0.kind != .connecting }
+        let closing = streamNotices.filter { $0.kind != .joined }
         let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
-        var notices = activeQueueNotices + closing
+        var notices = activeQueueNotices + streamNotices
+        notices += messages.startedAgentSessions(openedBy: streamNotices)
         notices += messages.endedAgentSessions(isOngoing: conversationState == .agentActive, closedBy: closing)
-        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: closing)
+        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
         var seenSeqs = Set<Int>()
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
     }

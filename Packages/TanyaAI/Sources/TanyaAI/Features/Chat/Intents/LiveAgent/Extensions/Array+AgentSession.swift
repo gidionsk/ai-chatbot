@@ -6,6 +6,36 @@
 //
 
 extension Array where Element == ChatMessage {
+    /// Chip "sesi dimulai" untuk sesi agen di history, karena history tidak membawa event `agent_joined`. Sesi
+    /// dimulai di pesan agen pertama setelah bot menjawab (atau di awal daftar). `seq` chip = `seq` pesan sebelumnya
+    /// (`Int.min` bila tidak ada), jadi chip tampil tepat setelahnya. Pesan itu bot atau nasabah, jadi tidak pernah
+    /// menjadi kartu selesai atau "tidak dilanjutkan". Sesi yang sudah punya chip dari stream di antara pesan
+    /// sebelumnya dan pesan agen pertama tidak diberi chip lagi.
+    func startedAgentSessions(openedBy notices: [LiveAgentNotice]) -> [LiveAgentNotice] {
+        var starts: [(previousSeq: Int, agentSeq: Int)] = []
+        var previousSeq = Int.min
+        var isInSession = false
+        for message in self {
+            switch message.author {
+            case .agent:
+                if !isInSession {
+                    starts.append((previousSeq, message.seq))
+                }
+                isInSession = true
+            case .assistant:
+                isInSession = false
+            case .user, .unknown:
+                break
+            }
+            previousSeq = message.seq
+        }
+        let joined = notices.filter { $0.kind == .joined }
+        return
+            starts
+            .filter { start in !joined.contains { $0.seq > start.previousSeq && $0.seq < start.agentSeq } }
+            .map { LiveAgentNotice(kind: .joined, seq: $0.previousSeq) }
+    }
+
     /// Kartu selesai untuk sesi agen di history, karena history tidak membawa event `system`. Sesi berakhir saat bot
     /// menjawab lagi, atau di akhir daftar bila agen tidak sedang melayani; kartunya tepat setelah pesan agen
     /// terakhir sesi itu. Sesi yang sudah punya kartu dari stream di antara keduanya tidak diberi kartu lagi.

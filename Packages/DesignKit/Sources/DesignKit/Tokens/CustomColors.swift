@@ -25,6 +25,11 @@ public enum CustomColors {
         public static let pressedFill = CustomBasePaletteColor.glossySilver
     }
 
+    public enum Chip {
+        /// Figma `time_stamp`: opacity seluruh chip berlatar abu, termasuk teksnya.
+        public static let filledOpacity: Double = 0.7
+    }
+
     public enum Button {
         /// Figma tombol batal di bawah kartu status.
         public static let muted = CustomBasePaletteColor.slateBlue

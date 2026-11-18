@@ -68,9 +68,12 @@ Aplikasi tidak memakai intent ini: antre/agen ditentukan event `state` dan `syst
 `mode:"agent"` tidak punya pesan ini.
 
 Event `system` yang menjadi kartu: `agent_connecting` (antre), `agent_ended`, `agent_idle_timeout`,
-`queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` tidak menjadi kartu (agen menyapa
-lewat bubble, kartu antre hilang karena state berpindah) dan `back_to_assistant` selalu bersama kartu selesai.
-Copy kartu milik aplikasi; server hanya mengirim token.
+`queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` menjadi chip abu "Sesi dengan Customer
+Assistant Tanya OCBC dimulai" tanpa kartu (kartu antre hilang karena state berpindah). `agent_ended` dan
+`agent_idle_timeout` menjadi chip "... berakhir" lalu kartu "Mode dengan Customer Assistant Berakhir" (keputusan user
+18 November 2026: hanya sesi yang sudah dilayani agen; batal antre, antre habis, dan agen tidak tersedia tetap kartu
+lama). Chip memakai `DateChip` gaya `.filled` (Figma `time_stamp`). `back_to_assistant` selalu bersama event penutup.
+Copy milik aplikasi; server hanya mengirim token.
 
 History hanya berisi `Message`, jadi kartu hanya ada selama halaman terbuka. Saat dibuka lagi, kartu yang
 `seq`-nya setelah pesan terakhir masih ikut replay SSE (cursor = seq pesan terakhir) selama outbox belum
@@ -86,6 +89,8 @@ dibuka lagi saat masih antre tanpa event yang ikut replay. Kartu selesai dari hi
 terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau di akhir bila agen tidak sedang melayani), kecuali
 stream sudah memberi kartu penutup untuk sesi itu. Waktu antre habis dan agen tidak tersedia memakai kartu yang sama.
 Kartu dari history memakai `seq` pesan yang ditutupnya dan disisipkan dengan `<=`, jadi tepat setelah pesan itu.
+Chip awal sesi dari history ditaruh tepat setelah pesan sebelum pesan agen pertama sesi itu (`seq` pesan tersebut),
+kecuali stream sudah memberi `agent_joined` di rentang itu.
 `seq` kartu menjadi id baris table. Bila gateway memberi `id:` SSE dari urutan lain sehingga kartu ber-`seq` sama,
 hanya satu yang tampil: kartu antre yang sedang aktif, lalu kartu dari stream, baru kartu turunan history.
 

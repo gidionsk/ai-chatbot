@@ -24,10 +24,10 @@ struct TanyaAIBridgeNoticeIdentityTests {
         let task = Task { await bridge.run() }
         defer { task.cancel() }
         await waitUntil { bridge.connection == .live }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .ended, seq: 3)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2), .init(kind: .ended, seq: 3)])
         transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_idle_timeout"))
         await waitUntil { bridge.liveAgentNotices.count == 1 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .idleTimeout, seq: 3)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2), .init(kind: .idleTimeout, seq: 3)])
         let items = [ChatListItem](rows: bridge.rows).inserting(bridge.visibleLiveAgentNotices, isLeaveEnabled: true)
         #expect(Set(items.map(\.id)).count == items.count)
     }
@@ -45,7 +45,7 @@ struct TanyaAIBridgeNoticeIdentityTests {
         transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
         transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
         await waitUntil { bridge.conversationState == .agentQueued }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connecting, seq: 3)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2), .init(kind: .connecting, seq: 3)])
         let items = [ChatListItem](rows: bridge.rows).inserting(bridge.visibleLiveAgentNotices, isLeaveEnabled: true)
         #expect(items.contains(.leaveAgentQueue(isEnabled: true)))
         #expect(Set(items.map(\.id)).count == items.count)

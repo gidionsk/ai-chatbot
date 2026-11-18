@@ -14,11 +14,12 @@ import UIKit
 /// Chip selebar daftar (teks di tengah) dengan padding vertikal kecil; satu baris.
 @MainActor
 struct DateChipTests {
-    @Test
-    func chipSpansTheRowAndAddsOnlyItsVerticalPadding() throws {
+    /// Gaya hanya mengganti permukaan dan warna; ukuran sama.
+    @Test(arguments: [DateChipStyle.card, .filled])
+    func chipSpansTheRowAndAddsOnlyItsVerticalPadding(style: DateChipStyle) throws {
         try FontFace.registerFonts()
         let width: CGFloat = 375
-        let chip = size(of: DateChip(text: "14 Okt 2026"), width: width)
+        let chip = size(of: DateChip(text: "14 Okt 2026", style: style), width: width)
         let text = size(
             of: Text("14 Okt 2026").font(
                 FontFace.firaSansRegular.swiftUIFont(

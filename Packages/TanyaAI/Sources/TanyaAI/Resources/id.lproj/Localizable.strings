@@ -20,12 +20,12 @@
 "liveAgent.typing" = "Agen sedang mengetik...";
 "liveAgent.leaveQueue" = "Batalkan proses ini";
 "liveAgent.attachment" = "Lampirkan PDF atau gambar";
+"liveAgent.started.chip" = "Sesi dengan Customer Assistant Tanya OCBC dimulai";
+"liveAgent.ended.chip" = "Sesi dengan Customer Assistant Tanya OCBC berakhir";
 "liveAgent.connecting.title" = "Menghubungkan ke Agent";
 "liveAgent.connecting.message" = "Saat ini Anda berada dalam antrian.\n\nMohon kesediaannya untuk menunggu. Customer Assistant Tanya OCBC NISP akan segera melayani Anda.";
-"liveAgent.ended.title" = "Percakapan dengan Agent Selesai";
-"liveAgent.ended.message" = "Anda telah melakukan percakapan dengan Customer Assistant Tanya OCBC NISP. Tanya AI siap membantu Anda kembali.";
-"liveAgent.idle.title" = "Percakapan dengan Agent Berakhir";
-"liveAgent.idle.message" = "Percakapan berakhir karena tidak ada aktivitas. Tanya AI siap membantu Anda kembali.";
+"liveAgent.ended.title" = "Mode dengan Customer Assistant Berakhir";
+"liveAgent.ended.message" = "Anda akan kembali ke mode self service";
 "liveAgent.canceled.title" = "Permintaan Agent Dibatalkan";
 "liveAgent.canceled.message" = "Anda telah membatalkan permintaan untuk terhubung dengan Customer Assistant. Tanya AI siap membantu Anda kembali.";
 "liveAgent.unavailable.title" = "Agent Belum Tersedia";

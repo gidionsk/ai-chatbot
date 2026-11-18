@@ -50,19 +50,32 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connecting, seq: .max)])
     }
 
-    /// History hanya membawa pesan: sesi agen yang sudah selesai diberi kartu selesai setelah pesan agen terakhir.
+    /// History hanya membawa pesan: sesi agen diberi chip awal sebelum pesan agen pertama dan, bila sudah selesai,
+    /// kartu selesai setelah pesan agen terakhir.
     @Test
-    func finishedAgentSessionInHistoryGetsAnEndedCard() async {
+    func finishedAgentSessionInHistoryGetsItsChipAndEndedCard() async {
         let (_, bridge) = await connectedBridge(history: [1, 2, 3])
         defer { bridge.connectionTask?.cancel() }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .ended, seq: 3)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2), .init(kind: .ended, seq: 3)])
     }
 
     @Test
-    func ongoingAgentSessionHasNoEndedCard() async {
+    func ongoingAgentSessionHasOnlyItsStartChip() async {
         let (_, bridge) = await connectedBridge(state: "AGENT_ACTIVE", history: [1, 2, 3])
         defer { bridge.connectionTask?.cancel() }
-        #expect(bridge.visibleLiveAgentNotices.isEmpty)
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2)])
+    }
+
+    /// Chip awal dari stream (`agent_joined`) tidak ditambah chip turunan saat pesan agen pertama datang.
+    @Test
+    func joinedEventIsTheOnlyStartChip() async {
+        let (transport, bridge) = await connectedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 4, type: "agent_joined"))
+        transport.emit(WireFixture.stateFrame(seq: 5, state: "AGENT_ACTIVE", previous: "AGENT_QUEUED"))
+        transport.emit(WireFixture.messageFrame(seq: 6, direction: "agent"))
+        await waitUntil { bridge.messages.count == 1 }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 4)])
     }
 
     /// Sesi yang berakhir saat halaman terbuka memakai kartu dari stream, tidak ditambah kartu dari history.
@@ -73,7 +86,7 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         transport.emit(WireFixture.systemFrame(seq: 4, type: "agent_ended"))
         transport.emit(WireFixture.stateFrame(seq: 5, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
         await waitUntil { bridge.conversationState == .assistantActive }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .ended, seq: 4)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2), .init(kind: .ended, seq: 4)])
     }
 
     /// Dibuka lagi setelah serah terima yang tidak sampai ke agen: kartu "tidak dilanjutkan" setelah pesan itu.

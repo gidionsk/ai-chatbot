@@ -7,8 +7,8 @@
 
 import XCTest
 
-/// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal, agen mengetik dan menjawab, lalu kartu
-/// selesai. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol lampiran hanya selama agen melayani.
+/// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal, chip sesi dimulai, agen mengetik dan
+/// menjawab, lalu chip sesi berakhir dengan kartunya. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol lampiran hanya selama agen melayani.
 final class LiveAgentUITests: XCTestCase {
     private let application = XCUIApplication()
 
@@ -28,13 +28,15 @@ final class LiveAgentUITests: XCTestCase {
         waitUntilGone(element("chat.agent.typing"))
         XCTAssertFalse(application.buttons["chat.agent.leaveQueue"].exists, "kartu antre hilang saat agen bergabung")
         XCTAssertFalse(element("chat.agent.notice").exists)
+        XCTAssertTrue(application.staticTexts["Session with Tanya OCBC Customer Assistant started"].exists)
         assertAttachmentLinesUpWithSend()
         capture("live-agent-active")
         send("Cek status kartu saya")
         XCTAssertEqual(application.buttons["composer.send"].label, "Send message", "agen tidak memakai stop")
         let ended = element("chat.agent.notice")
         XCTAssertTrue(ended.waitForExistence(timeout: 10))
-        XCTAssertTrue(ended.label.contains("Agent Conversation Ended"))
+        XCTAssertTrue(ended.label.contains("Customer Assistant Mode Ended"))
+        XCTAssertTrue(application.staticTexts["Session with Tanya OCBC Customer Assistant ended"].exists)
         capture("live-agent-ended")
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "agen sudah selesai")
     }

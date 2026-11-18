@@ -63,7 +63,10 @@ struct TanyaAIBridgeLiveAgentTests {
         transport.emit(WireFixture.systemFrame(seq: 7, type: "queue_canceled"))
         transport.emit(WireFixture.systemFrame(seq: 8, type: "agent_joined"))
         await waitUntil { bridge.eventCursor == 8 }
-        #expect(bridge.liveAgentNotices == [.init(kind: .connecting, seq: 4), .init(kind: .canceled, seq: 7)])
+        #expect(
+            bridge.liveAgentNotices == [
+                .init(kind: .connecting, seq: 4), .init(kind: .canceled, seq: 7), .init(kind: .joined, seq: 8)
+            ])
     }
 
     /// Kartu milik percakapan lama tidak terbawa saat init memberi percakapan lain.

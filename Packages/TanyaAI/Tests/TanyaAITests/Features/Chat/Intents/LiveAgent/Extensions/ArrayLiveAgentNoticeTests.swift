@@ -41,6 +41,25 @@ struct ArrayLiveAgentNoticeTests {
         #expect(ids == [.liveAgentNotice(3), .message("m-9")])
     }
 
+    /// Sesi dimulai di pesan agen pertama setelah bot menjawab; chip tepat setelah pesan sebelumnya, atau di awal
+    /// daftar. Chip dari stream di rentang itu menggantikannya; event lain tidak.
+    @Test
+    func agentSessionStartsAtItsFirstAgentMessage() {
+        let messages = [
+            message(seq: 1, author: .assistant), message(seq: 4, author: .agent), message(seq: 5, author: .user),
+            message(seq: 6, author: .agent), message(seq: 7, author: .assistant), message(seq: 8, author: .user),
+            message(seq: 11, author: .agent)
+        ]
+        let derived = [LiveAgentNotice(kind: .joined, seq: 1), LiveAgentNotice(kind: .joined, seq: 8)]
+        #expect(messages.startedAgentSessions(openedBy: []) == derived)
+        #expect(messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .ended, seq: 9)]) == derived)
+        #expect(
+            [message(seq: 2, author: .agent)].startedAgentSessions(openedBy: []) == [.init(kind: .joined, seq: .min)])
+        #expect(
+            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 9)])
+                == [LiveAgentNotice(kind: .joined, seq: 1)])
+    }
+
     /// Sesi berakhir saat bot menjawab lagi; kartu setelah pesan agen terakhir sesi itu.
     @Test
     func agentSessionEndsWhenTheAssistantAnswersAgain() {

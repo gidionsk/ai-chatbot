@@ -20,12 +20,12 @@
 "liveAgent.typing" = "Agent is typing...";
 "liveAgent.leaveQueue" = "Cancel this request";
 "liveAgent.attachment" = "Attach PDF or image";
+"liveAgent.started.chip" = "Session with Tanya OCBC Customer Assistant started";
+"liveAgent.ended.chip" = "Session with Tanya OCBC Customer Assistant ended";
 "liveAgent.connecting.title" = "Connecting to an Agent";
 "liveAgent.connecting.message" = "You are currently in the queue.\n\nPlease wait. A Tanya OCBC NISP Customer Assistant will serve you shortly.";
-"liveAgent.ended.title" = "Agent Conversation Ended";
-"liveAgent.ended.message" = "You have finished your conversation with a Tanya OCBC NISP Customer Assistant. Tanya AI is ready to help you again.";
-"liveAgent.idle.title" = "Agent Conversation Closed";
-"liveAgent.idle.message" = "The conversation ended because there was no activity. Tanya AI is ready to help you again.";
+"liveAgent.ended.title" = "Customer Assistant Mode Ended";
+"liveAgent.ended.message" = "You will return to self-service mode";
 "liveAgent.canceled.title" = "Agent Request Canceled";
 "liveAgent.canceled.message" = "You canceled the request to connect with a Customer Assistant. Tanya AI is ready to help you again.";
 "liveAgent.unavailable.title" = "No Agent Available";

@@ -46,7 +46,7 @@ enum ChatEvent: Equatable {
 // MARK: - Helpers
 
 private extension ChatEvent {
-    /// Jenis yang bukan kartu (mis. `agent_joined`) atau frame tanpa `id:` tidak punya posisi di daftar.
+    /// Jenis yang bukan chip/kartu (mis. `back_to_assistant`) atau frame tanpa `id:` tidak punya posisi di daftar.
     static func notice(from data: Data, seq: Int?) -> ChatEvent? {
         guard let seq, let wire = try? JSONDecoder.wire.decode(WireSystemNotice.self, from: data),
             let kind = LiveAgentNoticeKind(rawValue: wire.type)

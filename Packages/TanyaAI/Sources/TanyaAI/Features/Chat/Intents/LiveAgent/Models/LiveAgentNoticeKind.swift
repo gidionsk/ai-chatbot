@@ -5,10 +5,11 @@
 //  Created by Wendra on 10/11/26.
 //
 
-/// Jenis event `system` (contract §7.6) yang menjadi kartu status live agent. Nilai mentah = token gateway;
-/// copy milik aplikasi. `agent_joined` tidak menjadi kartu karena agen menyapa lewat bubble, dan
-/// `back_to_assistant` selalu datang bersama kartu selesai.
+/// Jenis event `system` (contract §7.6) yang menjadi chip atau kartu status live agent. Nilai mentah = token
+/// gateway; copy milik aplikasi. `back_to_assistant` tidak dipakai karena selalu datang bersama event penutup.
 enum LiveAgentNoticeKind: String, Equatable {
+    /// Agen bergabung (`AGENT_ACTIVE`): chip "sesi dimulai", tanpa kartu.
+    case joined = "agent_joined"
     /// Masuk antrean agen (`AGENT_QUEUED`).
     case connecting = "agent_connecting"
     /// Agen menutup percakapan.
