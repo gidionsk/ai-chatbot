@@ -42,6 +42,29 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.incomingContentID(latestNotice: bridge.visibleLiveAgentNotices.last) != beforeState)
     }
 
+    /// Event setelah kartu antre langsung menggantikannya, walau event `state` terlambat datang.
+    @Test(arguments: [LiveAgentNoticeKind.joined, .canceled])
+    func laterQueueEventHidesTheQueueCardBeforeTheState(kind: LiveAgentNoticeKind) async {
+        let (transport, bridge) = await connectedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        transport.emit(WireFixture.systemFrame(seq: 5, type: kind.rawValue))
+        await waitUntil { bridge.eventCursor == 5 }
+        #expect(bridge.conversationState == .agentQueued)
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: kind, seq: 5)])
+    }
+
+    /// Antre dari init tanpa event antre: `agent_joined` setelah pesan terakhir juga menutup kartu antre.
+    @Test
+    func joinedEventHidesAQueueCardWithoutItsEvent() async {
+        let (transport, bridge) = await connectedBridge(state: "AGENT_QUEUED", history: [1, 2])
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_joined"))
+        await waitUntil { bridge.eventCursor == 3 }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 3)])
+    }
+
     /// Dibuka lagi saat masih antre tetapi event antre tidak ikut replay: kartu antre di akhir daftar.
     @Test
     func queuedConversationWithoutItsEventStillShowsTheCard() async {

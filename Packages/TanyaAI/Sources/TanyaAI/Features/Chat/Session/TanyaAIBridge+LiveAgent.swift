@@ -54,10 +54,14 @@ extension TanyaAIBridge {
     }
 
     /// Kartu antre selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir daftar bila event-nya tidak ikut
-    /// replay. Kosong di luar antre.
+    /// replay. Kosong di luar antre, dan juga begitu stream memberi event berikutnya (agen bergabung, batal, antre
+    /// habis): event `state` bisa terlambat, dan kartu antre tidak boleh tampil bersama penggantinya.
     private var activeQueueNotices: [LiveAgentNotice] {
         guard conversationState == .agentQueued else { return [] }
         let latest = liveAgentNotices.last { $0.kind == .connecting }
+        // Tanpa event antre, antrean dimulai setelah pesan terakhir.
+        let queueSeq = latest?.seq ?? messages.last?.seq ?? .min
+        guard !liveAgentNotices.contains(where: { $0.kind != .connecting && $0.seq > queueSeq }) else { return [] }
         return [latest ?? LiveAgentNotice(kind: .connecting, seq: .max)]
     }
 
