@@ -98,8 +98,10 @@ Pesan bot ber-intent `handover-to-agent` yang tidak diikuti pesan agen (sampai b
 daftar bila sudah tidak antre/dilayani dan turn-nya selesai) diberi kartu "tidak dilanjutkan" tepat setelahnya.
 History tidak membawa event `system`, jadi penyebabnya (batal, antre habis, agen tidak tersedia) tidak diketahui
 dan copy-nya netral. Rentang yang sudah punya kartu dari stream (termasuk kartu antre) tidak diberi kartu ini.
-Serah terima dari kanal lain yang tiba di luar turn halaman ini bisa menampilkan kartu sekejap sebelum event
-antre-nya tiba.
+Kartu ini hanya diturunkan dari pesan serah terima yang dimuat lewat history. Pesan serah terima yang datang lewat
+stream (termasuk dari kanal lain, atau saat event `state` antre terlambat) ditutup oleh event stream-nya sendiri,
+jadi tidak sempat tampil sebagai "tidak dilanjutkan" sebelum event antre tiba. Sinkronisasi history berikutnya
+(menyambung ulang) membuat pesan itu kembali dinilai dari history, karena event penutupnya bisa sudah terpangkas.
 Tombol batal berwarna #567180 (`CustomColors.Button.muted`).
 
 Nasabah mengetik (§7.7) dikirim lewat `TanyaAIChatTransport.sendTyping` hanya selama `AGENT_ACTIVE`. Composer

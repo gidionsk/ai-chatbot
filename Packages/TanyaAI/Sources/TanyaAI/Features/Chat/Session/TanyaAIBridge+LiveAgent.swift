@@ -48,6 +48,7 @@ extension TanyaAIBridge {
         notices += messages.startedAgentSessions(openedBy: streamNotices)
         notices += messages.endedAgentSessions(isOngoing: conversationState == .agentActive, closedBy: closing)
         notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
+            .filter { !streamedHandoverSeqs.contains($0.seq) }
         var seenSeqs = Set<Int>()
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
     }
