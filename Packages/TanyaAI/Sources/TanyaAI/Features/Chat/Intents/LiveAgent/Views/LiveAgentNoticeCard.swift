@@ -26,7 +26,7 @@ struct LiveAgentNoticeCard: View {
     @ViewBuilder
     private var chip: some View {
         if let text = kind.chip {
-            DateChip(text: String(text, locale: locale), style: .filled)
+            TextChip(text: String(text, locale: locale), style: .filled)
                 .accessibilityIdentifier(ChatElementIdentifier.liveAgentChip)
         }
     }

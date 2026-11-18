@@ -72,7 +72,7 @@ Event `system` yang menjadi kartu: `agent_connecting` (antre), `agent_ended`, `a
 Assistant Tanya OCBC dimulai" tanpa kartu (kartu antre hilang karena state berpindah). `agent_ended` dan
 `agent_idle_timeout` menjadi chip "... berakhir" lalu kartu "Mode dengan Customer Assistant Berakhir" (keputusan user
 18 November 2026: hanya sesi yang sudah dilayani agen; batal antre, antre habis, dan agen tidak tersedia tetap kartu
-lama). Chip memakai `DateChip` gaya `.filled` (Figma `time_stamp`). `back_to_assistant` selalu bersama event penutup.
+lama). Chip memakai `TextChip` gaya `.filled` (Figma `time_stamp`). `back_to_assistant` selalu bersama event penutup.
 Copy milik aplikasi; server hanya mengirim token.
 
 History hanya berisi `Message`, jadi kartu hanya ada selama halaman terbuka. Saat dibuka lagi, kartu yang

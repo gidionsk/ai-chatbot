@@ -1,5 +1,5 @@
 //
-//  DateChip.swift
+//  TextChip.swift
 //  DesignKit
 //
 //  Created by Wendra on 3/11/26.
@@ -10,12 +10,12 @@ import SwiftUI
 /// Label di tengah daftar pesan: tanggal di atas pesan pertama setiap hari, atau status (`style: .filled`).
 /// Teks sudah diformat caller. TODO: Konfirmasi warna teks gaya `.card` dengan Figma; sementara dari screenshot.
 @MainActor
-public struct DateChip: View {
+public struct TextChip: View {
     @Environment(\.designColors) private var colors
     private let text: String
-    private let style: DateChipStyle
+    private let style: TextChipStyle
 
-    public init(text: String, style: DateChipStyle = .card) {
+    public init(text: String, style: TextChipStyle = .card) {
         self.text = text
         self.style = style
     }
@@ -45,7 +45,7 @@ public struct DateChip: View {
     private var label: some View {
         Text(text)
             .designFont(.caption)
-            .lineLimit(CustomTextLines.dateChip)
+            .lineLimit(CustomTextLines.textChip)
             .padding(.horizontal, FigmaSize.spacingMedium.scaledToArtwork)
             .padding(.vertical, FigmaSize.spacingSmall.scaledToArtwork)
     }
