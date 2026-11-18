@@ -8,7 +8,8 @@
 import XCTest
 
 /// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal, chip sesi dimulai, agen mengetik dan
-/// menjawab, lalu chip sesi berakhir dengan kartunya. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol lampiran hanya selama agen melayani.
+/// menjawab, lalu chip sesi berakhir dengan kartunya. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol
+/// lampiran hanya selama agen melayani.
 final class LiveAgentUITests: XCTestCase {
     private let application = XCUIApplication()
 
