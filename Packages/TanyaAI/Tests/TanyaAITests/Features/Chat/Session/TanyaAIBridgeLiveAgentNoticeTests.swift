@@ -78,6 +78,19 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 4)])
     }
 
+    /// Nasabah mengirim pesan setelah agen bergabung dan sebelum agen membalas: chip stream tetap satu-satunya.
+    @Test
+    func userMessageBeforeTheAgentRepliesKeepsOneStartChip() async {
+        let (transport, bridge) = await connectedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 4, type: "agent_joined"))
+        transport.emit(WireFixture.stateFrame(seq: 5, state: "AGENT_ACTIVE", previous: "AGENT_QUEUED"))
+        transport.emit(WireFixture.messageFrame(seq: 6, direction: "user"))
+        transport.emit(WireFixture.messageFrame(seq: 7, direction: "agent"))
+        await waitUntil { bridge.messages.count == 2 }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 4)])
+    }
+
     /// Sesi yang berakhir saat halaman terbuka memakai kartu dari stream, tidak ditambah kartu dari history.
     @Test
     func endedEventReplacesTheCardFromHistory() async {

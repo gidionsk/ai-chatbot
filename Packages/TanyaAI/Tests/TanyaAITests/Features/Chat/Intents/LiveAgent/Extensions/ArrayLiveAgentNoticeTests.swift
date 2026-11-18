@@ -47,16 +47,20 @@ struct ArrayLiveAgentNoticeTests {
     func agentSessionStartsAtItsFirstAgentMessage() {
         let messages = [
             message(seq: 1, author: .assistant), message(seq: 4, author: .agent), message(seq: 5, author: .user),
-            message(seq: 6, author: .agent), message(seq: 7, author: .assistant), message(seq: 8, author: .user),
+            message(seq: 6, author: .agent), message(seq: 7, author: .assistant), message(seq: 9, author: .user),
             message(seq: 11, author: .agent)
         ]
-        let derived = [LiveAgentNotice(kind: .joined, seq: 1), LiveAgentNotice(kind: .joined, seq: 8)]
+        let derived = [LiveAgentNotice(kind: .joined, seq: 1), LiveAgentNotice(kind: .joined, seq: 9)]
         #expect(messages.startedAgentSessions(openedBy: []) == derived)
-        #expect(messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .ended, seq: 9)]) == derived)
+        #expect(messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .ended, seq: 10)]) == derived)
         #expect(
             [message(seq: 2, author: .agent)].startedAgentSessions(openedBy: []) == [.init(kind: .joined, seq: .min)])
         #expect(
-            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 9)])
+            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 10)])
+                == [LiveAgentNotice(kind: .joined, seq: 1)])
+        // Agen bergabung sebelum nasabah mengirim pesan, lalu agen membalas: chip stream tetap milik sesi itu.
+        #expect(
+            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 8)])
                 == [LiveAgentNotice(kind: .joined, seq: 1)])
     }
 
