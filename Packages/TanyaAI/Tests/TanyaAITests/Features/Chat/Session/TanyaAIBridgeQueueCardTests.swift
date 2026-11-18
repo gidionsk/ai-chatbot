@@ -57,6 +57,61 @@ struct TanyaAIBridgeQueueCardTests {
         let expected = [LiveAgentNotice(kind: .canceled, seq: 5), .init(kind: .connecting, seq: .max)]
         #expect(bridge.visibleLiveAgentNotices == expected)
     }
+
+    /// Antrean pertama habis lalu putus sebelum event `state`; init masih antre (antrean kedua, nilai state sama):
+    /// antre habis yang lama tidak menyembunyikan kartu antrean kedua.
+    @Test
+    func aTimedOutQueueDoesNotHideTheNextQueueWithTheSameState() async {
+        let (transport, bridge) = await connectedBridge(states: ["ASSISTANT_ACTIVE", "AGENT_QUEUED"])
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        transport.emit(WireFixture.systemFrame(seq: 5, type: "queue_timeout"))
+        await waitUntil { bridge.eventCursor == 5 }
+        transport.drop()
+        await waitUntil { transport.calls.filter { $0 == "init" }.count == 2 && bridge.connection == .live }
+        let expected = [LiveAgentNotice(kind: .queueTimeout, seq: 5), .init(kind: .connecting, seq: .max)]
+        #expect(bridge.visibleLiveAgentNotices == expected)
+    }
+
+    /// Percakapan berganti saat antre dengan seq yang mulai dari kecil lagi: acuan antrean ikut percakapan baru.
+    @Test
+    func aNewConversationResetsTheQueueReference() async {
+        let transport = FakeChatTransport()
+        transport.initResults = [
+            .success(WireFixture.initialize(state: "AGENT_QUEUED")),
+            .success(WireFixture.initialize(conversationID: "percakapan-baru", state: "AGENT_QUEUED"))
+        ]
+        transport.historyPages = [WireFixture.history([20, 19]), WireFixture.history([])]
+        let bridge = await connected(transport)
+        defer { bridge.connectionTask?.cancel() }
+        transport.drop()
+        await waitUntil { bridge.messages.isEmpty }
+        transport.emit(WireFixture.systemFrame(seq: 1, type: "agent_joined"))
+        await waitUntil { bridge.eventCursor == 1 }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 1)])
+    }
+
+    /// Penutup antrean lama terlewat saat putus, lalu bot menjawab dan menyerahkan lagi: event antre lama bukan
+    /// pembuka antrean ini, jadi kartu dan tombol batal di akhir daftar, bukan di bawah serah terima lama.
+    @Test
+    func anOldQueueEventIsNotTheOpenerAfterANewBotReply() async {
+        let transport = FakeChatTransport()
+        transport.initResults = [
+            .success(WireFixture.initialize()), .success(WireFixture.initialize(state: "AGENT_QUEUED"))
+        ]
+        let handover = WireFixture.message(seq: 8, intent: ChatIntent.liveAgent.rawValue)
+        let reconnect = [handover] + [6, 2, 1].map { WireFixture.message(seq: $0) }
+        transport.historyPages = [WireFixture.history([2, 1]), WireFixture.history(messages: reconnect)]
+        let bridge = await connected(transport)
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.conversationState == .agentQueued }
+        transport.drop()
+        await waitUntil { bridge.messages.count == 4 }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connecting, seq: .max)])
+    }
 }
 
 // MARK: - Helpers
@@ -67,9 +122,13 @@ private extension TanyaAIBridgeQueueCardTests {
         let transport = FakeChatTransport()
         transport.initResults = states.map { .success(WireFixture.initialize(state: $0)) }
         transport.historyPages = [WireFixture.history([2, 1])]
+        return (transport, await connected(transport))
+    }
+
+    func connected(_ transport: FakeChatTransport) async -> TanyaAIBridge {
         let bridge = TanyaAIBridge(transport: transport, onSessionExpired: nil, sleep: { _ in })
         Task { await bridge.run() }
         await waitUntil { bridge.connection == .live }
-        return (transport, bridge)
+        return bridge
     }
 }

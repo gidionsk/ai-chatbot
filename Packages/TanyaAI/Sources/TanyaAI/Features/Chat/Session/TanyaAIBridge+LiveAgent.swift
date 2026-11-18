@@ -55,17 +55,19 @@ extension TanyaAIBridge {
 
     /// Kartu antre selama `AGENT_QUEUED`. Kosong begitu stream memberi event setelah antrean dimulai (agen bergabung,
     /// batal, antre habis), karena event `state` bisa terlambat dan kartu antre tidak boleh tampil bersama
-    /// penggantinya. Event antre terbaru dipakai hanya bila belum ditutup event lain (milik antrean sebelumnya);
-    /// selain itu event pembukanya terlewat replay, jadi kartu di akhir daftar.
+    /// penggantinya. Event antre dipakai sebagai posisi hanya bila milik antrean ini: setelah jawaban bot terakhir
+    /// (bot tidak menjawab selama antre) dan belum ditutup event lain. Selain itu pembukanya terlewat, jadi kartu di
+    /// akhir daftar.
     private var activeQueueNotices: [LiveAgentNotice] {
         guard conversationState == .agentQueued else { return [] }
         let closing = liveAgentNotices.filter { $0.kind != .connecting }
         guard !closing.contains(where: { $0.seq > queueStartSeq ?? .min }) else { return [] }
-        let latest = liveAgentNotices.last { $0.kind == .connecting }
-        guard let latest, !closing.contains(where: { $0.seq > latest.seq }) else {
+        let assistantSeq = messages.last { $0.author == .assistant }?.seq ?? .min
+        let opener = liveAgentNotices.last { $0.kind == .connecting && $0.seq > assistantSeq }
+        guard let opener, !closing.contains(where: { $0.seq > opener.seq }) else {
             return [LiveAgentNotice(kind: .connecting, seq: .max)]
         }
-        return [latest]
+        return [opener]
     }
 
     /// Pemicu ikut ke bawah bila pembaca di ujung daftar: pesan masuk terbaru, kartu live agent terbaru yang tampil,
@@ -86,10 +88,17 @@ extension TanyaAIBridge {
 extension TanyaAIBridge {
     /// Dari init (termasuk setelah reconnect) maupun event `state`: di luar antre/agen tidak ada agen yang mengetik,
     /// dan di luar `AGENT_ACTIVE` tidak ada yang menerima sinyal mengetik nasabah.
+    /// Acuan awal antrean untuk `activeQueueNotices`: seq terakhir yang diketahui. Dipanggil saat stream memindahkan
+    /// state ke antre (= seq event `state`) dan setiap init yang masih antre, karena antrean (atau percakapan) bisa
+    /// sudah berganti selama putus walau nilai state-nya sama.
+    func markQueueStart() {
+        guard conversationState == .agentQueued else { return }
+        queueStartSeq = [messages.latestSeq, eventCursor].compactMap { $0 }.max()
+    }
+
     func didChangeConversationState(previous: ConversationState) {
-        // Lewat stream = seq event `state`; lewat init = seq terbesar dari history dan event yang sudah diterima.
-        if conversationState == .agentQueued, previous != .agentQueued {
-            queueStartSeq = [messages.latestSeq, eventCursor].compactMap { $0 }.max()
+        if previous != .agentQueued {
+            markQueueStart()
         }
         if !conversationState.isLiveAgent {
             showAgentTyping(false)

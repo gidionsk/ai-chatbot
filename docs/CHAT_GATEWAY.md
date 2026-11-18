@@ -86,7 +86,10 @@ Tampilan: kartu status mengikuti Figma frame 62/64 (`NoticeCard` DesignKit: baya
 `FilledButton` varian `.link` tepat di bawah kartu antre, dan pesan agen mengikuti frame 68 (`SenderMessageCard`: kartu berbayangan, avatar
 dan label statis "Live Agent OCBC Nyala", teks polos). Kartu antre di posisi event-nya, atau di akhir daftar bila
 dibuka lagi saat masih antre tanpa event yang ikut replay. Event stream setelahnya (`agent_joined`, batal, antre habis,
-agen tidak tersedia) langsung menyembunyikan kartu antre tanpa menunggu event `state`. Kartu selesai dari history ditaruh setelah pesan agen
+agen tidak tersedia) langsung menyembunyikan kartu antre tanpa menunggu event `state`. Acuannya `seq` terakhir yang
+diketahui saat antrean dimulai: saat event `state` memindahkan ke antre, dan setiap init yang masih antre (antrean
+atau percakapan bisa sudah berganti selama putus). Event antre hanya dipakai sebagai posisi bila datang setelah
+jawaban bot terakhir dan belum ditutup event lain; selain itu kartu antre di akhir daftar. Kartu selesai dari history ditaruh setelah pesan agen
 terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau di akhir bila agen tidak sedang melayani), kecuali
 stream sudah memberi kartu penutup untuk sesi itu. Waktu antre habis dan agen tidak tersedia memakai kartu yang sama.
 Kartu dari history memakai `seq` pesan yang ditutupnya dan disisipkan dengan `<=`, jadi tepat setelah pesan itu.
