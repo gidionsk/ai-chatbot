@@ -93,7 +93,8 @@ extension TanyaAIBridge {
     /// sudah berganti selama putus walau nilai state-nya sama.
     func markQueueStart() {
         guard conversationState == .agentQueued else { return }
-        queueStartSeq = [messages.latestSeq, eventCursor].compactMap { $0 }.max()
+        // `messages` sudah urut `seq` naik, jadi pesan terakhir = seq terbesar tanpa memindai seluruh history.
+        queueStartSeq = [messages.last?.seq, eventCursor].compactMap { $0 }.max()
     }
 
     func didChangeConversationState(previous: ConversationState) {
