@@ -6,26 +6,25 @@
 //
 
 extension LiveAgentNoticeKind {
-    /// Waktu antre habis dan sambungan ke sistem agen hilang sama-sama berarti agen tidak didapat.
-    var title: ChatCopy {
+    /// Chip abu (Figma `time_stamp`) untuk awal dan akhir sesi yang sudah dilayani agen. Nil = tanpa chip.
+    var chip: ChatCopy? {
         switch self {
-        case .connecting: return .agentConnectingTitle
-        case .ended: return .agentEndedTitle
-        case .idleTimeout: return .agentIdleTitle
-        case .canceled: return .agentCanceledTitle
-        case .queueTimeout, .unavailable: return .agentUnavailableTitle
-        case .notContinued: return .agentNotContinuedTitle
+        case .joined: return .agentStartedChip
+        case .ended, .idleTimeout: return .agentEndedChip
+        case .connecting, .canceled, .queueTimeout, .unavailable, .notContinued: return nil
         }
     }
 
-    var message: ChatCopy {
+    /// Kartu di bawah chip. Sesi yang dimulai cukup chip; sesi yang ditutup agen atau berakhir tanpa aktivitas memakai
+    /// kartu yang sama. Waktu antre habis dan sambungan ke sistem agen hilang sama-sama berarti agen tidak didapat.
+    var card: (title: ChatCopy, message: ChatCopy)? {
         switch self {
-        case .connecting: return .agentConnectingMessage
-        case .ended: return .agentEndedMessage
-        case .idleTimeout: return .agentIdleMessage
-        case .canceled: return .agentCanceledMessage
-        case .queueTimeout, .unavailable: return .agentUnavailableMessage
-        case .notContinued: return .agentNotContinuedMessage
+        case .joined: return nil
+        case .connecting: return (.agentConnectingTitle, .agentConnectingMessage)
+        case .ended, .idleTimeout: return (.agentEndedTitle, .agentEndedMessage)
+        case .canceled: return (.agentCanceledTitle, .agentCanceledMessage)
+        case .queueTimeout, .unavailable: return (.agentUnavailableTitle, .agentUnavailableMessage)
+        case .notContinued: return (.agentNotContinuedTitle, .agentNotContinuedMessage)
         }
     }
 }

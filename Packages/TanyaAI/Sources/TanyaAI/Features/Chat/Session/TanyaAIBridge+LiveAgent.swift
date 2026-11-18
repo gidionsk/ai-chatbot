@@ -32,29 +32,42 @@ extension TanyaAIBridge {
 // MARK: - Notices
 
 extension TanyaAIBridge {
-    /// Kartu yang tampil di daftar. Kartu antre hanya selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir
-    /// daftar bila event-nya tidak ikut replay. Dari history ditambahkan kartu selesai untuk sesi agen dan kartu
-    /// "tidak dilanjutkan" untuk serah terima tanpa agen, bila stream tidak memberi kartu penutupnya. Kartu antre
-    /// bukan penutup: setelah antre selesai kartunya tersembunyi. `seq` menjadi id baris, jadi kartu ber-`seq` sama
-    /// hanya tampil sekali: table crash bila menerima id ganda, dan itu terjadi bila `id:` SSE dan `seq` pesan tidak
-    /// berasal dari satu urutan. Yang dipertahankan urut kepentingannya: kartu antre yang sedang aktif (tombol
-    /// batalnya ikut kartu ini), lalu kartu dari stream, baru kartu turunan history.
+    /// Chip dan kartu yang tampil di daftar. Kartu antre hanya selama `AGENT_QUEUED`: yang terbaru dari stream, atau
+    /// di akhir daftar bila event-nya tidak ikut replay. Dari history ditambahkan chip awal sesi agen, kartu selesai
+    /// untuk sesi agen, dan kartu "tidak dilanjutkan" untuk serah terima tanpa agen, bila stream tidak memberi chip
+    /// atau kartu penutupnya. Kartu antre bukan penutup: setelah antre selesai kartunya tersembunyi. Chip awal sesi
+    /// juga bukan penutup sesi, tetapi menandai serah terima yang dilanjutkan. `seq` menjadi id baris, jadi kartu
+    /// ber-`seq` sama hanya tampil sekali: table crash bila menerima id ganda, dan itu terjadi bila `id:` SSE dan `seq`
+    /// pesan tidak berasal dari satu urutan. Yang dipertahankan urut kepentingannya: kartu antre yang sedang aktif
+    /// (tombol batalnya ikut kartu ini), lalu kartu dari stream, baru kartu turunan history.
     var visibleLiveAgentNotices: [LiveAgentNotice] {
-        let closing = liveAgentNotices.filter { $0.kind != .connecting }
+        let streamNotices = liveAgentNotices.filter { $0.kind != .connecting }
+        let closing = streamNotices.filter { $0.kind != .joined }
         let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
-        var notices = activeQueueNotices + closing
+        var notices = activeQueueNotices + streamNotices
+        notices += messages.startedAgentSessions(openedBy: streamNotices)
         notices += messages.endedAgentSessions(isOngoing: conversationState == .agentActive, closedBy: closing)
-        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: closing)
+        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
+            .filter { !streamedHandoverSeqs.contains($0.seq) }
         var seenSeqs = Set<Int>()
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
     }
 
-    /// Kartu antre selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir daftar bila event-nya tidak ikut
-    /// replay. Kosong di luar antre.
+    /// Kartu antre selama `AGENT_QUEUED`. Kosong begitu stream memberi event setelah antrean dimulai (agen bergabung,
+    /// batal, antre habis), karena event `state` bisa terlambat dan kartu antre tidak boleh tampil bersama
+    /// penggantinya. Event antre dipakai sebagai posisi hanya bila milik antrean ini: setelah jawaban bot terakhir
+    /// (bot tidak menjawab selama antre) dan belum ditutup event lain. Selain itu pembukanya terlewat, jadi kartu di
+    /// akhir daftar.
     private var activeQueueNotices: [LiveAgentNotice] {
         guard conversationState == .agentQueued else { return [] }
-        let latest = liveAgentNotices.last { $0.kind == .connecting }
-        return [latest ?? LiveAgentNotice(kind: .connecting, seq: .max)]
+        let closing = liveAgentNotices.filter { $0.kind != .connecting }
+        guard !closing.contains(where: { $0.seq > queueStartSeq ?? .min }) else { return [] }
+        let assistantSeq = messages.last { $0.author == .assistant }?.seq ?? .min
+        let opener = liveAgentNotices.last { $0.kind == .connecting && $0.seq > assistantSeq }
+        guard let opener, !closing.contains(where: { $0.seq > opener.seq }) else {
+            return [LiveAgentNotice(kind: .connecting, seq: .max)]
+        }
+        return [opener]
     }
 
     /// Pemicu ikut ke bawah bila pembaca di ujung daftar: pesan masuk terbaru, kartu live agent terbaru yang tampil,
@@ -75,7 +88,19 @@ extension TanyaAIBridge {
 extension TanyaAIBridge {
     /// Dari init (termasuk setelah reconnect) maupun event `state`: di luar antre/agen tidak ada agen yang mengetik,
     /// dan di luar `AGENT_ACTIVE` tidak ada yang menerima sinyal mengetik nasabah.
-    func didChangeConversationState() {
+    /// Acuan awal antrean untuk `activeQueueNotices`: seq terakhir yang diketahui. Dipanggil saat stream memindahkan
+    /// state ke antre (= seq event `state`) dan setiap init yang masih antre, karena antrean (atau percakapan) bisa
+    /// sudah berganti selama putus walau nilai state-nya sama.
+    func markQueueStart() {
+        guard conversationState == .agentQueued else { return }
+        // `messages` sudah urut `seq` naik, jadi pesan terakhir = seq terbesar tanpa memindai seluruh history.
+        queueStartSeq = [messages.last?.seq, eventCursor].compactMap { $0 }.max()
+    }
+
+    func didChangeConversationState(previous: ConversationState) {
+        if previous != .agentQueued {
+            markQueueStart()
+        }
         if !conversationState.isLiveAgent {
             showAgentTyping(false)
         }

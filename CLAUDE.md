@@ -31,7 +31,7 @@ usulan ditulis di body PR sebagai pertanyaan untuk owner. Bila berbeda, ikuti do
   Bridge yang menyambung, retry, decode, dan merge (`docs/CHAT_GATEWAY.md`). Bubble pertanyaan tampil saat
   kirim (`LocalQuestion`), diganti salinan SSE lewat `client_msg_id`/seq ack; gagal kirim = bubble abu-abu +
   hint tanpa retry. Loading hanya saat history pertama; sambutan hanya bila history kosong. Chip tanggal
-  (`DateChip`, `d MMM yyyy`, zona perangkat) di atas pertanyaan pertama tiap hari; bubble lokal memakai waktu kirim.
+  (`TextChip`, `d MMM yyyy`, zona perangkat) di atas pertanyaan pertama tiap hari; bubble lokal memakai waktu kirim.
   Saran lanjutan = `SuggestionChip` di bawah jawaban terakhir, diketuk = terkirim seperti shortcut.
   Live agent: kartu status (frame 62/64) dari event `system`, kartu antre + tombol batal hanya selama antre, pesan
   agen dengan avatar dan label statis (frame 68), "Agen sedang mengetik..." miring. History tanpa event `system`:

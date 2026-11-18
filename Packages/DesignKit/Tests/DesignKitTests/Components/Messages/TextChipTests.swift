@@ -1,5 +1,5 @@
 //
-//  DateChipTests.swift
+//  TextChipTests.swift
 //  DesignKit
 //
 //  Created by Wendra on 3/11/26.
@@ -13,12 +13,13 @@ import UIKit
 
 /// Chip selebar daftar (teks di tengah) dengan padding vertikal kecil; satu baris.
 @MainActor
-struct DateChipTests {
-    @Test
-    func chipSpansTheRowAndAddsOnlyItsVerticalPadding() throws {
+struct TextChipTests {
+    /// Gaya hanya mengganti permukaan dan warna; ukuran sama.
+    @Test(arguments: [TextChipStyle.card, .filled])
+    func chipSpansTheRowAndAddsOnlyItsVerticalPadding(style: TextChipStyle) throws {
         try FontFace.registerFonts()
         let width: CGFloat = 375
-        let chip = size(of: DateChip(text: "14 Okt 2026"), width: width)
+        let chip = size(of: TextChip(text: "14 Okt 2026", style: style), width: width)
         let text = size(
             of: Text("14 Okt 2026").font(
                 FontFace.firaSansRegular.swiftUIFont(
@@ -30,7 +31,7 @@ struct DateChipTests {
 
 // MARK: - Helpers
 
-private extension DateChipTests {
+private extension TextChipTests {
     func size(of content: some View, width: CGFloat) -> CGSize {
         UIHostingController(rootView: content).sizeThatFits(in: CGSize(width: width, height: 800))
     }

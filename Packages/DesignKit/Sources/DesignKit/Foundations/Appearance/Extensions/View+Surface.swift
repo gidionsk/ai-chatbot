@@ -10,7 +10,7 @@ import SwiftUI
 public extension View {
     /// Kartu standar (isi, radius, bayangan, garis tepi). Pakai ini daripada menyusun ulang di setiap view.
     /// `isOutlined: false` untuk kartu yang hanya memakai bayangan, misalnya `ActionCard`; `isElevated: false`
-    /// untuk permukaan rata, misalnya `DateChip`. `cornerRadius` sudah di-scale oleh pemakai. `fillColor` nil = isi
+    /// untuk permukaan rata, misalnya `TextChip`. `cornerRadius` sudah di-scale oleh pemakai. `fillColor` nil = isi
     /// kartu standar.
     func cardStyle(
         isOutlined: Bool = true,

@@ -34,10 +34,15 @@ public final class TanyaAIBridge: ObservableObject {
     /// State dari init terakhir, diperbarui event `state`. `unknown` sebelum init pertama. Lewat init maupun stream,
     /// status mengetik kedua pihak ikut dibersihkan (lihat `didChangeConversationState`).
     @Published var conversationState = ConversationState.unknown {
-        didSet { didChangeConversationState() }
+        didSet { didChangeConversationState(previous: oldValue) }
     }
+    /// Acuan awal antrean saat ini (lihat `markQueueStart`); tetap selama antre walau pesan baru datang.
+    var queueStartSeq: Int?
     /// Kartu status live agent yang diterima selama halaman terbuka, urut `seq`.
     @Published private(set) var liveAgentNotices: [LiveAgentNotice] = []
+    /// `seq` pesan serah terima yang datang lewat stream sejak sinkronisasi history terakhir. Penutupnya datang dari
+    /// event stream, jadi pesan ini tidak diberi kartu "tidak dilanjutkan" selama event antre masih tertunda.
+    private(set) var streamedHandoverSeqs: Set<Int> = []
     /// Permintaan keluar antrean sedang diproses; tombol batal tidak dikirim dua kali.
     @Published var isLeavingAgentQueue = false
     /// Indikator "agen sedang mengetik"; dimatikan oleh `typing:false`, pesan agen, atau batas `ttl_s`.
@@ -181,6 +186,9 @@ extension TanyaAIBridge {
         switch event {
         case .message(let message):
             messages = messages.merging([message])
+            if message.intent == .liveAgent {
+                streamedHandoverSeqs.insert(message.seq)
+            }
             if message.author == .agent {
                 showAgentTyping(false)
             }
@@ -208,6 +216,7 @@ extension TanyaAIBridge {
             localQuestions = []
             sentMessageIDs = []
             liveAgentNotices = []
+            streamedHandoverSeqs = []
             showAgentTyping(false)
             resetUserTyping()
             turn.cancel()
@@ -219,6 +228,8 @@ extension TanyaAIBridge {
         }
         self.conversationID = conversationID
         messages = messages.merging(history)
+        // Setelah putus, event penutup bisa sudah terpangkas dari outbox; kartu dari history kembali berlaku.
+        streamedHandoverSeqs = []
         isHistoryLoaded = true
         // Pertanyaan yang terlewat stream saat putus datang lewat history.
         removeDeliveredQuestions()

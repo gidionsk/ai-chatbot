@@ -63,6 +63,7 @@ private extension TanyaAIBridge {
         )
         replaceOrMerge(history, conversationID: session.conversationId)
         conversationState = session.state
+        markQueueStart()
         guard session.state != .closed else { return false }
         // Replay mulai setelah pesan/event terakhir yang diterima: event di antara history dan stream tidak
         // hilang, duplikat pesan digabung lewat `message_id`, `turn_end` yang sudah diproses tidak diulang.

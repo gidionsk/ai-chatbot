@@ -68,9 +68,12 @@ Aplikasi tidak memakai intent ini: antre/agen ditentukan event `state` dan `syst
 `mode:"agent"` tidak punya pesan ini.
 
 Event `system` yang menjadi kartu: `agent_connecting` (antre), `agent_ended`, `agent_idle_timeout`,
-`queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` tidak menjadi kartu (agen menyapa
-lewat bubble, kartu antre hilang karena state berpindah) dan `back_to_assistant` selalu bersama kartu selesai.
-Copy kartu milik aplikasi; server hanya mengirim token.
+`queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` menjadi chip abu "Sesi dengan Customer
+Assistant Tanya OCBC dimulai" tanpa kartu (kartu antre hilang karena state berpindah). `agent_ended` dan
+`agent_idle_timeout` menjadi chip "... berakhir" lalu kartu "Mode dengan Customer Assistant Berakhir" (keputusan user
+18 November 2026: hanya sesi yang sudah dilayani agen; batal antre, antre habis, dan agen tidak tersedia tetap kartu
+lama). Chip memakai `TextChip` gaya `.filled` (Figma `time_stamp`). `back_to_assistant` selalu bersama event penutup.
+Copy milik aplikasi; server hanya mengirim token.
 
 History hanya berisi `Message`, jadi kartu hanya ada selama halaman terbuka. Saat dibuka lagi, kartu yang
 `seq`-nya setelah pesan terakhir masih ikut replay SSE (cursor = seq pesan terakhir) selama outbox belum
@@ -82,10 +85,16 @@ stream. `left:false` atau 409 (agen sudah bergabung) menunggu event `state`.
 Tampilan: kartu status mengikuti Figma frame 62/64 (`NoticeCard` DesignKit: bayangan tanpa garis tepi, ikon headset), tombol batal
 `FilledButton` varian `.link` tepat di bawah kartu antre, dan pesan agen mengikuti frame 68 (`SenderMessageCard`: kartu berbayangan, avatar
 dan label statis "Live Agent OCBC Nyala", teks polos). Kartu antre di posisi event-nya, atau di akhir daftar bila
-dibuka lagi saat masih antre tanpa event yang ikut replay. Kartu selesai dari history ditaruh setelah pesan agen
+dibuka lagi saat masih antre tanpa event yang ikut replay. Event stream setelahnya (`agent_joined`, batal, antre habis,
+agen tidak tersedia) langsung menyembunyikan kartu antre tanpa menunggu event `state`. Acuannya `seq` terakhir yang
+diketahui saat antrean dimulai: saat event `state` memindahkan ke antre, dan setiap init yang masih antre (antrean
+atau percakapan bisa sudah berganti selama putus). Event antre hanya dipakai sebagai posisi bila datang setelah
+jawaban bot terakhir dan belum ditutup event lain; selain itu kartu antre di akhir daftar. Kartu selesai dari history ditaruh setelah pesan agen
 terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau di akhir bila agen tidak sedang melayani), kecuali
 stream sudah memberi kartu penutup untuk sesi itu. Waktu antre habis dan agen tidak tersedia memakai kartu yang sama.
 Kartu dari history memakai `seq` pesan yang ditutupnya dan disisipkan dengan `<=`, jadi tepat setelah pesan itu.
+Chip awal sesi dari history ditaruh tepat setelah pesan sebelum pesan agen pertama sesi itu (`seq` pesan tersebut),
+kecuali stream sudah memberi `agent_joined` di rentang itu.
 `seq` kartu menjadi id baris table. Bila gateway memberi `id:` SSE dari urutan lain sehingga kartu ber-`seq` sama,
 hanya satu yang tampil: kartu antre yang sedang aktif, lalu kartu dari stream, baru kartu turunan history.
 
@@ -93,8 +102,10 @@ Pesan bot ber-intent `handover-to-agent` yang tidak diikuti pesan agen (sampai b
 daftar bila sudah tidak antre/dilayani dan turn-nya selesai) diberi kartu "tidak dilanjutkan" tepat setelahnya.
 History tidak membawa event `system`, jadi penyebabnya (batal, antre habis, agen tidak tersedia) tidak diketahui
 dan copy-nya netral. Rentang yang sudah punya kartu dari stream (termasuk kartu antre) tidak diberi kartu ini.
-Serah terima dari kanal lain yang tiba di luar turn halaman ini bisa menampilkan kartu sekejap sebelum event
-antre-nya tiba.
+Kartu ini hanya diturunkan dari pesan serah terima yang dimuat lewat history. Pesan serah terima yang datang lewat
+stream (termasuk dari kanal lain, atau saat event `state` antre terlambat) ditutup oleh event stream-nya sendiri,
+jadi tidak sempat tampil sebagai "tidak dilanjutkan" sebelum event antre tiba. Sinkronisasi history berikutnya
+(menyambung ulang) membuat pesan itu kembali dinilai dari history, karena event penutupnya bisa sudah terpangkas.
 Tombol batal berwarna #567180 (`CustomColors.Button.muted`).
 
 Nasabah mengetik (§7.7) dikirim lewat `TanyaAIChatTransport.sendTyping` hanya selama `AGENT_ACTIVE`. Composer

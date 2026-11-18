@@ -94,9 +94,9 @@ struct ChatEventTests {
         #expect(ChatEvent(frame(WireFixture.stateFrame(seq: 5, state: wire))) == .state(expected))
     }
 
-    /// Token contract §7.6 yang menjadi kartu, di posisi `id:` frame-nya.
+    /// Token contract §7.6 yang menjadi chip atau kartu, di posisi `id:` frame-nya.
     @Test(arguments: [
-        ("agent_connecting", LiveAgentNoticeKind.connecting), ("agent_ended", .ended),
+        ("agent_joined", LiveAgentNoticeKind.joined), ("agent_connecting", .connecting), ("agent_ended", .ended),
         ("agent_idle_timeout", .idleTimeout), ("queue_canceled", .canceled), ("queue_timeout", .queueTimeout),
         ("agent_unavailable", .unavailable)
     ])
@@ -126,7 +126,7 @@ struct ChatEventTests {
         ServerSentEvent(
             id: "4", name: "message", data: #"{"message_id":"m","seq":"x","direction":"assistant","status":"active"}"#),
         ServerSentEvent(id: "5", name: "typing", data: #"{"direction":"user","typing":true,"ttl_s":10}"#),
-        ServerSentEvent(id: "6", name: "system", data: #"{"type":"agent_joined","data":{"agent":{"name":"A"}}}"#),
+        ServerSentEvent(id: "6", name: "system", data: #"{"type":"back_to_assistant","data":null}"#),
         ServerSentEvent(id: nil, name: "system", data: #"{"type":"queue_timeout","data":null}"#),
         ServerSentEvent(id: "7", name: "state", data: #"{"from":"ASSISTANT_ACTIVE"}"#)
     ])
