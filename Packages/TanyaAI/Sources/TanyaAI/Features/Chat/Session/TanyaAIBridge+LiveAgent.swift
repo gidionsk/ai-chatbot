@@ -53,16 +53,19 @@ extension TanyaAIBridge {
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
     }
 
-    /// Kartu antre selama `AGENT_QUEUED`: yang terbaru dari stream, atau di akhir daftar bila event-nya tidak ikut
-    /// replay. Kosong di luar antre, dan juga begitu stream memberi event berikutnya (agen bergabung, batal, antre
-    /// habis): event `state` bisa terlambat, dan kartu antre tidak boleh tampil bersama penggantinya.
+    /// Kartu antre selama `AGENT_QUEUED`. Kosong begitu stream memberi event setelah antrean dimulai (agen bergabung,
+    /// batal, antre habis), karena event `state` bisa terlambat dan kartu antre tidak boleh tampil bersama
+    /// penggantinya. Event antre terbaru dipakai hanya bila belum ditutup event lain (milik antrean sebelumnya);
+    /// selain itu event pembukanya terlewat replay, jadi kartu di akhir daftar.
     private var activeQueueNotices: [LiveAgentNotice] {
         guard conversationState == .agentQueued else { return [] }
+        let closing = liveAgentNotices.filter { $0.kind != .connecting }
+        guard !closing.contains(where: { $0.seq > queueStartSeq ?? .min }) else { return [] }
         let latest = liveAgentNotices.last { $0.kind == .connecting }
-        // Tanpa event antre, antrean dimulai setelah pesan terakhir.
-        let queueSeq = latest?.seq ?? messages.last?.seq ?? .min
-        guard !liveAgentNotices.contains(where: { $0.kind != .connecting && $0.seq > queueSeq }) else { return [] }
-        return [latest ?? LiveAgentNotice(kind: .connecting, seq: .max)]
+        guard let latest, !closing.contains(where: { $0.seq > latest.seq }) else {
+            return [LiveAgentNotice(kind: .connecting, seq: .max)]
+        }
+        return [latest]
     }
 
     /// Pemicu ikut ke bawah bila pembaca di ujung daftar: pesan masuk terbaru, kartu live agent terbaru yang tampil,
@@ -83,7 +86,11 @@ extension TanyaAIBridge {
 extension TanyaAIBridge {
     /// Dari init (termasuk setelah reconnect) maupun event `state`: di luar antre/agen tidak ada agen yang mengetik,
     /// dan di luar `AGENT_ACTIVE` tidak ada yang menerima sinyal mengetik nasabah.
-    func didChangeConversationState() {
+    func didChangeConversationState(previous: ConversationState) {
+        // Lewat stream = seq event `state`; lewat init = seq terbesar dari history dan event yang sudah diterima.
+        if conversationState == .agentQueued, previous != .agentQueued {
+            queueStartSeq = [messages.latestSeq, eventCursor].compactMap { $0 }.max()
+        }
         if !conversationState.isLiveAgent {
             showAgentTyping(false)
         }

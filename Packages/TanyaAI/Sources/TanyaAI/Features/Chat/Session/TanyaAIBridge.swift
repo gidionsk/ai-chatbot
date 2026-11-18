@@ -34,8 +34,10 @@ public final class TanyaAIBridge: ObservableObject {
     /// State dari init terakhir, diperbarui event `state`. `unknown` sebelum init pertama. Lewat init maupun stream,
     /// status mengetik kedua pihak ikut dibersihkan (lihat `didChangeConversationState`).
     @Published var conversationState = ConversationState.unknown {
-        didSet { didChangeConversationState() }
+        didSet { didChangeConversationState(previous: oldValue) }
     }
+    /// `seq` terakhir yang diketahui saat state masuk `AGENT_QUEUED`; tetap selama antre (lihat `activeQueueNotices`).
+    var queueStartSeq: Int?
     /// Kartu status live agent yang diterima selama halaman terbuka, urut `seq`.
     @Published private(set) var liveAgentNotices: [LiveAgentNotice] = []
     /// `seq` pesan serah terima yang datang lewat stream sejak sinkronisasi history terakhir. Penutupnya datang dari
