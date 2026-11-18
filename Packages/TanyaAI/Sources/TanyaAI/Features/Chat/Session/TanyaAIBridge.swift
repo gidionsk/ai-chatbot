@@ -168,6 +168,14 @@ extension TanyaAIBridge {
         onSessionExpired?()
     }
 
+    /// Untuk request yang gagalnya tidak memengaruhi percakapan (`typing`, `success-id`): hanya 401 yang berarti.
+    func expireSessionIfUnauthorized(_ error: Error) {
+        guard case let .response(statusCode, _)? = error as? TanyaAITransportError,
+            ChatBackoff.isUnauthorized(statusCode: statusCode)
+        else { return }
+        expireSession()
+    }
+
     /// Event `message` digabung ke daftar; `turn_end` milik pertanyaan yang ditunggu membuka kunci kirim.
     func apply(_ event: ChatEvent) {
         switch event {

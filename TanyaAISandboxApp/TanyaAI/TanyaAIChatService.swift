@@ -108,6 +108,14 @@ final class TanyaAIChatService {
         }
     }
 
+    /// Bukti transaksi intent; gateway tiruan selalu menerimanya tanpa mengirim ulang frame pesan.
+    func attachSuccessID(
+        messageID: String, successID: String, onSuccess: @escaping (Data) -> Void,
+        onFailed: @escaping (Error) -> Void
+    ) {
+        DispatchQueue.main.async { onSuccess(SandboxGatewayFrames.successIDAccepted) }
+    }
+
     /// Sinyal nasabah mengetik; gateway tiruan tidak punya agen sungguhan, jadi cukup dijawab 204.
     func sendTyping(
         conversationID: String, isTyping: Bool, onSuccess: @escaping () -> Void,

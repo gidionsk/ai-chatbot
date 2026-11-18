@@ -27,6 +27,9 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
     /// Intent router dari gateway. `liveAgent` dibaca untuk kartu "tidak dilanjutkan" di history; intent lain
     /// dibaca oleh fiturnya sendiri di `Intents/<Nama>`.
     let intent: ChatIntent?
+    /// Bukti transaksi intent dari `success_id`; nil = belum selesai. Fitur intent memakainya untuk kartu sukses,
+    /// isinya sendiri tidak ditampilkan.
+    let successID: String?
 
     /// Nil bila `seq` bukan angka desimal: pesan tanpa urutan tidak bisa digabung dengan aman.
     init?(wire: WireMessage) {
@@ -34,13 +37,13 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
         self.init(
             id: wire.messageId, seq: seq, author: wire.direction, text: wire.payload, status: wire.status,
             createdAt: wire.createdAt.flatMap(Date.init(wire:)), clientMessageID: wire.clientMsgId,
-            followUps: wire.followUpQuestions ?? [], intent: wire.intent
+            followUps: wire.followUpQuestions ?? [], intent: wire.intent, successID: wire.successId
         )
     }
 
     init(
         id: String, seq: Int, author: ChatAuthor, text: String?, status: ChatMessageStatus, createdAt: Date? = nil,
-        clientMessageID: String? = nil, followUps: [String] = [], intent: ChatIntent? = nil
+        clientMessageID: String? = nil, followUps: [String] = [], intent: ChatIntent? = nil, successID: String? = nil
     ) {
         self.id = id
         self.seq = seq
@@ -51,6 +54,15 @@ struct ChatMessage: Identifiable, Equatable, Sendable {
         self.clientMessageID = clientMessageID
         self.followUps = followUps
         self.intent = intent
+        self.successID = successID
         document = author == .assistant ? text.map(MarkdownDocument.init) : nil
+    }
+
+    /// Salinan pesan ini dengan bukti transaksi, sama dengan frame yang dikirim ulang gateway setelah `success-id`.
+    func receipted(successID: String) -> ChatMessage {
+        ChatMessage(
+            id: id, seq: seq, author: author, text: text, status: status, createdAt: createdAt,
+            clientMessageID: clientMessageID, followUps: followUps, intent: intent, successID: successID
+        )
     }
 }

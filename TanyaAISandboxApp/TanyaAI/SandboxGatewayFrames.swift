@@ -26,6 +26,8 @@ struct SandboxGatewayFrames {
     /// Respons `leave-agent`: keluar dari antrean / tidak sedang antre.
     static let leftAgentQueue = Data(#"{"success":true,"data":{"left":true}}"#.utf8)
     static let notInAgentQueue = Data(#"{"success":true,"data":{"left":false}}"#.utf8)
+    /// Respons `success-id`: bukti transaksi baru tercatat.
+    static let successIDAccepted = Data(#"{"success":true,"data":{"deduplicated":false}}"#.utf8)
     static let assistantActive = "ASSISTANT_ACTIVE"
     static let agentQueued = "AGENT_QUEUED"
     static let agentActive = "AGENT_ACTIVE"

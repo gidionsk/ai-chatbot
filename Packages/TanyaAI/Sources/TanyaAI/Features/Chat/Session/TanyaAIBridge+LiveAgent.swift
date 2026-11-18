@@ -148,7 +148,7 @@ private extension TanyaAIBridge {
                 do {
                     try await transport.sendTyping(conversationID: signal.conversationID, isTyping: signal.isTyping)
                 } catch {
-                    self?.didFailUserTyping(error)
+                    self?.expireSessionIfUnauthorized(error)
                 }
             }
             self?.userTypingDelivery = nil
@@ -168,12 +168,5 @@ private extension TanyaAIBridge {
         userTypingIdle?.cancel()
         userTypingRefresh?.cancel()
         userTypingRefresh = nil
-    }
-
-    func didFailUserTyping(_ error: Error) {
-        guard case let .response(statusCode, _)? = error as? TanyaAITransportError,
-            ChatBackoff.isUnauthorized(statusCode: statusCode)
-        else { return }
-        expireSession()
     }
 }
