@@ -89,11 +89,16 @@ struct IntentFormActionTests {
         let isValid = state.validate()
         #expect(!isValid)
         var isCancelled = false
-        let content = makeForm(binding, onOpenChoices: { _ in }, onConfirm: {}) {
-            #expect(state.value(for: .toggle) == .toggle(false))
-            #expect(state.invalidFieldIDs.isEmpty)
-            isCancelled = true
-        }
+        let content = makeForm(
+            binding,
+            onOpenChoices: { _ in },
+            onConfirm: {},
+            onCancel: {
+                #expect(state.value(for: .toggle) == .toggle(false))
+                #expect(state.invalidFieldIDs.isEmpty)
+                isCancelled = true
+            }
+        )
         content.cancel()
         #expect(isCancelled)
     }

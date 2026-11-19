@@ -53,17 +53,6 @@ struct IntentFormView<FieldID: Hashable>: View {
     }
 }
 
-// MARK: - Helpers
-
-private extension IntentFormView {
-    func selectionText(for field: FormField<FieldID>) -> String? {
-        let codes = Set(state.value(for: field.id)?.selectedCodes ?? [])
-        let options = field.options.filter { codes.contains($0.code) }
-        guard !options.isEmpty else { return nil }
-        return selectionSummary(field.id, options)
-    }
-}
-
 // MARK: - Actions
 
 extension IntentFormView {
@@ -80,5 +69,16 @@ extension IntentFormView {
     func cancel() {
         state.reset()
         onCancel()
+    }
+}
+
+// MARK: - Helpers
+
+private extension IntentFormView {
+    func selectionText(for field: FormField<FieldID>) -> String? {
+        let codes = Set(state.value(for: field.id)?.selectedCodes ?? [])
+        let options = field.options.filter { codes.contains($0.code) }
+        guard !options.isEmpty else { return nil }
+        return selectionSummary(field.id, options)
     }
 }
