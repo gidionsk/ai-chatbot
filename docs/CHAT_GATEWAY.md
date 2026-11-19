@@ -100,12 +100,13 @@ Kartu pembuka sesi agen ada satu per sesi:
 - Begitu sapaan otomatis datang atau agen bergabung (`agent_joined` bisa mendahului event `state`), kartu yang sama
   berganti menjadi "Connected" tanpa tombol, lalu tetap tampil sebagai riwayat, juga untuk sesi yang ditutup agen
   tanpa pesan. Posisinya event antre sesi itu bila ada dari stream; selain itu tepat sebelum pesan agen pertama, atau
-  di posisi `agent_joined`. Sesi berakhir saat bot menjawab atau event penutup datang, jadi sapaan dari antrean yang
-  sudah ditutup bukan milik antrean berikutnya, dan event antre yang sudah ditutup tidak dipakai lagi sebagai posisi.
+  di posisi `agent_joined`. Sesi berakhir saat bot menjawab, event penutup datang, atau event antre baru datang (event
+  penutup lama bisa terlewat bila replay terpangkas), jadi sapaan dari antrean lama bukan milik antrean berikutnya, dan
+  event antre yang sudah ditutup tidak dipakai lagi sebagai posisi.
 - Event penutup antrean (batal, antre habis, agen tidak tersedia) langsung menyembunyikan kartu antre tanpa menunggu
   event `state`. Acuannya `seq` terakhir yang diketahui saat antrean dimulai: saat event `state` memindahkan ke antre,
-  dan setiap init yang masih antre (antrean atau percakapan bisa sudah berganti selama putus), atau jawaban bot
-  terakhir bila lebih baru. Di luar antre dan sesi agen acuan ini dilupakan.
+  dan setiap init yang masih antre atau dengan agen (antrean, sesi, atau percakapan bisa sudah berganti selama putus),
+  atau jawaban bot terakhir bila lebih baru. Di luar antre dan sesi agen acuan ini dilupakan.
 
 Selama antre setelah sapaan otomatis, "Mencari customer assistant..." tampil di bawah pesan terakhir sampai agen
 bergabung atau antrean ditutup; indikator agen mengetik didahulukan (TODO: ikon sparkle dan ukuran Figma).

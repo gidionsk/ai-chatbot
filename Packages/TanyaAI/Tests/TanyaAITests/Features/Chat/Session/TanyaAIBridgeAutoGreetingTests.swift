@@ -85,6 +85,24 @@ struct TanyaAIBridgeAutoGreetingTests {
         #expect(!bridge.isSearchingAgent)
     }
 
+    /// Event penutup antrean lama terlewat (replay terpangkas), lalu event antre baru datang: sapaan lama bukan milik
+    /// antrean baru, dan sapaan berikutnya memberi kartu "Connected" kedua di posisi event antre baru.
+    @Test
+    func aNewQueueEventStartsANewSessionWithoutTheOldClosingEvent() async {
+        let (transport, bridge) = await queuedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.messageFrame(seq: 5, direction: "agent"))
+        transport.emit(WireFixture.systemFrame(seq: 8, type: "agent_connecting"))
+        await waitUntil { bridge.eventCursor == 8 }
+        let queued = [LiveAgentNotice(kind: .connected, seq: 3), .init(kind: .connecting, seq: 8)]
+        #expect(bridge.visibleLiveAgentNotices == queued)
+        #expect(!bridge.isSearchingAgent)
+        transport.emit(WireFixture.messageFrame(seq: 9, direction: "agent"))
+        await waitUntil { bridge.messages.count == 4 }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 3), .init(kind: .connected, seq: 8)])
+        #expect(bridge.isSearchingAgent)
+    }
+
     /// Agen bergabung lalu menutup sesi tanpa mengirim pesan: kartu "Connected" tetap sebagai riwayat.
     @Test
     func aSessionWithoutAgentMessagesKeepsItsConnectedCard() async {

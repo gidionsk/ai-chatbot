@@ -87,6 +87,23 @@ struct TanyaAIBridgeQueueCardTests {
         #expect(bridge.visibleLiveAgentNotices == expected)
     }
 
+    /// Antrean dibatalkan, lalu putus dan init sudah `AGENT_ACTIVE` (antre lagi dan agen bergabung selama putus): batal
+    /// yang lama tidak menyembunyikan kartu "Connected" sesi yang belum punya pesan agen.
+    @Test
+    func anOldCancelDoesNotHideTheActiveSessionFromInit() async {
+        let (transport, bridge) = await connectedBridge(states: ["ASSISTANT_ACTIVE", "AGENT_ACTIVE"])
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        transport.emit(WireFixture.systemFrame(seq: 5, type: "queue_canceled"))
+        transport.emit(WireFixture.stateFrame(seq: 6, state: "ASSISTANT_ACTIVE", previous: "AGENT_QUEUED"))
+        await waitUntil { bridge.conversationState == .assistantActive }
+        transport.drop()
+        await waitUntil { bridge.conversationState == .agentActive }
+        let expected = [LiveAgentNotice(kind: .canceled, seq: 5), .init(kind: .connected, seq: .max)]
+        #expect(bridge.visibleLiveAgentNotices == expected)
+    }
+
     /// Percakapan berganti saat antre dengan seq yang mulai dari kecil lagi: acuan antrean ikut percakapan baru.
     @Test
     func aNewConversationResetsTheQueueReference() async {

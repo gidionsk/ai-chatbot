@@ -102,12 +102,12 @@ extension TanyaAIBridge {
 // MARK: - Typing
 
 extension TanyaAIBridge {
-    /// Acuan awal antrean untuk kartu pembuka dan indikator mencari agen: seq terakhir yang diketahui. Dipanggil saat
-    /// stream memindahkan state ke antre (= seq event `state`) dan setiap init, karena antrean (atau percakapan) bisa
-    /// sudah berganti selama putus walau nilai state-nya sama. Di luar antre acuannya dilupakan, supaya acuan dari
-    /// percakapan lain tidak menyembunyikan kartu sesi agen yang dibuka langsung dari init.
+    /// Acuan awal antrean atau sesi agen untuk kartu pembuka dan indikator mencari agen: seq terakhir yang diketahui.
+    /// Dipanggil saat stream memindahkan state ke antre (= seq event `state`) dan setiap init, karena antrean, sesi,
+    /// atau percakapan bisa sudah berganti selama putus walau nilai state-nya sama; event penutup sebelum acuan milik
+    /// antrean lama. Di luar antre dan sesi agen acuannya dilupakan.
     func markQueueStart() {
-        guard conversationState == .agentQueued else {
+        guard conversationState.isLiveAgent else {
             queueStartSeq = nil
             return
         }
@@ -222,10 +222,11 @@ private extension TanyaAIBridge {
     var lastAssistantSeq: Int { messages.last { $0.author == .assistant }?.seq ?? .min }
 
     /// Batas sesi agen yang sedang berjalan untuk pesan agen dan `agent_joined`: jawaban bot terakhir, atau event
-    /// penutup terakhir dari stream bila lebih baru (antrean sebelumnya bisa ditutup tanpa jawaban bot, lalu antre
-    /// lagi). Tanpa event stream (dibuka lagi) batasnya jawaban bot.
+    /// penutup maupun event antre terakhir dari stream bila lebih baru (antrean sebelumnya bisa ditutup tanpa jawaban
+    /// bot, dan event penutupnya bisa terlewat bila replay terpangkas). Tanpa event stream (dibuka lagi) batasnya
+    /// jawaban bot.
     func sessionBoundarySeq(assistantSeq: Int) -> Int {
-        let closedSeq = liveAgentNotices.last { $0.kind != .connecting && $0.kind != .joined }?.seq ?? .min
+        let closedSeq = liveAgentNotices.last { $0.kind != .joined }?.seq ?? .min
         return Swift.max(assistantSeq, closedSeq)
     }
 

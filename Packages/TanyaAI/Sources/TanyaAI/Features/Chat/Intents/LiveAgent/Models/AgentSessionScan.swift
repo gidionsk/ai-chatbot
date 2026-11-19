@@ -7,8 +7,9 @@
 
 /// Pemindai pesan dan event stream urut `seq` untuk kartu "Connected" tiap sesi agen. Sesi dimulai di pesan agen
 /// pertama (bisa sapaan otomatis selama antre) atau `agent_joined`, mana yang lebih dulu, dan berakhir saat bot
-/// menjawab atau event penutup datang (selesai, antre habis, batal, agen tidak tersedia). Event antre hanya menjadi
-/// posisi kartu bila belum ditutup sebelum sesinya dimulai.
+/// menjawab, event penutup datang (selesai, antre habis, batal, agen tidak tersedia), atau antrean baru dimulai (event
+/// penutup lama bisa terlewat bila replay terpangkas). Event antre hanya menjadi posisi kartu bila belum ditutup
+/// sebelum sesinya dimulai.
 struct AgentSessionScan {
     private(set) var cards: [LiveAgentNotice] = []
     private var openerSeq: Int?
@@ -32,7 +33,7 @@ struct AgentSessionScan {
     mutating func read(_ notice: LiveAgentNotice) {
         switch notice.kind {
         case .connecting:
-            guard !isInSession else { return }
+            close()
             openerSeq = notice.seq
         case .joined:
             start(fallbackSeq: notice.seq)

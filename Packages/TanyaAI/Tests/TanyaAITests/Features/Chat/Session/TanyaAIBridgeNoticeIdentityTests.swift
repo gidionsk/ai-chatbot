@@ -33,9 +33,10 @@ struct TanyaAIBridgeNoticeIdentityTests {
         #expect(Set(items.map(\.id)).count == items.count)
     }
 
-    /// Event antre ber-`seq` sama dengan sapaan otomatis agen: hanya satu kartu "Connected", tanpa tombol batal.
+    /// Event antre ber-`seq` sama dengan pesan agen di history dibaca setelah pesannya: antrean baru dengan tombol
+    /// batal di bawah kartu "Connected" sesi sebelumnya, dan setiap baris tetap punya id unik.
     @Test
-    func aQueueEventSharingTheSeqOfAnAutoGreetingShowsOneCard() async {
+    func aQueueEventSharingTheSeqOfAnAgentMessageStartsANewQueue() async {
         let transport = FakeChatTransport()
         let messages = [3, 2, 1].map { WireFixture.message(seq: $0, direction: $0 == 3 ? "agent" : nil) }
         transport.historyPages = [WireFixture.history(messages: messages)]
@@ -46,9 +47,9 @@ struct TanyaAIBridgeNoticeIdentityTests {
         transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
         transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
         await waitUntil { bridge.conversationState == .agentQueued }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 2)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 2), .init(kind: .connecting, seq: 3)])
         let items = [ChatListItem](rows: bridge.rows).inserting(bridge.visibleLiveAgentNotices, isLeaveEnabled: true)
-        #expect(!items.contains(.leaveAgentQueue(isEnabled: true)))
+        #expect(items.contains(.leaveAgentQueue(isEnabled: true)))
         #expect(Set(items.map(\.id)).count == items.count)
     }
 }
