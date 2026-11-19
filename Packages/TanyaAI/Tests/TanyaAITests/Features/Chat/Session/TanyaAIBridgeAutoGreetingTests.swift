@@ -65,6 +65,39 @@ struct TanyaAIBridgeAutoGreetingTests {
         #expect(bridge.visibleLiveAgentNotices == expected)
     }
 
+    /// Antre habis setelah sapaan, lalu antre lagi tanpa jawaban bot di antaranya: sapaan lama bukan milik antrean
+    /// baru, jadi kartu antre baru (dengan tombol batal) tampil dan belum mencari agen.
+    @Test
+    func anOldGreetingDoesNotConnectTheNextQueue() async {
+        let (transport, bridge) = await queuedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.messageFrame(seq: 5, direction: "agent"))
+        transport.emit(WireFixture.systemFrame(seq: 6, type: "queue_timeout"))
+        transport.emit(WireFixture.stateFrame(seq: 7, state: "ASSISTANT_ACTIVE", previous: "AGENT_QUEUED"))
+        transport.emit(WireFixture.systemFrame(seq: 8, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 9, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.conversationState == .agentQueued && bridge.eventCursor == 9 }
+        let expected = [
+            LiveAgentNotice(kind: .connected, seq: 3), .init(kind: .queueTimeout, seq: 6),
+            .init(kind: .connecting, seq: 8)
+        ]
+        #expect(bridge.visibleLiveAgentNotices == expected)
+        #expect(!bridge.isSearchingAgent)
+    }
+
+    /// Agen bergabung lalu menutup sesi tanpa mengirim pesan: kartu "Connected" tetap sebagai riwayat.
+    @Test
+    func aSessionWithoutAgentMessagesKeepsItsConnectedCard() async {
+        let (transport, bridge) = await queuedBridge()
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 5, type: "agent_joined"))
+        transport.emit(WireFixture.stateFrame(seq: 6, state: "AGENT_ACTIVE", previous: "AGENT_QUEUED"))
+        transport.emit(WireFixture.systemFrame(seq: 7, type: "agent_ended"))
+        transport.emit(WireFixture.stateFrame(seq: 8, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        await waitUntil { bridge.conversationState == .assistantActive }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 3), .init(kind: .ended, seq: 7)])
+    }
+
     /// Dibuka lagi saat masih antre dengan sapaan di history: "Connected" sebelum sapaan, dan masih mencari.
     @Test
     func reopeningTheQueueAfterTheGreetingStillSearches() async {

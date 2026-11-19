@@ -50,13 +50,28 @@ struct ArrayLiveAgentNoticeTests {
             message(seq: 6, author: .agent), message(seq: 7, author: .assistant), message(seq: 9, author: .user),
             message(seq: 11, author: .agent)
         ]
-        let connected = { LiveAgentNotice(kind: .connected, seq: $0) }
-        let opener = { LiveAgentNotice(kind: .connecting, seq: $0) }
-        #expect(messages.connectedAgentSessions(openedBy: []) == [connected(1), connected(9)])
-        #expect(messages.connectedAgentSessions(openedBy: [opener(3), opener(8)]) == [connected(3), connected(8)])
+        #expect(messages.connectedAgentSessions(streamNotices: []) == [connected(1), connected(9)])
+        #expect(messages.connectedAgentSessions(streamNotices: [opener(3), opener(8)]) == [connected(3), connected(8)])
         // Event antre sesi pertama bukan milik sesi berikutnya.
-        #expect(messages.connectedAgentSessions(openedBy: [opener(3)]) == [connected(3), connected(9)])
-        #expect([message(seq: 2, author: .agent)].connectedAgentSessions(openedBy: []) == [connected(.min)])
+        #expect(messages.connectedAgentSessions(streamNotices: [opener(3)]) == [connected(3), connected(9)])
+        #expect([message(seq: 2, author: .agent)].connectedAgentSessions(streamNotices: []) == [connected(.min)])
+    }
+
+    /// Event penutup memisahkan sesi, dan event antre yang sudah ditutup tidak menjadi posisi sesi berikutnya. Agen
+    /// yang bergabung tanpa mengirim pesan tetap memulai sesi.
+    @Test
+    func closingEventsSplitSessionsAndRetireTheirQueueEvent() {
+        let bot = message(seq: 1, author: .assistant)
+        let canceled = LiveAgentNotice(kind: .canceled, seq: 4)
+        let lateGreeting = [bot, message(seq: 9, author: .agent)]
+        #expect(lateGreeting.connectedAgentSessions(streamNotices: [opener(3), canceled]) == [connected(1)])
+        let greetings = [bot, message(seq: 3, author: .agent), message(seq: 7, author: .agent)]
+        let timedOut = [opener(2), LiveAgentNotice(kind: .queueTimeout, seq: 4), opener(6)]
+        #expect(greetings.connectedAgentSessions(streamNotices: timedOut) == [connected(2), connected(6)])
+        let joined = LiveAgentNotice(kind: .joined, seq: 3)
+        let ended = LiveAgentNotice(kind: .ended, seq: 4)
+        #expect([bot].connectedAgentSessions(streamNotices: [opener(2), joined, ended]) == [connected(2)])
+        #expect([bot].connectedAgentSessions(streamNotices: [joined]) == [connected(3)])
     }
 
     /// Sesi berakhir saat bot menjawab lagi; kartu setelah pesan agen terakhir sesi itu.
@@ -103,6 +118,14 @@ struct ArrayLiveAgentNoticeTests {
 // MARK: - Helpers
 
 private extension ArrayLiveAgentNoticeTests {
+    func connected(_ seq: Int) -> LiveAgentNotice {
+        LiveAgentNotice(kind: .connected, seq: seq)
+    }
+
+    func opener(_ seq: Int) -> LiveAgentNotice {
+        LiveAgentNotice(kind: .connecting, seq: seq)
+    }
+
     func message(seq: Int, author: ChatAuthor = .assistant, intent: ChatIntent? = nil) -> ChatMessage {
         ChatMessage(id: "m-\(seq)", seq: seq, author: author, text: "pesan \(seq)", status: .active, intent: intent)
     }

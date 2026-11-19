@@ -66,8 +66,8 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 2)])
     }
 
-    /// Agen bergabung tanpa event antre: kartu "Connected" di akhir daftar, lalu tepat sebelum pesan agen pertama.
-    /// Tidak ada kartu kedua.
+    /// Agen bergabung tanpa event antre: kartu "Connected" di posisi `agent_joined`, dan pesan agen pertama tidak
+    /// menambah kartu kedua.
     @Test
     func joinedAgentIsConnectedOnceBeforeAndAfterItsFirstMessage() async {
         let (transport, bridge) = await connectedBridge()
@@ -75,10 +75,10 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         transport.emit(WireFixture.systemFrame(seq: 4, type: "agent_joined"))
         transport.emit(WireFixture.stateFrame(seq: 5, state: "AGENT_ACTIVE", previous: "AGENT_QUEUED"))
         await waitUntil { bridge.conversationState == .agentActive }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 4)])
         transport.emit(WireFixture.messageFrame(seq: 6, direction: "agent"))
         await waitUntil { bridge.messages.count == 1 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .min)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 4)])
     }
 
     /// Nasabah mengirim pesan setelah agen bergabung dan sebelum agen membalas: tetap satu kartu "Connected".
@@ -91,7 +91,7 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         transport.emit(WireFixture.messageFrame(seq: 6, direction: "user"))
         transport.emit(WireFixture.messageFrame(seq: 7, direction: "agent"))
         await waitUntil { bridge.messages.count == 2 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 6)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 4)])
     }
 
     /// Sesi yang berakhir saat halaman terbuka memakai kartu dari stream, tidak ditambah kartu dari history.

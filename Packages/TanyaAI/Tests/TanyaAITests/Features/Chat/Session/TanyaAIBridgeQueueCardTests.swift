@@ -48,10 +48,10 @@ struct TanyaAIBridgeQueueCardTests {
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_joined"))
         await waitUntil { bridge.eventCursor == 3 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 3)])
         transport.emit(WireFixture.messageFrame(seq: 4, direction: "user"))
         await waitUntil { bridge.messages.count == 3 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 3)])
     }
 
     /// Antrean pertama dibatalkan, lalu menyambung ulang ke antrean kedua yang event antre-nya tidak ikut replay:
@@ -102,7 +102,7 @@ struct TanyaAIBridgeQueueCardTests {
         await waitUntil { bridge.messages.isEmpty }
         transport.emit(WireFixture.systemFrame(seq: 1, type: "agent_joined"))
         await waitUntil { bridge.eventCursor == 1 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 1)])
     }
 
     /// Penutup antrean lama terlewat saat putus, lalu bot menjawab dan menyerahkan lagi: event antre lama bukan

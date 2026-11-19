@@ -32,19 +32,19 @@ extension TanyaAIBridge {
 // MARK: - Notices
 
 extension TanyaAIBridge {
-    /// Kartu yang tampil di daftar: kartu pembuka sesi yang sedang berjalan selama belum ada pesan agen, kartu penutup
-    /// dari stream, lalu dari history kartu "Connected" tiap sesi agen, kartu selesai, dan kartu "tidak dilanjutkan"
-    /// untuk serah terima tanpa agen, bila stream tidak memberi kartu penutupnya. Event antre dan agen bergabung tidak
-    /// tampil sendiri; keduanya hanya menentukan kartu pembuka. `seq` menjadi id baris, jadi kartu ber-`seq` sama hanya
-    /// tampil sekali: table crash bila menerima id ganda, dan itu terjadi bila `id:` SSE dan `seq` pesan tidak berasal
-    /// dari satu urutan. Yang dipertahankan urut kepentingannya: kartu pembuka yang sedang berjalan (tombol batalnya
-    /// ikut kartu ini), lalu kartu dari stream, baru kartu turunan history.
+    /// Kartu yang tampil di daftar: kartu pembuka sesi yang sedang berjalan selama belum ada pesan agen atau
+    /// `agent_joined`, kartu penutup dari stream, kartu "Connected" tiap sesi agen dari pesan dan event stream, lalu
+    /// dari history kartu selesai dan kartu "tidak dilanjutkan" untuk serah terima tanpa agen, bila stream tidak
+    /// memberi kartu penutupnya. Event antre dan agen bergabung tidak tampil sendiri. `seq` menjadi id baris, jadi
+    /// kartu ber-`seq` sama hanya tampil sekali: table crash bila menerima id ganda, dan itu terjadi bila `id:` SSE dan
+    /// `seq` pesan tidak berasal dari satu urutan. Yang dipertahankan urut kepentingannya: kartu pembuka yang sedang
+    /// berjalan (tombol batalnya ikut kartu ini), lalu kartu dari stream, baru kartu turunan.
     var visibleLiveAgentNotices: [LiveAgentNotice] {
         let streamNotices = liveAgentNotices.filter { $0.kind != .connecting }
         let closing = streamNotices.filter { $0.kind != .joined }
         let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
         var notices = openingNotices + closing
-        notices += messages.connectedAgentSessions(openedBy: liveAgentNotices.filter { $0.kind == .connecting })
+        notices += messages.connectedAgentSessions(streamNotices: liveAgentNotices)
         notices += messages.endedAgentSessions(isOngoing: conversationState.isLiveAgent, closedBy: closing)
         notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
             .filter { !streamedHandoverSeqs.contains($0.seq) }
@@ -52,27 +52,32 @@ extension TanyaAIBridge {
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
     }
 
-    /// "Mencari customer assistant..." selama antre setelah sapaan otomatis agen (pesan agen sebelum agen bergabung),
-    /// sampai agen bergabung atau antrean ditutup. Indikator agen mengetik didahulukan.
+    /// "Mencari customer assistant..." selama antre setelah sapaan otomatis agen (pesan agen antrean ini sebelum agen
+    /// bergabung), sampai agen bergabung atau antrean ditutup. Indikator agen mengetik didahulukan.
     var isSearchingAgent: Bool {
-        guard conversationState == .agentQueued, !isAgentTyping, isAgentMessageInSession else { return false }
-        return !liveAgentNotices.contains { $0.kind != .connecting && $0.seq > sessionStartSeq }
+        guard conversationState == .agentQueued, !isAgentTyping else { return false }
+        let assistantSeq = lastAssistantSeq
+        guard isAgentMessage(after: sessionBoundarySeq(assistantSeq: assistantSeq)) else { return false }
+        let startSeq = Swift.max(queueStartSeq ?? .min, assistantSeq)
+        return !liveAgentNotices.contains { $0.kind != .connecting && $0.seq > startSeq }
     }
 
-    /// Kartu pembuka sesi yang sedang berjalan selama belum ada pesan agen: "Switching" dengan tombol batal selama
-    /// antre, "Connected" begitu agen bergabung (`agent_joined` bisa mendahului event `state`). Setelah pesan agen
-    /// pertama, kartunya diturunkan dari pesan di posisi yang sama. Kosong begitu antrean ditutup event lain (batal,
-    /// antre habis, agen tidak tersedia), karena event `state` bisa terlambat dan kartu tidak boleh tampil bersama
-    /// penggantinya. Event antre dipakai sebagai posisi hanya bila milik antrean ini: setelah jawaban bot terakhir (bot
-    /// tidak menjawab selama antre) dan belum ditutup event lain. Selain itu pembukanya terlewat, jadi kartu di akhir
-    /// daftar.
+    /// Kartu pembuka sesi yang sedang berjalan selama belum ada pesan agen atau `agent_joined`: "Switching" dengan
+    /// tombol batal selama antre, "Connected" bila dibuka langsung dalam `AGENT_ACTIVE` tanpa event yang ikut replay.
+    /// Setelah itu kartunya diturunkan dari pesan dan event di posisi yang sama. Kosong begitu antrean ditutup event
+    /// lain (batal, antre habis, agen tidak tersedia), karena event `state` bisa terlambat dan kartu tidak boleh tampil
+    /// bersama penggantinya; acuannya awal antrean (`markQueueStart`). Event antre dipakai sebagai posisi hanya bila
+    /// milik antrean ini: setelah jawaban bot terakhir dan belum ditutup event lain. Selain itu kartu di akhir daftar.
     private var openingNotices: [LiveAgentNotice] {
-        guard conversationState.isLiveAgent, !isAgentMessageInSession else { return [] }
-        let closing = liveAgentNotices.filter { $0.kind != .connecting && $0.kind != .joined }
-        guard !closing.contains(where: { $0.seq > sessionStartSeq }) else { return [] }
-        let isJoined = liveAgentNotices.contains { $0.kind == .joined && $0.seq > sessionStartSeq }
-        let kind: LiveAgentNoticeKind = conversationState == .agentActive || isJoined ? .connected : .connecting
+        guard conversationState.isLiveAgent else { return [] }
         let assistantSeq = lastAssistantSeq
+        let boundarySeq = sessionBoundarySeq(assistantSeq: assistantSeq)
+        let isJoined = liveAgentNotices.contains { $0.kind == .joined && $0.seq > boundarySeq }
+        guard !isJoined, !isAgentMessage(after: boundarySeq) else { return [] }
+        let startSeq = Swift.max(queueStartSeq ?? .min, assistantSeq)
+        let closing = liveAgentNotices.filter { $0.kind != .connecting && $0.kind != .joined }
+        guard !closing.contains(where: { $0.seq > startSeq }) else { return [] }
+        let kind: LiveAgentNoticeKind = conversationState == .agentActive ? .connected : .connecting
         let opener = liveAgentNotices.last { $0.kind == .connecting && $0.seq > assistantSeq }
         guard let opener, !closing.contains(where: { $0.seq > opener.seq }) else {
             return [LiveAgentNotice(kind: kind, seq: .max)]
@@ -216,12 +221,17 @@ private extension TanyaAIBridge {
     /// `seq` jawaban bot terakhir; bot tidak menjawab selama antre atau dilayani agen.
     var lastAssistantSeq: Int { messages.last { $0.author == .assistant }?.seq ?? .min }
 
-    /// Acuan awal sesi agen yang sedang berjalan: awal antrean (`markQueueStart`) atau jawaban bot terakhir, mana
-    /// yang lebih baru. Event sebelum acuan ini milik antrean atau sesi sebelumnya.
-    var sessionStartSeq: Int { Swift.max(queueStartSeq ?? .min, lastAssistantSeq) }
+    /// Batas sesi agen yang sedang berjalan untuk pesan agen dan `agent_joined`: jawaban bot terakhir, atau event
+    /// penutup terakhir dari stream bila lebih baru (antrean sebelumnya bisa ditutup tanpa jawaban bot, lalu antre
+    /// lagi). Tanpa event stream (dibuka lagi) batasnya jawaban bot.
+    func sessionBoundarySeq(assistantSeq: Int) -> Int {
+        let closedSeq = liveAgentNotices.last { $0.kind != .connecting && $0.kind != .joined }?.seq ?? .min
+        return Swift.max(assistantSeq, closedSeq)
+    }
 
-    /// Ada pesan agen setelah jawaban bot terakhir: sapaan otomatis selama antre, atau balasan agen.
-    var isAgentMessageInSession: Bool {
-        messages.last { $0.author == .assistant || $0.author == .agent }?.author == .agent
+    /// Ada pesan agen setelah batas sesi: sapaan otomatis selama antre, atau balasan agen.
+    func isAgentMessage(after boundarySeq: Int) -> Bool {
+        guard let agentSeq = messages.last(where: { $0.author == .agent })?.seq else { return false }
+        return agentSeq > boundarySeq
     }
 }

@@ -98,8 +98,10 @@ Kartu pembuka sesi agen ada satu per sesi:
   daftar bila dibuka lagi saat masih antre tanpa event yang ikut replay. Event antre hanya dipakai sebagai posisi bila
   datang setelah jawaban bot terakhir dan belum ditutup event lain.
 - Begitu sapaan otomatis datang atau agen bergabung (`agent_joined` bisa mendahului event `state`), kartu yang sama
-  berganti menjadi "Connected" tanpa tombol, lalu tetap tampil sebagai riwayat. Dari history kartu ini ditaruh tepat
-  sebelum pesan agen pertama sesi itu, atau di posisi event antre sesi itu bila ada dari stream.
+  berganti menjadi "Connected" tanpa tombol, lalu tetap tampil sebagai riwayat, juga untuk sesi yang ditutup agen
+  tanpa pesan. Posisinya event antre sesi itu bila ada dari stream; selain itu tepat sebelum pesan agen pertama, atau
+  di posisi `agent_joined`. Sesi berakhir saat bot menjawab atau event penutup datang, jadi sapaan dari antrean yang
+  sudah ditutup bukan milik antrean berikutnya, dan event antre yang sudah ditutup tidak dipakai lagi sebagai posisi.
 - Event penutup antrean (batal, antre habis, agen tidak tersedia) langsung menyembunyikan kartu antre tanpa menunggu
   event `state`. Acuannya `seq` terakhir yang diketahui saat antrean dimulai: saat event `state` memindahkan ke antre,
   dan setiap init yang masih antre (antrean atau percakapan bisa sudah berganti selama putus), atau jawaban bot

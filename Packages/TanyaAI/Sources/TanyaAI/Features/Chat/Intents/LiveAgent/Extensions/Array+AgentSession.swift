@@ -6,33 +6,23 @@
 //
 
 extension Array where Element == ChatMessage {
-    /// Kartu "Connected" untuk tiap sesi agen, karena history tidak membawa event. Sesi dimulai di pesan agen pertama
-    /// setelah bot menjawab (atau di awal daftar); pesan itu bisa sapaan otomatis selama antre. Kartu memakai `seq`
-    /// event antre sesi itu bila ada dari stream, jadi tidak berpindah saat kartu antre berganti; selain itu `seq`
-    /// pesan tepat sebelum pesan agen pertama (`Int.min` bila tidak ada), sehingga tampil tepat setelahnya. Pesan itu
-    /// bot atau nasabah, jadi tidak pernah menjadi kartu selesai atau "tidak dilanjutkan".
-    func connectedAgentSessions(openedBy openers: [LiveAgentNotice]) -> [LiveAgentNotice] {
-        var cards: [LiveAgentNotice] = []
-        var boundarySeq = Int.min
-        var previousSeq = Int.min
-        var isInSession = false
+    /// Kartu "Connected" untuk tiap sesi agen dari pesan dan event stream (`notices`, urut `seq`), karena history tidak
+    /// membawa event. Lihat `AgentSessionScan`. Kartu memakai `seq` event antre sesi itu bila ada, jadi tidak berpindah
+    /// saat kartu antre berganti; selain itu `seq` pesan tepat sebelum pesan agen pertama (`Int.min` bila tidak ada),
+    /// atau `seq` `agent_joined`. Pesan itu bot atau nasabah, jadi tidak pernah menjadi kartu selesai atau "tidak
+    /// dilanjutkan". Event ber-`seq` sama dengan pesan dibaca setelah pesannya.
+    func connectedAgentSessions(streamNotices notices: [LiveAgentNotice]) -> [LiveAgentNotice] {
+        var scan = AgentSessionScan()
+        var pending = notices[...]
         for message in self {
-            switch message.author {
-            case .agent:
-                if !isInSession {
-                    let opener = openers.last { $0.seq > boundarySeq && $0.seq < message.seq }
-                    cards.append(LiveAgentNotice(kind: .connected, seq: opener?.seq ?? previousSeq))
-                }
-                isInSession = true
-            case .assistant:
-                boundarySeq = message.seq
-                isInSession = false
-            case .user, .unknown:
-                break
+            while let notice = pending.first, notice.seq < message.seq {
+                scan.read(notice)
+                pending = pending.dropFirst()
             }
-            previousSeq = message.seq
+            scan.read(message)
         }
-        return cards
+        pending.forEach { scan.read($0) }
+        return scan.cards
     }
 
     /// Kartu selesai untuk sesi agen di history, karena history tidak membawa event `system`. Sesi berakhir saat bot
