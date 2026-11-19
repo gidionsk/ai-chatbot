@@ -47,6 +47,12 @@ public enum CustomSizes {
         public static let outgoingLeadingInset: CGFloat = 48
     }
 
+    /// Ikon di kiri teks status (spinner, sparkle); 20 = ukuran spinner bawaan iOS.
+    /// TODO: Cocokkan dengan nilai Figma node 3262-86657.
+    public enum StatusCaption {
+        public static let icon: CGFloat = 20
+    }
+
     public enum Composer {
         public static let sendButton: CGFloat = 24
     }

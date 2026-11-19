@@ -154,6 +154,7 @@ private extension ChatScreen {
     func listItems(notices: [LiveAgentNotice]) -> [ChatListItem] {
         var items = [ChatListItem](rows: bridge.rows)
             .inserting(notices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgentQueue)
+            .appendingAnswerLoading(isAwaitingReply: bridge.isAwaitingReply)
         if welcome != nil, bridge.isWelcomeVisible {
             items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
         }

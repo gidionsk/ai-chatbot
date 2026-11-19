@@ -21,6 +21,8 @@ enum ChatListItem: Identifiable, Equatable {
     case agentTyping
     /// "Mencari customer assistant..." selama antre setelah sapaan otomatis agen.
     case agentSearching
+    /// Loading di bawah pertanyaan yang belum dijawab bot.
+    case answerLoading
     /// Konten yang disisipkan pemakai `ChatScreen`.
     case content
 
@@ -42,6 +44,8 @@ enum ChatListItem: Identifiable, Equatable {
             return .agentTyping
         case .agentSearching:
             return .agentSearching
+        case .answerLoading:
+            return .answerLoading
         case .content:
             return .content
         }
@@ -56,7 +60,8 @@ enum ChatListItem: Identifiable, Equatable {
     /// Tanpa `default`: baris baru wajib memilih jaraknya di sini.
     var topSpacing: CGFloat {
         switch self {
-        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping, .agentSearching:
+        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping, .agentSearching,
+            .answerLoading:
             return FigmaSize.spacingLarge.scaledToArtwork
         case .leaveAgentQueue:
             return FigmaSize.spacingMedium.scaledToArtwork

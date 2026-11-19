@@ -13,6 +13,7 @@
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "Pesan ini gagal terkirim";
 "chat.scrollToLatest" = "Ke pesan terbaru";
+"chat.answerLoading" = "Sedang menyiapkan jawaban...";
 "welcome.shortcutsTitle" = "Mulai dari sini:";
 "welcome.terms" = "Pelajari [Syarat & Ketentuan](terms) penggunaan TANYA AI.";
 /* TODO: Copy final live agent dari UI/UX; kartu antre, kartu terhubung, label pengirim dan indikator mencari mengikuti Figma, sisanya placeholder. */

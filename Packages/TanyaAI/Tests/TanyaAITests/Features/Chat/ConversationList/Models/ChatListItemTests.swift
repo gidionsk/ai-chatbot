@@ -56,4 +56,15 @@ struct ChatListItemTests {
         let items = [ChatListItem](rows: [message("a", author: .user)], calendar: calendar)
         #expect(items.last?.isQuestion == true)
     }
+
+    /// Loading hanya di bawah pertanyaan yang sedang ditunggu; jawaban pertama atau turn selesai menghapusnya.
+    @Test
+    func answerLoadingFollowsOnlyAnAwaitedQuestion() {
+        let asked = [ChatListItem](rows: [message("a"), message("b", author: .user)], calendar: calendar)
+        let answered = [ChatListItem](rows: [message("b", author: .user), message("c")], calendar: calendar)
+        #expect(asked.appendingAnswerLoading(isAwaitingReply: true).last == .answerLoading)
+        #expect(asked.appendingAnswerLoading(isAwaitingReply: true).count == asked.count + 1)
+        #expect(answered.appendingAnswerLoading(isAwaitingReply: true) == answered)
+        #expect(asked.appendingAnswerLoading(isAwaitingReply: false) == asked)
+    }
 }

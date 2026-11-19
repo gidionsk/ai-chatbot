@@ -59,6 +59,8 @@ Contoh penempatan yang sudah diterapkan:
   kedua bergaris seukuran `.regular`, mis. Batalkan di form), dan `.link` (teks kecil bergaris bawah, mis. "Batalkan
   proses ini").
 - `Components/Feedback/LoadingIndicator.swift`: spinner untuk semua loading.
+- `Components/Feedback/StatusCaption.swift`: teks status kecil di bawah pesan terakhir dengan ikon opsional (mencari
+  agen, agen mengetik, bot menyiapkan jawaban).
 - `Components/Lists/SeparatorLine.swift`: garis pemisah 1 pt (daftar, tabel Markdown, di atas composer).
 - `Components/Screen/BottomSheet/Models/BottomSheetMaxHeight.swift`: batas tinggi, di bawah status bar atau bagian layar.
 - `Components/Screen/BottomSheet/Models/BottomSheetLayout.swift`: batas tinggi dan letak sheet dari safe area, layar
@@ -140,12 +142,12 @@ TanyaAI/Features/Chat/Intents/LiveAgent/
 │   ├── Array+LiveAgentNotice.swift
 │   └── LiveAgentNoticeKind+Copy.swift
 └── Views/
-    ├── AgentTypingIndicator.swift
     ├── LiveAgentMessageRow.swift
     └── LiveAgentNoticeCard.swift
 ```
 
-Komponen visualnya generik di DesignKit: `NoticeCard`, `SenderMessageCard`, dan `FilledButton` varian `.link`.
+Komponen visualnya generik di DesignKit: `NoticeCard`, `SenderMessageCard`, `StatusCaption` (mencari agen dan agen
+mengetik, langsung di `ChatListRow`), dan `FilledButton` varian `.link`.
 Tombol lampiran adalah parameter `attachment` milik `MessageComposer`.
 
 ### Menambah intent: langkah yang sudah punya pola

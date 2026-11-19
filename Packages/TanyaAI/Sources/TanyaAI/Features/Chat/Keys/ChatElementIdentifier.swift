@@ -18,6 +18,7 @@ enum ChatElementIdentifier {
     static let agentMessage = "chat.agent.message"
     static let agentTyping = "chat.agent.typing"
     static let agentSearching = "chat.agent.searching"
+    static let answerLoading = "chat.answer.loading"
     static let liveAgentNotice = "chat.agent.notice"
     /// Chip awal/akhir sesi agen.
     static let leaveAgentQueue = "chat.agent.leaveQueue"

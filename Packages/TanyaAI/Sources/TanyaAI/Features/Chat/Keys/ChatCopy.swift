@@ -16,6 +16,9 @@ enum ChatCopy: String, CaseIterable {
     case sendFailed = "chat.sendFailed"
     /// Label aksesibilitas tombol panah ke pesan terbaru.
     case scrollToLatest = "chat.scrollToLatest"
+    /// Loading di bawah pertanyaan selama bot menyiapkan jawaban.
+    /// TODO: Copy sementara dari tim iOS; ganti dengan copy final UI/UX.
+    case answerLoading = "chat.answerLoading"
     case shortcutsTitle = "welcome.shortcutsTitle"
     /// Bagian yang bisa diketuk ditulis sebagai link Markdown; tujuannya diabaikan.
     case welcomeTerms = "welcome.terms"
