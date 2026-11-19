@@ -27,4 +27,6 @@ enum ChatElementIdentifier {
 
     /// Kartu shortcut ke-`index` (mulai 0) sesuai urutan dari BE.
     static func shortcut(_ index: Int) -> String { "welcome.shortcut.\(index)" }
+    /// Pesan foto galeri berformat lain di sheet lampiran.
+    static let attachmentFormatError = "chat.attachment.formatError"
 }

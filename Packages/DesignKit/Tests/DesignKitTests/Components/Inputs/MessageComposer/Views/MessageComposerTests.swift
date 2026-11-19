@@ -11,8 +11,7 @@ import UIKit
 
 @testable import DesignKit
 
-/// Tombol lampiran berada di luar kartu tanpa menambah tinggi composer, karena padding vertikalnya sama dengan
-/// padding kartu.
+/// Tombol lampiran di dalam kartu seukuran tombol kirim, jadi tinggi composer tetap.
 @MainActor
 struct MessageComposerTests {
     @Test

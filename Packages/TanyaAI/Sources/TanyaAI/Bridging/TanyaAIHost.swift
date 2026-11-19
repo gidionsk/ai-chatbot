@@ -20,18 +20,23 @@ public struct TanyaAIHost {
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let bridge: TanyaAIBridge
+    private let onSheetChange: ((Bool) -> Void)?
 
     /// `welcome` dipetakan host dari inquiry init BE. `bridge` dibuat sekali oleh host dan dipakai ulang
     /// setiap render, sehingga status menunggu jawaban tidak hilang saat halaman host di-render ulang.
+    /// `onSheetChange` true saat bottom sheet milik Tanya AI terbuka (mis. pilihan lampiran) dan false saat
+    /// tertutup: host menahan swipe-back navigasinya selama true, sama seperti untuk sheet milik host.
     public init(
         locale: Locale = .current, colors: any FigmaColorProtocol = EnvironmentValues().designColors,
-        isEnabled: Bool = true, welcome: WelcomeContent? = nil, bridge: TanyaAIBridge
+        isEnabled: Bool = true, welcome: WelcomeContent? = nil, bridge: TanyaAIBridge,
+        onSheetChange: ((Bool) -> Void)? = nil
     ) {
         self.locale = locale
         self.colors = colors
         self.isEnabled = isEnabled
         self.welcome = welcome
         self.bridge = bridge
+        self.onSheetChange = onSheetChange
     }
 
     /// Halaman Tanya AI. Tanpa `onBack`, tombol kembali memakai `dismiss` SwiftUI (pop pada navigasi host).
@@ -48,7 +53,7 @@ public struct TanyaAIHost {
     ) -> some View {
         ChatScreen(
             isEnabled: isEnabled, welcome: welcome, bridge: bridge, onBack: onBack, onOpenLink: onOpenLink,
-            content: content
+            onSheetChange: onSheetChange, content: content
         )
         .environment(\.locale, locale)
         .designColors(colors)

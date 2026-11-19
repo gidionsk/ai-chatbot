@@ -33,3 +33,9 @@
 "liveAgent.unavailable.message" = "Customer Assistant belum dapat melayani Anda saat ini. Silakan coba lagi nanti; Tanya AI siap membantu Anda kembali.";
 "liveAgent.notContinued.title" = "Permintaan Agent Tidak Dilanjutkan";
 "liveAgent.notContinued.message" = "Anda telah meminta untuk terhubung dengan Customer Assistant, tetapi percakapan tidak dilanjutkan. Tanya AI siap membantu Anda kembali.";
+"attachment.gallery" = "Galeri";
+"attachment.gallery.formats" = "HEIC, JPG, atau PNG";
+"attachment.file" = "File";
+"attachment.file.formats" = "PDF, HEIC, JPG, atau PNG";
+"attachment.close" = "Tutup";
+"attachment.unsupportedFormat" = "Format foto tidak didukung. Pilih foto HEIC, JPG, atau PNG.";

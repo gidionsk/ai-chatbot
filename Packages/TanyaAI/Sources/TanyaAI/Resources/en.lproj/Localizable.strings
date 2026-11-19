@@ -33,3 +33,9 @@
 "liveAgent.unavailable.message" = "A Customer Assistant cannot serve you right now. Please try again later; Tanya AI is ready to help you again.";
 "liveAgent.notContinued.title" = "Agent Request Not Continued";
 "liveAgent.notContinued.message" = "You requested to connect with a Customer Assistant, but the conversation did not continue. Tanya AI is ready to help you again.";
+"attachment.gallery" = "Gallery";
+"attachment.gallery.formats" = "HEIC, JPG, or PNG";
+"attachment.file" = "File";
+"attachment.file.formats" = "PDF, HEIC, JPG, or PNG";
+"attachment.close" = "Close";
+"attachment.unsupportedFormat" = "This photo format isn't supported. Choose a HEIC, JPG, or PNG photo.";
