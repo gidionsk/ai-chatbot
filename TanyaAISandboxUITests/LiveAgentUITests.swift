@@ -42,6 +42,25 @@ final class LiveAgentUITests: XCTestCase {
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "agen sudah selesai")
     }
 
+    /// Sheet lampiran yang masih terbuka ikut tertutup saat agen mengakhiri sesi, jadi Galeri tidak bisa diketuk lagi.
+    func testAttachmentSheetClosesWhenTheAgentEndsTheSession() {
+        launchAndAskForAnAgent()
+        XCTAssertTrue(element("chat.agent.message").waitForExistence(timeout: 15))
+        send("Cek status kartu saya")
+        let attachment = application.buttons["composer.attachment"]
+        XCTAssertTrue(attachment.waitForExistence(timeout: 5))
+        attachment.tap()
+        let sheet = element("sheet")
+        XCTAssertTrue(sheet.waitForExistence(timeout: 3))
+        XCTAssertTrue(sheet.staticTexts["Gallery"].exists)
+        // Agen menutup sesi beberapa detik setelah menjawab (`--live-agent`); sheet tidak ditutup oleh test.
+        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: sheet)
+        wait(for: [gone], timeout: 12)
+        XCTAssertTrue(element("chat.agent.notice").waitForExistence(timeout: 5))
+        XCTAssertFalse(application.staticTexts["Gallery"].exists)
+        XCTAssertFalse(attachment.exists, "agen sudah selesai")
+    }
+
     func testLeavingTheQueueShowsTheCanceledCard() {
         launchAndAskForAnAgent()
         let leave = application.buttons["chat.agent.leaveQueue"]
@@ -83,14 +102,29 @@ private extension LiveAgentUITests {
         application.buttons["composer.send"].tap()
     }
 
-    /// Di luar kartu composer, sebelah kiri, dan sejajar dengan tombol kirim.
+    /// Di dalam kartu composer sebelah kiri field, seukuran dan sejajar dengan tombol kirim. Diketuk = bottom sheet
+    /// Galeri dan File (tanpa kamera), lalu ditutup lagi lewat latar gelap.
     func assertAttachmentLinesUpWithSend() {
         let attachment = application.buttons["composer.attachment"]
         XCTAssertTrue(attachment.waitForExistence(timeout: 5))
         let send = application.buttons["composer.send"].frame
         XCTAssertEqual(attachment.frame.midY, send.midY, accuracy: 0.5)
         XCTAssertEqual(attachment.frame.size, send.size)
-        XCTAssertLessThan(attachment.frame.maxX, application.otherElements["composer"].frame.minX)
+        XCTAssertGreaterThan(attachment.frame.minX, application.otherElements["composer"].frame.minX)
+        XCTAssertLessThan(attachment.frame.maxX, application.textViews["composer.input"].frame.minX)
+        attachment.tap()
+        let sheet = element("sheet")
+        XCTAssertTrue(sheet.waitForExistence(timeout: 3))
+        XCTAssertTrue(sheet.staticTexts["Gallery"].exists)
+        XCTAssertTrue(sheet.staticTexts["PDF, HEIC, JPG, or PNG"].exists)
+        capture("live-agent-attachment-sources")
+        // Swipe-back dari tepi kiri ditahan host selama sheet terbuka: halaman chat tetap tampil.
+        let leftEdge = application.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        leftEdge.press(
+            forDuration: 0.1, thenDragTo: application.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)))
+        XCTAssertTrue(application.buttons["composer.attachment"].exists, "masih di halaman chat")
+        application.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        waitUntilGone(sheet)
     }
 
     func element(_ identifier: String) -> XCUIElement {

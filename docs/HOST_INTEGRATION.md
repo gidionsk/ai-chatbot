@@ -181,6 +181,10 @@ Mulai 18 November 2026 transport juga mewajibkan `attachSuccessID(messageID:succ
 (`POST /v1/chat/messages/{message_id}/success-id`, body `{"success_id": "..."}`) untuk menandai pesan intent
 selesai setelah transaksinya berhasil. Polanya sama dengan `leaveAgent`, dengan body JSON seperti `sendMessage`.
 
+Mulai 18 November 2026 `TanyaAIHost` menerima `onSheetChange: (Bool) -> Void` (opsional). Tanya AI memanggilnya
+`true` saat bottom sheet miliknya terbuka (pilihan lampiran) dan `false` saat tertutup; host menahan swipe-back
+navigasinya selama `true`, sama seperti untuk sheet milik host. Di Byon: teruskan ke extension pop gesture global.
+
 ```swift
 TanyaAIHost(locale: locale, colors: colors, welcome: welcome, bridge: bridge)
 ```

@@ -43,21 +43,14 @@ public struct MessageComposer: View {
         self.onStop = onStop
     }
 
-    /// Tombol lampiran di luar kartu, sejajar bawah dengan tombol kirim: padding vertikalnya sama dengan padding
-    /// kartu dan jaraknya ke kartu sama dengan jarak field ke tombol kirim.
+    /// Tombol lampiran di dalam kartu sebelah kiri (Figma `typing-area`), sejajar bawah dengan tombol kirim.
+    /// TODO: Konfirmasi jarak tombol lampiran ke field dengan Figma; sementara sama dengan jarak field ke tombol kirim.
     public var body: some View {
         HStack(alignment: .bottom, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
             if let attachment {
                 attachmentButton(attachment)
                     .frame(minHeight: singleLineRowHeight)
-                    .padding(.vertical, FigmaSize.spacingLarge.scaledToArtwork)
             }
-            card
-        }
-    }
-
-    private var card: some View {
-        HStack(alignment: .bottom, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
             field
                 .frame(minHeight: singleLineRowHeight)
             actionButton
@@ -114,14 +107,20 @@ public struct MessageComposer: View {
         .accessibilityIdentifier(ComponentIdentifier.Composer.send)
     }
 
+    /// Figma `add`: lingkaran putih bergaris N200 dengan tanda tambah, seukuran tombol kirim.
     private func attachmentButton(_ attachment: MessageComposerAttachment) -> some View {
         Button(action: attachment.onTap) {
-            Image(DesignColorIcon.attachment).resizable().scaledToFit()
+            Image(DesignIcon.plus).resizable().scaledToFit()
+                .foregroundColor(colors.colorsIconDark)
                 .frame(
                     width: CustomSizes.Composer.sendButton.scaledToArtwork,
                     height: CustomSizes.Composer.sendButton.scaledToArtwork
                 )
-                .contentShape(Rectangle())
+                .background(Circle().fill(colors.colorsOutlineWhite))
+                .overlay(
+                    Circle().strokeBorder(CustomColors.Stroke.color, lineWidth: FigmaSize.weightOutline.scaledToArtwork)
+                )
+                .contentShape(Circle())
         }
         .buttonStyle(ArtworkButtonStyle())
         .accessibilityLabel(attachment.label)

@@ -32,3 +32,9 @@
 "liveAgent.unavailable.message" = "客服目前无法为您服务，请稍后再试。Tanya AI 随时为您服务。";
 "liveAgent.notContinued.title" = "客服请求未继续";
 "liveAgent.notContinued.message" = "您曾请求连接客服，但对话未继续。Tanya AI 随时为您服务。";
+"attachment.gallery" = "相册";
+"attachment.gallery.formats" = "HEIC、JPG 或 PNG";
+"attachment.file" = "文件";
+"attachment.file.formats" = "PDF、HEIC、JPG 或 PNG";
+"attachment.close" = "关闭";
+"attachment.unsupportedFormat" = "不支持此照片格式。请选择 HEIC、JPG 或 PNG 照片。";

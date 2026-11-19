@@ -5,8 +5,8 @@
 //  Created by Wendra on 20/10/26.
 //
 
-import Foundation
 import TanyaAI
+import UIKit
 
 /// View model halaman Tanya AI di host: membaca `repository` UseCase dan menyusun konfigurasi package.
 /// Urutan init → history → SSE, retry, pesan, dan status menunggu jawaban milik TanyaAI (`TanyaAIBridge`).
@@ -25,7 +25,9 @@ final class TanyaAIScreenViewModel: ScreenContentViewModel {
         // Sandbox: bahasa dari launch option; host memakai Localize_Swift.
         locale: SandboxOptions.current.locale ?? .current,
         welcome: useCase.repository.welcome,
-        bridge: bridge
+        bridge: bridge,
+        // Sama dengan sheet milik host: swipe-back ditahan selama sheet Tanya AI terbuka.
+        onSheetChange: { UINavigationController.setPopGestureEnabled(!$0) }
     )
 
     init(useCase: TanyaAIUseCase) {

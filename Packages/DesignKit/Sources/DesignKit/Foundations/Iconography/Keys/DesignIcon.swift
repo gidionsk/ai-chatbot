@@ -26,6 +26,9 @@ public enum DesignIcon: String, CaseIterable {
     case lightbulb
     /// TODO: Ganti PDF dummy dengan aset Figma gembok sheet PIN (`_Input OTP PIN DEBIT TRANSACTION`), nama tetap.
     case lock
+    /// Tanda tambah di tombol lampiran composer (Figma `typing-area` / `add`).
+    /// TODO: Ganti PDF dummy dengan aset Figma ikon tambah, nama tetap.
+    case plus
     /// TODO: Ganti PDF dummy dengan aset Figma `reply`, nama tetap.
     case reply
 }
