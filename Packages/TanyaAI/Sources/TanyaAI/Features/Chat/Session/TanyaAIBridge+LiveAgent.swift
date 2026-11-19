@@ -100,6 +100,7 @@ extension TanyaAIBridge {
         if previous != .agentQueued {
             markQueueStart()
         }
+        forgetAgent(previous: previous)
         guard !conversationState.isLiveAgent else { return }
         showAgentTyping(false)
         resetUserTyping()

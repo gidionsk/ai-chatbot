@@ -36,6 +36,8 @@ public final class TanyaAIBridge: ObservableObject {
     @Published var conversationState = ConversationState.unknown {
         didSet { didChangeConversationState(previous: oldValue) }
     }
+    /// Nama agen manusia dari stream (lihat `rememberAgent(named:)`); nil selama belum ada nama.
+    @Published var agentName: String?
     /// Acuan awal antrean saat ini (lihat `markQueueStart`); tetap selama antre dan sesi agen yang menyusul walau pesan
     /// baru datang.
     var queueStartSeq: Int?
@@ -197,9 +199,11 @@ extension TanyaAIBridge {
             updateLatestIncomingMessage()
         case .turnEnd(let seq):
             turn.end(seq: seq)
-        case .state(let state):
+        case .state(let state, let agentName):
             conversationState = state
-        case .notice(let notice):
+            rememberAgent(named: agentName)
+        case .notice(let notice, let agentName):
+            rememberAgent(named: agentName)
             // Replay setelah reconnect bisa mengulang event yang sama; `seq` menjadi kuncinya.
             let others = liveAgentNotices.filter { $0.seq != notice.seq }
             liveAgentNotices = (others + [notice]).sorted { $0.seq < $1.seq }

@@ -74,7 +74,7 @@ public struct ChatScreen<Content: View>: View {
         VStack(spacing: .zero) {
             agentSessionBanner(headerHeight: headerHeight)
             ChatTable(
-                state: tableState, headerHeight: isAgentSession ? .zero : headerHeight, actions: rowActions,
+                state: tableState, headerHeight: bridge.isHumanAgentActive ? .zero : headerHeight, actions: rowActions,
                 onScrollProgress: { scrollProgress = $0 }, onLatestVisibilityChange: { isLatestVisible = $0 },
                 row: listRow
             )
@@ -84,7 +84,7 @@ public struct ChatScreen<Content: View>: View {
 
     @ViewBuilder
     private func agentSessionBanner(headerHeight: CGFloat) -> some View {
-        if isAgentSession {
+        if bridge.isHumanAgentActive {
             AgentSessionBanner(onEnd: leaveAgent)
                 .disabled(!isEnabled || bridge.isLeavingAgent)
                 .padding(.top, headerHeight)
@@ -144,7 +144,7 @@ public struct ChatScreen<Content: View>: View {
 private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
 
-    /// Lampiran dan bar sesi agen hanya selama dilayani agen.
+    /// Lampiran hanya selama `AGENT_ACTIVE`; bar sesi agen juga menunggu nama agen (`isHumanAgentActive`).
     var isAgentSession: Bool { bridge.conversationState == .agentActive }
 
     var rowActions: ChatRowActions {

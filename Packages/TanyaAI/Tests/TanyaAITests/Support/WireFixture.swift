@@ -91,16 +91,19 @@ enum WireFixture {
         ["id: \(seq)", "event: turn_end", #"data: {"status":"\#(status)","active_turn_id":"100001"}"#, ""]
     }
 
-    /// Frame `state` contract §5; nama agen hanya ada saat menuju `AGENT_ACTIVE`.
-    static func stateFrame(seq: Int, state: String, previous: String = "ASSISTANT_ACTIVE") -> [String] {
-        let agent = state == "AGENT_ACTIVE" ? #"{"name":"Durenk"}"# : "null"
+    /// Frame `state` contract §5; nama agen hanya ada saat menuju `AGENT_ACTIVE`, kecuali `isAgentNamed` false
+    /// (UAT: `agent: null`).
+    static func stateFrame(
+        seq: Int, state: String, previous: String = "ASSISTANT_ACTIVE", isAgentNamed: Bool = true
+    ) -> [String] {
+        let agent = state == "AGENT_ACTIVE" && isAgentNamed ? #"{"name":"Durenk"}"# : "null"
         let data = #"{"from":"\#(previous)","to":"\#(state)","agent":\#(agent)}"#
         return ["id: \(seq)", "event: state", "data: \(data)", ""]
     }
 
-    /// Frame `system` contract §7.6.
-    static func systemFrame(seq: Int, type: String) -> [String] {
-        ["id: \(seq)", "event: system", #"data: {"type":"\#(type)","data":null}"#, ""]
+    /// Frame `system` contract §7.6; `data` per jenis, mis. `{"agent":{"name":"Durenk"}}` untuk `agent_joined`.
+    static func systemFrame(seq: Int, type: String, data: String = "null") -> [String] {
+        ["id: \(seq)", "event: system", #"data: {"type":"\#(type)","data":\#(data)}"#, ""]
     }
 
     static func typingFrame(seq: Int, isTyping: Bool = true, lifetime: Int = 10) -> [String] {

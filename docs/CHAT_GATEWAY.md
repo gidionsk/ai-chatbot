@@ -140,8 +140,12 @@ maupun stream), percakapan berganti, atau sesi berakhir, status dilupakan tanpa 
 mengetik ikut dihapus. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan ke agen memakai `sendMessage`
 yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
 
-Selama `AGENT_ACTIVE` bar hitam "You're now in mode talking with CA" + End Session (`ActionBanner` DesignKit, warna dan
-ukuran sementara dari foto Figma) menempel di bawah header, dan daftar mulai di bawah bar. End Session memanggil
+Selama `AGENT_ACTIVE` dengan nama agen bar hitam "You're now in mode talking with CA" + End Session (`ActionBanner`
+DesignKit, warna dan ukuran sementara dari foto Figma) menempel di bawah header, dan daftar mulai di bawah bar. Nama
+agen dari `agent.name` event `state` menuju `AGENT_ACTIVE` atau `data.agent.name` `agent_joined`, mana yang lebih dulu
+(keputusan user 20 November 2026: `AGENT_ACTIVE` tanpa nama belum dianggap agen manusia). Nama dilupakan saat keluar
+dari antre/agen atau antrean baru dimulai. Init tidak membawa nama, jadi saat halaman dibuka lagi bar baru tampil bila
+event bernama ikut replay. Lampiran tetap mengikuti `AGENT_ACTIVE` saja. End Session memanggil
 `leave-agent` yang sama dengan Batalkan: `left:true` langsung kembali ke bot, 409 atau gagal lain membuat tombol aktif
 lagi. Tanpa dialog konfirmasi sampai ada Figma.
 
@@ -174,8 +178,8 @@ antre, agen bergabung 3 detik kemudian, mengetik lalu menyapa, menjawab pertanya
 - End Session memakai `leave-agent` saat `AGENT_ACTIVE` (aturan baru dari user 19 November 2026), sedangkan contract
   v1.5.3 masih menulis 409 (OQ-P11). Event yang menyusul di stream setelah `left:true` belum dikonfirmasi BE.
 - Di UAT, `agent_joined` dan `AGENT_ACTIVE` (`agent: null`) datang sebelum sapaan otomatis dan pesan "masih dalam
-  antrian", jadi kartu langsung "Connected", bar sesi tampil, dan "Mencari customer assistant..." tidak muncul.
-  Penanda agen manusia yang sebenarnya belum dikonfirmasi BE.
+  antrian", jadi kartu langsung "Connected" dan "Mencari customer assistant..." tidak muncul. Bar sesi sementara
+  menunggu nama agen; penanda agen manusia yang sebenarnya belum dikonfirmasi BE, dan init belum membawa nama agen.
 - Pesan agen bisa `type: html` (disanitasi gateway); tanpa HTML renderer tag tampil sebagai teks.
 - CTA `action` belum tampil; `success_id` sudah dibaca, tetapi kartu suksesnya ikut fitur intent. Copy kartu live agent selain kartu antre masih placeholder.
 

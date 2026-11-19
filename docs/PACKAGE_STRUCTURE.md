@@ -133,7 +133,8 @@ PR #52 di basis `startingpoint`; keduanya dipertahankan pada struktur ini.
 
 Intent pertama adalah `LiveAgent` (serah terima ke agen manusia). Flow ini digerakkan event gateway,
 bukan form host, jadi decode tetap di `Gateway`, state dan aksi `leave-agent` di `Session`
-(`TanyaAIBridge+LiveAgent`, `TanyaAIBridge+LeaveAgent`), dan hanya nilai yang dilihat nasabah di `Intents/LiveAgent`:
+(`TanyaAIBridge+LiveAgent`, `TanyaAIBridge+LeaveAgent`, nama agen untuk bar sesi di `TanyaAIBridge+AgentName`), dan
+hanya nilai yang dilihat nasabah di `Intents/LiveAgent`:
 
 ```text
 TanyaAI/Features/Chat/Intents/LiveAgent/
