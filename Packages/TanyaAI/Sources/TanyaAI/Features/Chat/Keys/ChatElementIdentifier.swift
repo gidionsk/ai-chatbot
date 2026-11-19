@@ -20,8 +20,10 @@ enum ChatElementIdentifier {
     static let agentSearching = "chat.agent.searching"
     static let answerLoading = "chat.answer.loading"
     static let liveAgentNotice = "chat.agent.notice"
-    /// Chip awal/akhir sesi agen.
+    /// Tombol batal di dalam kartu antre.
     static let leaveAgentQueue = "chat.agent.leaveQueue"
+    /// Bar sesi agen di bawah header; End Session di dalamnya dicari lewat label.
+    static let agentSessionBanner = "chat.agent.session"
 
     /// Saran pertanyaan lanjutan ke-`index` (mulai 0) sesuai urutan dari gateway.
     static func followUp(_ index: Int) -> String { "chat.followUp.\(index)" }

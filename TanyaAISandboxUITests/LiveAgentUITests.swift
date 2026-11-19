@@ -37,6 +37,7 @@ final class LiveAgentUITests: XCTestCase {
         XCTAssertFalse(element("chat.agent.searching").exists, "agen sudah bergabung")
         XCTAssertTrue(notice("Connected to Customer Assistant").exists, "kartu terhubung tetap sebagai riwayat")
         XCTAssertFalse(application.staticTexts["Session with Tanya OCBC Customer Assistant started"].exists)
+        XCTAssertTrue(element("chat.agent.session").exists, "bar sesi agen selama dilayani")
         assertAttachmentLinesUpWithSend()
         capture("live-agent-active")
         send("Cek status kartu saya")
@@ -44,6 +45,21 @@ final class LiveAgentUITests: XCTestCase {
         XCTAssertTrue(notice("Customer Assistant Mode Ended").waitForExistence(timeout: 10))
         XCTAssertFalse(application.staticTexts["Session with Tanya OCBC Customer Assistant ended"].exists)
         capture("live-agent-ended")
+        XCTAssertFalse(application.buttons["composer.attachment"].exists, "agen sudah selesai")
+        XCTAssertFalse(element("chat.agent.session").exists, "bar hilang setelah sesi berakhir")
+    }
+
+    /// End Session di bar bawah header memanggil `leave-agent`: sesi berakhir tanpa menunggu agen menutupnya.
+    func testEndSessionLeavesTheAgent() {
+        launchAndAskForAnAgent()
+        let banner = element("chat.agent.session")
+        XCTAssertTrue(banner.waitForExistence(timeout: 15))
+        let title = application.staticTexts["Tanya AI"].firstMatch
+        XCTAssertGreaterThanOrEqual(banner.frame.minY, title.frame.maxY, "di bawah header")
+        capture("live-agent-session-banner")
+        banner.buttons["End Session"].tap()
+        XCTAssertTrue(notice("Customer Assistant Mode Ended").waitForExistence(timeout: 5))
+        XCTAssertFalse(banner.exists)
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "agen sudah selesai")
     }
 

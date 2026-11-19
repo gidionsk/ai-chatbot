@@ -140,6 +140,11 @@ maupun stream), percakapan berganti, atau sesi berakhir, status dilupakan tanpa 
 mengetik ikut dihapus. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan ke agen memakai `sendMessage`
 yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
 
+Selama `AGENT_ACTIVE` bar hitam "You're now in mode talking with CA" + End Session (`ActionBanner` DesignKit, warna dan
+ukuran sementara dari foto Figma) menempel di bawah header, dan daftar mulai di bawah bar. End Session memanggil
+`leave-agent` yang sama dengan Batalkan: `left:true` langsung kembali ke bot, 409 atau gagal lain membuat tombol aktif
+lagi. Tanpa dialog konfirmasi sampai ada Figma.
+
 Selama `AGENT_ACTIVE` composer menampilkan tombol `+` di dalam kartu sebelah kiri field (Figma `typing-area`:
 lingkaran 24, garis 1 N200; ikon masih PDF dummy). Ketuk = bottom sheet DesignKit (bukan popover) berisi Galeri
 dan File dengan keterangan format, tanpa kamera (keputusan user 18 November 2026; isi sheet sementara `OptionList`
@@ -166,8 +171,11 @@ antre, agen bergabung 3 detik kemudian, mengetik lalu menyapa, menjawab pertanya
 - Reconnect selalu lewat init, jadi percakapan yang ditutup admin atau perangkat lain terbuka lagi.
 - Pesan `agent` tampil sebagai bubble polos, bukan Markdown.
 - 401 langsung ke `onSessionExpired`, sedangkan contract menyarankan init ulang.
-- Bar "You're now in mode talking with CA" + End Session (Figma) belum dibuat: nasabah belum punya endpoint untuk
-  mengakhiri sesi agen (`leave-agent` saat `AGENT_ACTIVE` = 409, OQ-P11; `close` hanya dari `ASSISTANT_ACTIVE`).
+- End Session memakai `leave-agent` saat `AGENT_ACTIVE` (aturan baru dari user 19 November 2026), sedangkan contract
+  v1.5.3 masih menulis 409 (OQ-P11). Event yang menyusul di stream setelah `left:true` belum dikonfirmasi BE.
+- Di UAT, `agent_joined` dan `AGENT_ACTIVE` (`agent: null`) datang sebelum sapaan otomatis dan pesan "masih dalam
+  antrian", jadi kartu langsung "Connected", bar sesi tampil, dan "Mencari customer assistant..." tidak muncul.
+  Penanda agen manusia yang sebenarnya belum dikonfirmasi BE.
 - Pesan agen bisa `type: html` (disanitasi gateway); tanpa HTML renderer tag tampil sebagai teks.
 - CTA `action` belum tampil; `success_id` sudah dibaca, tetapi kartu suksesnya ikut fitur intent. Copy kartu live agent selain kartu antre masih placeholder.
 

@@ -29,15 +29,21 @@ extension TanyaAIChatService {
         return ack
     }
 
-    /// Respons `leave-agent`: hanya berlaku selama antre; agen yang dijadwalkan bergabung dibatalkan.
-    func leaveQueue() -> Data {
-        guard conversationState == SandboxGatewayFrames.agentQueued else {
+    /// Respons `leave-agent`: selama antre = batal antre, selama dilayani agen = End Session (sesi diakhiri seperti
+    /// agen menutupnya). Agen yang dijadwalkan bergabung, mengetik, atau menutup sesi dibatalkan.
+    func leaveAgentResponse() -> Data {
+        let state = conversationState
+        guard state == SandboxGatewayFrames.agentQueued || state == SandboxGatewayFrames.agentActive else {
             return SandboxGatewayFrames.notInAgentQueue
         }
         pendingWork.forEach { $0.cancel() }
         pendingWork = []
         DispatchQueue.main.async { [weak self] in
-            self?.moveAgent(to: SandboxGatewayFrames.assistantActive, notice: SandboxGatewayFrames.queueCanceled)
+            guard state == SandboxGatewayFrames.agentActive else {
+                self?.moveAgent(to: SandboxGatewayFrames.assistantActive, notice: SandboxGatewayFrames.queueCanceled)
+                return
+            }
+            self?.endAgentSession()
         }
         return SandboxGatewayFrames.leftAgentQueue
     }
@@ -72,12 +78,14 @@ private extension TanyaAIChatService {
         schedule(after: SandboxOptions.echoDelay + SandboxOptions.agentTypingDelay) { service in
             service.emit(service.frames.message(direction: SandboxWireMessage.agent, text: text))
             guard isClosing else { return }
-            service.schedule(after: SandboxOptions.agentJoinDelay) { service in
-                service.emit(service.frames.system(SandboxGatewayFrames.agentEnded))
-                service.moveAgent(
-                    to: SandboxGatewayFrames.assistantActive, notice: SandboxGatewayFrames.backToAssistant)
-            }
+            service.schedule(after: SandboxOptions.agentJoinDelay) { $0.endAgentSession() }
         }
+    }
+
+    /// Sesi agen ditutup: event penutup lalu kembali ke bot.
+    func endAgentSession() {
+        emit(frames.system(SandboxGatewayFrames.agentEnded))
+        moveAgent(to: SandboxGatewayFrames.assistantActive, notice: SandboxGatewayFrames.backToAssistant)
     }
 
     /// Perpindahan state selalu berpasangan dengan event `system` (contract §10.6).

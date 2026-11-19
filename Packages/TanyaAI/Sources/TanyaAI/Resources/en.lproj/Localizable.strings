@@ -21,6 +21,8 @@
 "liveAgent.typing" = "Agent is typing...";
 "liveAgent.searching" = "Looking for a customer assistant...";
 "liveAgent.leaveQueue" = "Cancel";
+"liveAgent.session.banner" = "You're now in mode talking with CA";
+"liveAgent.session.end" = "End Session";
 "liveAgent.attachment" = "Attach PDF or image";
 "liveAgent.connecting.title" = "Switching to Live Chat with Human";
 "liveAgent.connecting.message" = "Connecting you to our customer assistant";

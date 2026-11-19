@@ -21,6 +21,8 @@
 "liveAgent.typing" = "Agen sedang mengetik...";
 "liveAgent.searching" = "Mencari customer assistant...";
 "liveAgent.leaveQueue" = "Batalkan";
+"liveAgent.session.banner" = "You're now in mode talking with CA";
+"liveAgent.session.end" = "End Session";
 "liveAgent.attachment" = "Lampirkan PDF atau gambar";
 "liveAgent.connecting.title" = "Switching to Live Chat with Human";
 "liveAgent.connecting.message" = "Menghubungkan kamu ke customer assistant kami";

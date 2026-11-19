@@ -59,7 +59,7 @@ public struct ChatScreen<Content: View>: View {
         .modifier(
             AttachmentPickerModifier(
                 isPresented: $isChoosingAttachment,
-                isAvailable: isAttachable,
+                isAvailable: isAgentSession,
                 onPick: attach
             )
         )
@@ -69,13 +69,26 @@ public struct ChatScreen<Content: View>: View {
         .task { await bridge.run() }
     }
 
+    /// Bar sesi agen menempel di bawah header, jadi daftar mulai di bawah bar tanpa inset header.
     private func conversation(headerHeight: CGFloat) -> some View {
-        ChatTable(
-            state: tableState, headerHeight: headerHeight, actions: rowActions,
-            onScrollProgress: { scrollProgress = $0 }, onLatestVisibilityChange: { isLatestVisible = $0 },
-            row: listRow
-        )
-        .overlay(alignment: .bottom) { latestButton }
+        VStack(spacing: .zero) {
+            agentSessionBanner(headerHeight: headerHeight)
+            ChatTable(
+                state: tableState, headerHeight: isAgentSession ? .zero : headerHeight, actions: rowActions,
+                onScrollProgress: { scrollProgress = $0 }, onLatestVisibilityChange: { isLatestVisible = $0 },
+                row: listRow
+            )
+            .overlay(alignment: .bottom) { latestButton }
+        }
+    }
+
+    @ViewBuilder
+    private func agentSessionBanner(headerHeight: CGFloat) -> some View {
+        if isAgentSession {
+            AgentSessionBanner(onEnd: leaveAgent)
+                .disabled(!isEnabled || bridge.isLeavingAgent)
+                .padding(.top, headerHeight)
+        }
     }
 
     /// Mengambang di tengah, tepat di atas composer, selama ujung daftar di luar layar.
@@ -131,13 +144,13 @@ public struct ChatScreen<Content: View>: View {
 private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
 
-    /// Lampiran hanya selama dilayani agen.
-    var isAttachable: Bool { bridge.conversationState == .agentActive }
+    /// Lampiran dan bar sesi agen hanya selama dilayani agen.
+    var isAgentSession: Bool { bridge.conversationState == .agentActive }
 
     var rowActions: ChatRowActions {
         ChatRowActions(
             onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp,
-            onLeaveAgentQueue: leaveAgentQueue
+            onLeaveAgentQueue: leaveAgent
         )
     }
 
@@ -153,7 +166,7 @@ private extension ChatScreen {
 
     func listItems(notices: [LiveAgentNotice]) -> [ChatListItem] {
         var items = [ChatListItem](rows: bridge.rows)
-            .inserting(notices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgentQueue)
+            .inserting(notices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgent)
             .appendingAnswerLoading(isAwaitingReply: bridge.isAwaitingReply)
         if welcome != nil, bridge.isWelcomeVisible {
             items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
@@ -207,14 +220,14 @@ private extension ChatScreen {
         bridge.userTypingChanged(isTyping)
     }
 
-    /// "Batalkan" di dalam kartu antre.
-    func leaveAgentQueue() {
-        Task { [bridge] in await bridge.leaveAgentQueue() }
+    /// "Batalkan" di dalam kartu antre dan End Session di bar sesi agen.
+    func leaveAgent() {
+        Task { [bridge] in await bridge.leaveAgent() }
     }
 
     /// Lampiran (PDF/gambar) hanya saat dilayani agen; nil = tombol tidak tampil. Ketuk = bottom sheet Galeri / File.
     var attachAction: (() -> Void)? {
-        guard isAttachable else { return nil }
+        guard isAgentSession else { return nil }
         return { isChoosingAttachment = true }
     }
 

@@ -28,6 +28,9 @@ enum ChatCopy: String, CaseIterable {
     /// Indikator selama antre setelah sapaan otomatis agen, sampai agen bergabung.
     case liveAgentSearching = "liveAgent.searching"
     case leaveAgentQueue = "liveAgent.leaveQueue"
+    /// Bar di bawah header selama dilayani agen (Figma). TODO: Copy final id/zh dari UI/UX; sementara copy Figma.
+    case agentSessionBanner = "liveAgent.session.banner"
+    case endAgentSession = "liveAgent.session.end"
     /// Label aksesibilitas tombol lampiran saat dilayani agen.
     case liveAgentAttachment = "liveAgent.attachment"
     case agentConnectingTitle = "liveAgent.connecting.title"
