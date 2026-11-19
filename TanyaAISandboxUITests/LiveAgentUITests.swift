@@ -7,9 +7,9 @@
 
 import XCTest
 
-/// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal, chip sesi dimulai, agen mengetik dan
-/// menjawab, lalu chip sesi berakhir dengan kartunya. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol
-/// lampiran hanya selama agen melayani.
+/// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal, sapaan otomatis mengubah kartu menjadi
+/// "Connected" dengan indikator mencari agen, agen mengetik dan menjawab, lalu kartu sesi berakhir. Tidak ada chip abu.
+/// Kirim ke agen tidak mengubah tombol menjadi stop. Tombol lampiran hanya selama agen melayani.
 final class LiveAgentUITests: XCTestCase {
     private let application = XCUIApplication()
 
@@ -20,24 +20,27 @@ final class LiveAgentUITests: XCTestCase {
 
     func testHandoverQueuesJoinsAnswersAndEnds() {
         launchAndAskForAnAgent()
-        XCTAssertTrue(element("chat.agent.notice").waitForExistence(timeout: 5))
+        XCTAssertTrue(notice("Switching to Live Chat with Human").waitForExistence(timeout: 5))
+        XCTAssertTrue(application.buttons["chat.agent.leaveQueue"].exists)
         capture("live-agent-queued")
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "belum ada agen")
+        XCTAssertTrue(element("chat.agent.searching").waitForExistence(timeout: 5))
+        XCTAssertTrue(notice("Connected to Customer Assistant").exists, "sapaan otomatis mengubah kartu antre")
+        XCTAssertFalse(application.buttons["chat.agent.leaveQueue"].exists, "batal hanya sebelum sapaan otomatis")
+        capture("live-agent-searching")
         XCTAssertTrue(element("chat.agent.typing").waitForExistence(timeout: 8))
+        XCTAssertFalse(element("chat.agent.searching").exists, "indikator mengetik didahulukan")
         capture("live-agent-typing")
-        XCTAssertTrue(element("chat.agent.message").waitForExistence(timeout: 5))
         waitUntilGone(element("chat.agent.typing"))
-        XCTAssertFalse(application.buttons["chat.agent.leaveQueue"].exists, "kartu antre hilang saat agen bergabung")
-        XCTAssertFalse(element("chat.agent.notice").exists)
-        XCTAssertTrue(application.staticTexts["Session with Tanya OCBC Customer Assistant started"].exists)
+        XCTAssertFalse(element("chat.agent.searching").exists, "agen sudah bergabung")
+        XCTAssertTrue(notice("Connected to Customer Assistant").exists, "kartu terhubung tetap sebagai riwayat")
+        XCTAssertFalse(application.staticTexts["Session with Tanya OCBC Customer Assistant started"].exists)
         assertAttachmentLinesUpWithSend()
         capture("live-agent-active")
         send("Cek status kartu saya")
         XCTAssertEqual(application.buttons["composer.send"].label, "Send message", "agen tidak memakai stop")
-        let ended = element("chat.agent.notice")
-        XCTAssertTrue(ended.waitForExistence(timeout: 10))
-        XCTAssertTrue(ended.label.contains("Customer Assistant Mode Ended"))
-        XCTAssertTrue(application.staticTexts["Session with Tanya OCBC Customer Assistant ended"].exists)
+        XCTAssertTrue(notice("Customer Assistant Mode Ended").waitForExistence(timeout: 10))
+        XCTAssertFalse(application.staticTexts["Session with Tanya OCBC Customer Assistant ended"].exists)
         capture("live-agent-ended")
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "agen sudah selesai")
     }
@@ -54,11 +57,9 @@ final class LiveAgentUITests: XCTestCase {
         wait(for: [expectation(for: isRevealed, evaluatedWith: nil)], timeout: 3)
         leave.tap()
         waitUntilGone(leave)
-        let canceled = element("chat.agent.notice")
-        XCTAssertTrue(canceled.waitForExistence(timeout: 5))
-        XCTAssertTrue(canceled.label.contains("Agent Request Canceled"))
+        XCTAssertTrue(notice("Agent Request Canceled").waitForExistence(timeout: 5))
         capture("live-agent-canceled")
-        // Agen yang dijadwalkan tidak pernah bergabung.
+        // Sapaan otomatis dan agen yang dijadwalkan tidak pernah datang.
         XCTAssertFalse(element("chat.agent.message").waitForExistence(timeout: 5))
     }
 }
@@ -91,6 +92,12 @@ private extension LiveAgentUITests {
         XCTAssertEqual(attachment.frame.midY, send.midY, accuracy: 0.5)
         XCTAssertEqual(attachment.frame.size, send.size)
         XCTAssertLessThan(attachment.frame.maxX, application.otherElements["composer"].frame.minX)
+    }
+
+    /// Kartu live agent dengan judul tertentu; kartu lain (mis. "Connected") bisa tampil bersamaan.
+    func notice(_ title: String) -> XCUIElement {
+        application.descendants(matching: .any).matching(identifier: "chat.agent.notice")
+            .matching(NSPredicate(format: "label CONTAINS %@", title)).firstMatch
     }
 
     func element(_ identifier: String) -> XCUIElement {

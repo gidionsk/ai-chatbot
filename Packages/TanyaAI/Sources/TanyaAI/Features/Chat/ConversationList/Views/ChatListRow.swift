@@ -47,6 +47,8 @@ struct ChatListRow<Content: View>: View {
             .accessibilityIdentifier(ChatElementIdentifier.leaveAgentQueue)
         case .agentTyping:
             AgentTypingIndicator()
+        case .agentSearching:
+            AgentSearchingIndicator()
         case .content:
             VStack(spacing: .zero) { content }
         }

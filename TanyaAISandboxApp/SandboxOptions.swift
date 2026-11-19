@@ -66,7 +66,9 @@ struct SandboxOptions {
     static let lateMessageDelay: TimeInterval = 3
     /// Jeda jawaban bot tiruan setelah pertanyaan muncul di stream.
     static let replyDelay: TimeInterval = 1
-    /// `--live-agent`: jeda agen bergabung setelah antre, dan jeda agen menutup percakapan setelah menjawab.
+    /// `--live-agent`: jeda sapaan otomatis setelah antre; selama ini tombol batal masih tampil.
+    static let agentAutoGreetingDelay: TimeInterval = 2
+    /// `--live-agent`: jeda agen bergabung setelah sapaan otomatis, dan jeda agen menutup percakapan setelah menjawab.
     static let agentJoinDelay: TimeInterval = 3
     /// `--live-agent`: lama indikator agen mengetik sebelum pesannya datang.
     static let agentTypingDelay: TimeInterval = 1.5

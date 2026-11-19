@@ -16,5 +16,6 @@ enum ChatListItemID: Hashable {
     case liveAgentNotice(Int)
     case leaveAgentQueue
     case agentTyping
+    case agentSearching
     case content
 }

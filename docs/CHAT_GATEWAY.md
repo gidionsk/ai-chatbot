@@ -1,4 +1,4 @@
-# Chat-gateway Tanya AI (contract 1.5.0)
+# Chat-gateway Tanya AI (contract 1.5.3)
 
 Pembagian kerja host ↔ TanyaAI untuk gateway ICT. Sumber kebenaran contract tetap
 `chat-gateway/docs/contract.md` milik BE; dokumen ini hanya menjelaskan bagian yang dipakai iOS.
@@ -68,35 +68,52 @@ Aplikasi tidak memakai intent ini: antre/agen ditentukan event `state` dan `syst
 `mode:"agent"` tidak punya pesan ini.
 
 Event `system` yang menjadi kartu: `agent_connecting` (antre), `agent_ended`, `agent_idle_timeout`,
-`queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` menjadi chip abu "Sesi dengan Customer
-Assistant Tanya OCBC dimulai" tanpa kartu (kartu antre hilang karena state berpindah). `agent_ended` dan
-`agent_idle_timeout` menjadi chip "... berakhir" lalu kartu "Mode dengan Customer Assistant Berakhir" (keputusan user
-18 November 2026: hanya sesi yang sudah dilayani agen; batal antre, antre habis, dan agen tidak tersedia tetap kartu
-lama). Chip memakai `TextChip` gaya `.filled` (Figma `time_stamp`). `back_to_assistant` selalu bersama event penutup.
-Copy milik aplikasi; server hanya mengirim token.
+`queue_canceled`, `queue_timeout`, dan `agent_unavailable`. `agent_joined` tidak punya kartu sendiri: kartu antre
+berganti menjadi "Connected to Customer Assistant". `agent_ended` dan `agent_idle_timeout` menjadi kartu "Mode dengan
+Customer Assistant Berakhir" (keputusan user 18 November 2026: hanya sesi yang sudah dilayani agen; batal antre, antre
+habis, dan agen tidak tersedia tetap kartu lama). Tidak ada chip abu sesi agen (keputusan user 19 November 2026).
+`back_to_assistant` selalu bersama event penutup. Copy milik aplikasi; server hanya mengirim token.
+
+Sapaan otomatis (Figma node 3262-86657): sistem agen mengirim pesan `direction: agent` selama `AGENT_QUEUED`, sebelum
+agen bergabung. `AGENT_ACTIVE` baru terjadi saat agen benar-benar bergabung (contract §5: `agent` dari
+`ParticipantJoined`), jadi pesan agen selama antre dianggap sapaan otomatis. `Message` tidak punya penanda, jadi di
+history sapaan tidak bisa dibedakan dari pesan agen biasa; antre yang habis setelah sapaan tampil seperti sesi yang
+pernah dilayani (kartu "Connected" lalu kartu selesai) sampai BE memberi penanda. Asumsi ini menunggu konfirmasi BE.
 
 History hanya berisi `Message`, jadi kartu hanya ada selama halaman terbuka. Saat dibuka lagi, kartu yang
 `seq`-nya setelah pesan terakhir masih ikut replay SSE (cursor = seq pesan terakhir) selama outbox belum
 dipangkas; kartu sebelum pesan terakhir tidak kembali. Pesan agen tetap ada di history (`direction: agent`).
 
-"Batalkan proses ini" hanya selama `AGENT_QUEUED`: `left:true` langsung kembali ke bot, kartu batal datang dari
+"Batalkan" hanya di kartu antre "Switching to Live Chat with Human", sebelum sapaan otomatis (mengikuti Figma; contract
+masih mengizinkan `leave-agent` selama `AGENT_QUEUED`). `left:true` langsung kembali ke bot, kartu batal datang dari
 stream. `left:false` atau 409 (agen sudah bergabung) menunggu event `state`.
 
 Tampilan: kartu status mengikuti Figma frame 62/64 (`NoticeCard` DesignKit: bayangan tanpa garis tepi, ikon headset), tombol batal
-`FilledButton` varian `.link` tepat di bawah kartu antre, dan pesan agen mengikuti frame 68 (`SenderMessageCard`: kartu berbayangan, avatar
-dan label statis "Live Agent OCBC Nyala", teks polos). Kartu antre di posisi event-nya, atau di akhir daftar bila
-dibuka lagi saat masih antre tanpa event yang ikut replay. Event stream setelahnya (`agent_joined`, batal, antre habis,
-agen tidak tersedia) langsung menyembunyikan kartu antre tanpa menunggu event `state`. Acuannya `seq` terakhir yang
-diketahui saat antrean dimulai: saat event `state` memindahkan ke antre, dan setiap init yang masih antre (antrean
-atau percakapan bisa sudah berganti selama putus). Event antre hanya dipakai sebagai posisi bila datang setelah
-jawaban bot terakhir dan belum ditutup event lain; selain itu kartu antre di akhir daftar. Kartu selesai dari history ditaruh setelah pesan agen
-terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau di akhir bila agen tidak sedang melayani), kecuali
-stream sudah memberi kartu penutup untuk sesi itu. Waktu antre habis dan agen tidak tersedia memakai kartu yang sama.
-Kartu dari history memakai `seq` pesan yang ditutupnya dan disisipkan dengan `<=`, jadi tepat setelah pesan itu.
-Chip awal sesi dari history ditaruh tepat setelah pesan sebelum pesan agen pertama sesi itu (`seq` pesan tersebut),
-kecuali stream sudah memberi `agent_joined` di rentang itu.
+`FilledButton` varian `.link` tepat di bawah kartu antre (TODO: Figma baru menaruhnya di dalam kartu), dan pesan agen
+mengikuti frame 68 (`SenderMessageCard`: kartu berbayangan, avatar dan label statis "Customer Assistant Tanya OCBC",
+teks polos).
+
+Kartu pembuka sesi agen ada satu per sesi:
+- Selama antre dan belum ada pesan agen: kartu "Switching" dengan tombol batal, di posisi event antre, atau di akhir
+  daftar bila dibuka lagi saat masih antre tanpa event yang ikut replay. Event antre hanya dipakai sebagai posisi bila
+  datang setelah jawaban bot terakhir dan belum ditutup event lain.
+- Begitu sapaan otomatis datang atau agen bergabung (`agent_joined` bisa mendahului event `state`), kartu yang sama
+  berganti menjadi "Connected" tanpa tombol, lalu tetap tampil sebagai riwayat. Dari history kartu ini ditaruh tepat
+  sebelum pesan agen pertama sesi itu, atau di posisi event antre sesi itu bila ada dari stream.
+- Event penutup antrean (batal, antre habis, agen tidak tersedia) langsung menyembunyikan kartu antre tanpa menunggu
+  event `state`. Acuannya `seq` terakhir yang diketahui saat antrean dimulai: saat event `state` memindahkan ke antre,
+  dan setiap init yang masih antre (antrean atau percakapan bisa sudah berganti selama putus), atau jawaban bot
+  terakhir bila lebih baru. Di luar antre dan sesi agen acuan ini dilupakan.
+
+Selama antre setelah sapaan otomatis, "Mencari customer assistant..." tampil di bawah pesan terakhir sampai agen
+bergabung atau antrean ditutup; indikator agen mengetik didahulukan (TODO: ikon sparkle dan ukuran Figma).
+
+Kartu selesai dari history ditaruh setelah pesan agen terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau
+di akhir bila tidak sedang antre atau dilayani agen), kecuali stream sudah memberi kartu penutup untuk sesi itu. Waktu
+antre habis dan agen tidak tersedia memakai kartu yang sama. Kartu dari history memakai `seq` pesan yang ditutupnya dan
+disisipkan dengan `<=`, jadi tepat setelah pesan itu.
 `seq` kartu menjadi id baris table. Bila gateway memberi `id:` SSE dari urutan lain sehingga kartu ber-`seq` sama,
-hanya satu yang tampil: kartu antre yang sedang aktif, lalu kartu dari stream, baru kartu turunan history.
+hanya satu yang tampil: kartu pembuka yang sedang berjalan, lalu kartu dari stream, baru kartu turunan history.
 
 Pesan bot ber-intent `handover-to-agent` yang tidak diikuti pesan agen (sampai bot menjawab lagi, atau sampai akhir
 daftar bila sudah tidak antre/dilayani dan turn-nya selesai) diberi kartu "tidak dilanjutkan" tepat setelahnya.
@@ -108,9 +125,10 @@ jadi tidak sempat tampil sebagai "tidak dilanjutkan" sebelum event antre tiba. S
 (menyambung ulang) membuat pesan itu kembali dinilai dari history, karena event penutupnya bisa sudah terpangkas.
 Tombol batal berwarna #567180 (`CustomColors.Button.muted`).
 
-Nasabah mengetik (§7.7) dikirim lewat `TanyaAIChatTransport.sendTyping` hanya selama `AGENT_ACTIVE`. Composer
-mengabarkan draft berisi/kosong; draft tetap lokal. `typing:true` dikirim saat mulai dan diulang paling cepat
-tiap 5 detik selama terus mengetik (ttl server 10 detik). `typing:false` dikirim setelah 3 detik tanpa ketikan,
+Nasabah mengetik (§7.7) dikirim lewat `TanyaAIChatTransport.sendTyping` selama `AGENT_QUEUED` dan `AGENT_ACTIVE`;
+gateway meneruskannya ke sistem agen (`StartTyping`/`StopTyping`) di kedua state. Composer mengabarkan draft
+berisi/kosong; draft tetap lokal. `typing:true` dikirim saat mulai dan diulang paling cepat tiap 5 detik selama terus
+mengetik. `typing:false` dikirim setelah 3 detik tanpa ketikan,
 saat draft kosong (termasuk setelah terkirim), atau saat composer hilang. Satu pengirim berurutan; sinyal yang
 menunggu digabung menjadi yang terbaru dan dicek ulang sebelum dikirim. Saat state meninggalkan agen (lewat init
 maupun stream), percakapan berganti, atau sesi berakhir, status dilupakan tanpa kiriman, dan indikator agen
@@ -118,21 +136,25 @@ mengetik ikut dihapus. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan
 yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
 
 Selama `AGENT_ACTIVE` composer menampilkan tombol lampiran (PDF/gambar) di luar kartu sebelah kiri, sejajar
-dengan tombol kirim. Contract v1.5.0 belum punya endpoint upload, jadi ketukannya belum melakukan apa pun. Bila
+dengan tombol kirim. Contract v1.5.3 belum punya endpoint upload, jadi ketukannya belum melakukan apa pun. Bila
 endpoint sudah ada: picker di paket, upload lewat method baru `TanyaAIChatTransport` seperti `leaveAgent`.
 
 Event `typing` dari agen menampilkan "Agen sedang mengetik..." miring di bawah pesan terakhir. Indikator hilang saat
-`typing:false`, pesan agen datang, state kembali ke bot, atau `ttl_s` habis tanpa kabar baru. Kartu baru dan
+`typing:false`, pesan agen datang, state kembali ke bot, atau `ttl_s` habis tanpa kabar baru (dibaca per frame;
+cadangan 5 detik sesuai default `chat.typing_ttl`, contract v1.5.1). Kartu baru dan
 indikator mengetik ikut menggeser daftar ke bawah bila pembaca sedang di ujung daftar, sama seperti pesan masuk.
 
-Sandbox `--live-agent`: pertanyaan pertama dijawab bot dengan serah terima ke agen, antre 3 detik, agen bergabung,
-mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
+Sandbox `--live-agent`: pertanyaan pertama dijawab bot dengan serah terima ke agen, sapaan otomatis 2 detik setelah
+antre, agen bergabung 3 detik kemudian, mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
 
-## Selisih dengan contract 1.5.0 yang belum dikerjakan
+## Selisih dengan contract 1.5.3 yang belum dikerjakan
 
 - Reconnect selalu lewat init, jadi percakapan yang ditutup admin atau perangkat lain terbuka lagi.
 - Pesan `agent` tampil sebagai bubble polos, bukan Markdown.
 - 401 langsung ke `onSessionExpired`, sedangkan contract menyarankan init ulang.
+- Bar "You're now in mode talking with CA" + End Session (Figma) belum dibuat: nasabah belum punya endpoint untuk
+  mengakhiri sesi agen (`leave-agent` saat `AGENT_ACTIVE` = 409, OQ-P11; `close` hanya dari `ASSISTANT_ACTIVE`).
+- Pesan agen bisa `type: html` (disanitasi gateway); tanpa HTML renderer tag tampil sebagai teks.
 - CTA `action` belum tampil; `success_id` sudah dibaca, tetapi kartu suksesnya ikut fitur intent. Copy kartu live agent selain kartu antre masih placeholder.
 
 ## Alur

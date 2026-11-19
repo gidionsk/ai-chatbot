@@ -17,9 +17,9 @@ enum ChatElementIdentifier {
     static let answer = "chat.answer"
     static let agentMessage = "chat.agent.message"
     static let agentTyping = "chat.agent.typing"
+    static let agentSearching = "chat.agent.searching"
     static let liveAgentNotice = "chat.agent.notice"
     /// Chip awal/akhir sesi agen.
-    static let liveAgentChip = "chat.agent.chip"
     static let leaveAgentQueue = "chat.agent.leaveQueue"
 
     /// Saran pertanyaan lanjutan ke-`index` (mulai 0) sesuai urutan dari gateway.

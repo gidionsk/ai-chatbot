@@ -41,27 +41,22 @@ struct ArrayLiveAgentNoticeTests {
         #expect(ids == [.liveAgentNotice(3), .message("m-9")])
     }
 
-    /// Sesi dimulai di pesan agen pertama setelah bot menjawab; chip tepat setelah pesan sebelumnya, atau di awal
-    /// daftar. Chip dari stream di rentang itu menggantikannya; event lain tidak.
+    /// Sesi dimulai di pesan agen pertama setelah bot menjawab: kartu "Connected" di posisi event antre sesi itu bila
+    /// ada dari stream, selain itu tepat setelah pesan sebelumnya atau di awal daftar.
     @Test
-    func agentSessionStartsAtItsFirstAgentMessage() {
+    func agentSessionIsConnectedAtItsQueueEventOrBeforeItsFirstAgentMessage() {
         let messages = [
             message(seq: 1, author: .assistant), message(seq: 4, author: .agent), message(seq: 5, author: .user),
             message(seq: 6, author: .agent), message(seq: 7, author: .assistant), message(seq: 9, author: .user),
             message(seq: 11, author: .agent)
         ]
-        let derived = [LiveAgentNotice(kind: .joined, seq: 1), LiveAgentNotice(kind: .joined, seq: 9)]
-        #expect(messages.startedAgentSessions(openedBy: []) == derived)
-        #expect(messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .ended, seq: 10)]) == derived)
-        #expect(
-            [message(seq: 2, author: .agent)].startedAgentSessions(openedBy: []) == [.init(kind: .joined, seq: .min)])
-        #expect(
-            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 10)])
-                == [LiveAgentNotice(kind: .joined, seq: 1)])
-        // Agen bergabung sebelum nasabah mengirim pesan, lalu agen membalas: chip stream tetap milik sesi itu.
-        #expect(
-            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 8)])
-                == [LiveAgentNotice(kind: .joined, seq: 1)])
+        let connected = { LiveAgentNotice(kind: .connected, seq: $0) }
+        let opener = { LiveAgentNotice(kind: .connecting, seq: $0) }
+        #expect(messages.connectedAgentSessions(openedBy: []) == [connected(1), connected(9)])
+        #expect(messages.connectedAgentSessions(openedBy: [opener(3), opener(8)]) == [connected(3), connected(8)])
+        // Event antre sesi pertama bukan milik sesi berikutnya.
+        #expect(messages.connectedAgentSessions(openedBy: [opener(3)]) == [connected(3), connected(9)])
+        #expect([message(seq: 2, author: .agent)].connectedAgentSessions(openedBy: []) == [connected(.min)])
     }
 
     /// Sesi berakhir saat bot menjawab lagi; kartu setelah pesan agen terakhir sesi itu.

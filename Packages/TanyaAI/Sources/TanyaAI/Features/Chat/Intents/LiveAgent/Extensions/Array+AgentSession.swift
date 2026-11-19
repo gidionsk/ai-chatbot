@@ -6,24 +6,22 @@
 //
 
 extension Array where Element == ChatMessage {
-    /// Chip "sesi dimulai" untuk sesi agen di history, karena history tidak membawa event `agent_joined`. Sesi
-    /// dimulai di pesan agen pertama setelah bot menjawab (atau di awal daftar). `seq` chip = `seq` pesan tepat sebelum
-    /// pesan agen itu (`Int.min` bila tidak ada), jadi chip tampil tepat setelahnya. Pesan itu bot atau nasabah, jadi
-    /// tidak pernah menjadi kartu selesai atau "tidak dilanjutkan". Chip dari stream dicari sejak awal sesi (jawaban
-    /// bot terakhir), bukan sejak pesan sebelumnya: nasabah bisa mengirim pesan setelah agen bergabung dan sebelum
-    /// agen membalas.
-    func startedAgentSessions(openedBy notices: [LiveAgentNotice]) -> [LiveAgentNotice] {
-        let joinedSeqs = notices.filter { $0.kind == .joined }.map(\.seq)
-        var chips: [LiveAgentNotice] = []
+    /// Kartu "Connected" untuk tiap sesi agen, karena history tidak membawa event. Sesi dimulai di pesan agen pertama
+    /// setelah bot menjawab (atau di awal daftar); pesan itu bisa sapaan otomatis selama antre. Kartu memakai `seq`
+    /// event antre sesi itu bila ada dari stream, jadi tidak berpindah saat kartu antre berganti; selain itu `seq`
+    /// pesan tepat sebelum pesan agen pertama (`Int.min` bila tidak ada), sehingga tampil tepat setelahnya. Pesan itu
+    /// bot atau nasabah, jadi tidak pernah menjadi kartu selesai atau "tidak dilanjutkan".
+    func connectedAgentSessions(openedBy openers: [LiveAgentNotice]) -> [LiveAgentNotice] {
+        var cards: [LiveAgentNotice] = []
         var boundarySeq = Int.min
         var previousSeq = Int.min
         var isInSession = false
         for message in self {
             switch message.author {
             case .agent:
-                // Event stream hanya dicari di awal sesi, bukan di setiap balasan agen berikutnya.
-                if !isInSession, !joinedSeqs.contains(where: { $0 > boundarySeq && $0 < message.seq }) {
-                    chips.append(LiveAgentNotice(kind: .joined, seq: previousSeq))
+                if !isInSession {
+                    let opener = openers.last { $0.seq > boundarySeq && $0.seq < message.seq }
+                    cards.append(LiveAgentNotice(kind: .connected, seq: opener?.seq ?? previousSeq))
                 }
                 isInSession = true
             case .assistant:
@@ -34,12 +32,12 @@ extension Array where Element == ChatMessage {
             }
             previousSeq = message.seq
         }
-        return chips
+        return cards
     }
 
     /// Kartu selesai untuk sesi agen di history, karena history tidak membawa event `system`. Sesi berakhir saat bot
-    /// menjawab lagi, atau di akhir daftar bila agen tidak sedang melayani; kartunya tepat setelah pesan agen
-    /// terakhir sesi itu. Sesi yang sudah punya kartu dari stream di antara keduanya tidak diberi kartu lagi.
+    /// menjawab lagi, atau di akhir daftar bila tidak sedang antre atau dilayani agen; kartunya tepat setelah pesan
+    /// agen terakhir sesi itu. Sesi yang sudah punya kartu dari stream di antara keduanya tidak diberi kartu lagi.
     func endedAgentSessions(isOngoing: Bool, closedBy notices: [LiveAgentNotice]) -> [LiveAgentNotice] {
         var sessions: [(lastAgentSeq: Int, nextSeq: Int)] = []
         var lastAgentSeq: Int?

@@ -14,8 +14,8 @@ import Testing
 @MainActor
 @Suite(.serialized)
 struct TanyaAIBridgeQueueCardTests {
-    /// Event setelah antrean dimulai langsung menggantikan kartu antre, walau event `state` terlambat datang.
-    @Test(arguments: [LiveAgentNoticeKind.joined, .canceled])
+    /// Event penutup antrean langsung menggantikan kartu antre, walau event `state` terlambat datang.
+    @Test(arguments: [LiveAgentNoticeKind.canceled, .queueTimeout])
     func laterQueueEventHidesTheQueueCardBeforeTheState(kind: LiveAgentNoticeKind) async {
         let (transport, bridge) = await connectedBridge(states: ["ASSISTANT_ACTIVE"])
         defer { bridge.connectionTask?.cancel() }
@@ -27,18 +27,31 @@ struct TanyaAIBridgeQueueCardTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: kind, seq: 5)])
     }
 
-    /// Antre dari init tanpa event antre: `agent_joined` menutup kartu, dan pesan nasabah yang datang sebelum event
-    /// `state` tidak memunculkannya lagi.
+    /// Agen bergabung sebelum event `state`: kartu antre langsung menjadi "Connected" di posisi yang sama.
     @Test
-    func customerMessageAfterTheJoinKeepsTheQueueCardHidden() async {
+    func aJoinBeforeTheStateTurnsTheQueueCardIntoConnected() async {
+        let (transport, bridge) = await connectedBridge(states: ["ASSISTANT_ACTIVE"])
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        transport.emit(WireFixture.systemFrame(seq: 5, type: "agent_joined"))
+        await waitUntil { bridge.eventCursor == 5 }
+        #expect(bridge.conversationState == .agentQueued)
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 3)])
+    }
+
+    /// Antre dari init tanpa event antre: `agent_joined` mengubah kartu menjadi "Connected", dan pesan nasabah yang
+    /// datang sebelum event `state` tidak mengembalikan kartu antre.
+    @Test
+    func customerMessageAfterTheJoinKeepsTheConnectedCard() async {
         let (transport, bridge) = await connectedBridge(states: ["AGENT_QUEUED"])
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_joined"))
         await waitUntil { bridge.eventCursor == 3 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 3)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
         transport.emit(WireFixture.messageFrame(seq: 4, direction: "user"))
         await waitUntil { bridge.messages.count == 3 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 3)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
     }
 
     /// Antrean pertama dibatalkan, lalu menyambung ulang ke antrean kedua yang event antre-nya tidak ikut replay:
@@ -89,7 +102,7 @@ struct TanyaAIBridgeQueueCardTests {
         await waitUntil { bridge.messages.isEmpty }
         transport.emit(WireFixture.systemFrame(seq: 1, type: "agent_joined"))
         await waitUntil { bridge.eventCursor == 1 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 1)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
     }
 
     /// Penutup antrean lama terlewat saat putus, lalu bot menjawab dan menyerahkan lagi: event antre lama bukan

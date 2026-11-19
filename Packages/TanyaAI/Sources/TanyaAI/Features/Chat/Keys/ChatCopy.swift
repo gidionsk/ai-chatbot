@@ -22,14 +22,15 @@ enum ChatCopy: String, CaseIterable {
     /// Label pengirim di atas bubble agen; statis, bukan nama agen dari gateway.
     case liveAgentSender = "liveAgent.sender"
     case liveAgentTyping = "liveAgent.typing"
+    /// Indikator selama antre setelah sapaan otomatis agen, sampai agen bergabung.
+    case liveAgentSearching = "liveAgent.searching"
     case leaveAgentQueue = "liveAgent.leaveQueue"
     /// Label aksesibilitas tombol lampiran saat dilayani agen.
     case liveAgentAttachment = "liveAgent.attachment"
-    /// Chip abu saat agen bergabung dan saat sesi agen berakhir.
-    case agentStartedChip = "liveAgent.started.chip"
-    case agentEndedChip = "liveAgent.ended.chip"
     case agentConnectingTitle = "liveAgent.connecting.title"
     case agentConnectingMessage = "liveAgent.connecting.message"
+    case agentConnectedTitle = "liveAgent.connected.title"
+    case agentConnectedMessage = "liveAgent.connected.message"
     case agentEndedTitle = "liveAgent.ended.title"
     case agentEndedMessage = "liveAgent.ended.message"
     case agentCanceledTitle = "liveAgent.canceled.title"

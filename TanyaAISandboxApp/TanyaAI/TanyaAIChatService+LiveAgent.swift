@@ -7,8 +7,9 @@
 
 import Foundation
 
-/// `--live-agent`: pertanyaan pertama diserahkan bot ke agen. Agen bergabung setelah jeda, menyapa, menjawab
-/// pertanyaan berikutnya, lalu menutup percakapan. "Batalkan proses ini" selama antre mengembalikan ke bot.
+/// `--live-agent`: pertanyaan pertama diserahkan bot ke agen. Selama antre sistem agen mengirim sapaan otomatis,
+/// lalu agen bergabung setelah jeda, menyapa, menjawab pertanyaan berikutnya, dan menutup percakapan. "Batalkan"
+/// sebelum sapaan otomatis mengembalikan ke bot.
 extension TanyaAIChatService {
     func acceptForLiveAgent(_ text: String, clientMessageID: String) -> Data {
         let ack = frames.ack()
@@ -45,7 +46,7 @@ extension TanyaAIChatService {
 // MARK: - Skenario
 
 private extension TanyaAIChatService {
-    /// Bot menjawab bahwa nasabah dihubungkan ke agen, masuk antrean, lalu agen bergabung setelah jeda.
+    /// Bot menjawab bahwa nasabah dihubungkan ke agen, masuk antrean, sapaan otomatis datang, lalu agen bergabung.
     func scheduleHandover() {
         schedule(after: SandboxOptions.echoDelay + SandboxOptions.replyDelay) { service in
             service.emit(
@@ -54,7 +55,11 @@ private extension TanyaAIChatService {
             )
             service.moveAgent(to: SandboxGatewayFrames.agentQueued, notice: SandboxGatewayFrames.agentConnecting)
             service.finishTurn()
-            service.schedule(after: SandboxOptions.agentJoinDelay) { service in
+            service.schedule(after: SandboxOptions.agentAutoGreetingDelay) { service in
+                let greeting = SandboxGatewayFrames.agentAutoGreeting
+                service.emit(service.frames.message(direction: SandboxWireMessage.agent, text: greeting))
+            }
+            service.schedule(after: SandboxOptions.agentAutoGreetingDelay + SandboxOptions.agentJoinDelay) { service in
                 service.moveAgent(to: SandboxGatewayFrames.agentActive, notice: SandboxGatewayFrames.agentJoined)
                 service.scheduleAgentMessage(SandboxGatewayFrames.agentGreeting, isClosing: false)
             }

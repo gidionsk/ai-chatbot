@@ -36,7 +36,8 @@ public final class TanyaAIBridge: ObservableObject {
     @Published var conversationState = ConversationState.unknown {
         didSet { didChangeConversationState(previous: oldValue) }
     }
-    /// Acuan awal antrean saat ini (lihat `markQueueStart`); tetap selama antre walau pesan baru datang.
+    /// Acuan awal antrean saat ini (lihat `markQueueStart`); tetap selama antre dan sesi agen yang menyusul walau pesan
+    /// baru datang.
     var queueStartSeq: Int?
     /// Kartu status live agent yang diterima selama halaman terbuka, urut `seq`.
     @Published private(set) var liveAgentNotices: [LiveAgentNotice] = []

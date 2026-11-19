@@ -15,15 +15,16 @@
 "chat.scrollToLatest" = "回到最新消息";
 "welcome.shortcutsTitle" = "从这里开始：";
 "welcome.terms" = "了解 TANYA AI 的[使用条款](terms)。";
-/* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */
-"liveAgent.sender" = "Live Agent OCBC Nyala";
+/* TODO: Copy final live agent dari UI/UX; kartu antre, kartu terhubung, label pengirim dan indikator mencari mengikuti Figma, sisanya placeholder. */
+"liveAgent.sender" = "Tanya OCBC 客服";
 "liveAgent.typing" = "客服正在输入...";
-"liveAgent.leaveQueue" = "取消此请求";
+"liveAgent.searching" = "正在寻找客服...";
+"liveAgent.leaveQueue" = "取消";
 "liveAgent.attachment" = "附加 PDF 或图片";
-"liveAgent.started.chip" = "与 Tanya OCBC 客服的会话已开始";
-"liveAgent.ended.chip" = "与 Tanya OCBC 客服的会话已结束";
-"liveAgent.connecting.title" = "正在连接客服";
-"liveAgent.connecting.message" = "您目前正在排队。\n\n请稍候，Tanya OCBC NISP 客服将尽快为您服务。";
+"liveAgent.connecting.title" = "正在转接人工客服";
+"liveAgent.connecting.message" = "正在为您连接我们的客服";
+"liveAgent.connected.title" = "已连接客服";
+"liveAgent.connected.message" = "为保持连接，请留在此对话中，并确保不要退出 OCBC mobile 应用。";
 "liveAgent.ended.title" = "客服模式已结束";
 "liveAgent.ended.message" = "您将返回自助服务模式";
 "liveAgent.canceled.title" = "已取消客服请求";

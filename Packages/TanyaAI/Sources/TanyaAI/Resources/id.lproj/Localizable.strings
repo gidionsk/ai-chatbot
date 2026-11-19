@@ -15,15 +15,16 @@
 "chat.scrollToLatest" = "Ke pesan terbaru";
 "welcome.shortcutsTitle" = "Mulai dari sini:";
 "welcome.terms" = "Pelajari [Syarat & Ketentuan](terms) penggunaan TANYA AI.";
-/* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */
-"liveAgent.sender" = "Live Agent OCBC Nyala";
+/* TODO: Copy final live agent dari UI/UX; kartu antre, kartu terhubung, label pengirim dan indikator mencari mengikuti Figma, sisanya placeholder. */
+"liveAgent.sender" = "Customer Assistant Tanya OCBC";
 "liveAgent.typing" = "Agen sedang mengetik...";
-"liveAgent.leaveQueue" = "Batalkan proses ini";
+"liveAgent.searching" = "Mencari customer assistant...";
+"liveAgent.leaveQueue" = "Batalkan";
 "liveAgent.attachment" = "Lampirkan PDF atau gambar";
-"liveAgent.started.chip" = "Sesi dengan Customer Assistant Tanya OCBC dimulai";
-"liveAgent.ended.chip" = "Sesi dengan Customer Assistant Tanya OCBC berakhir";
-"liveAgent.connecting.title" = "Menghubungkan ke Agent";
-"liveAgent.connecting.message" = "Saat ini Anda berada dalam antrian.\n\nMohon kesediaannya untuk menunggu. Customer Assistant Tanya OCBC NISP akan segera melayani Anda.";
+"liveAgent.connecting.title" = "Switching to Live Chat with Human";
+"liveAgent.connecting.message" = "Menghubungkan kamu ke customer assistant kami";
+"liveAgent.connected.title" = "Connected to Customer Assistant";
+"liveAgent.connected.message" = "Supaya tetap dapat terhubung dengan kami, mohon untuk tetap berada di dalam percakapan ini dan pastikan Bapak/Ibu tidak keluar dari aplikasi OCBC mobile.";
 "liveAgent.ended.title" = "Mode dengan Customer Assistant Berakhir";
 "liveAgent.ended.message" = "Anda akan kembali ke mode self service";
 "liveAgent.canceled.title" = "Permintaan Agent Dibatalkan";

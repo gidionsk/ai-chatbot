@@ -144,6 +144,9 @@ private extension ChatScreen {
         if bridge.isAgentTyping {
             items.append(.agentTyping)
         }
+        if bridge.isSearchingAgent {
+            items.append(.agentSearching)
+        }
         if !bridge.followUps.isEmpty {
             items.append(.followUps(bridge.followUps, isEnabled: isEnabled && isSendable))
         }
@@ -187,7 +190,7 @@ private extension ChatScreen {
         bridge.userTypingChanged(isTyping)
     }
 
-    /// "Batalkan proses ini" di bawah kartu antre.
+    /// "Batalkan" di bawah kartu antre.
     func leaveAgentQueue() {
         Task { [bridge] in await bridge.leaveAgentQueue() }
     }

@@ -14,9 +14,9 @@ import Testing
 @MainActor
 @Suite(.serialized)
 struct TanyaAIBridgeLiveAgentNoticeTests {
-    /// Kartu antre hanya selama antre; setelah agen bergabung kartu hilang, kartu penutup tetap.
+    /// Kartu antre selama antre; setelah agen bergabung kartu yang sama menjadi kartu "Connected".
     @Test
-    func connectingCardOnlyShowsWhileQueued() async {
+    func queueCardBecomesConnectedWhenTheAgentJoins() async {
         let (transport, bridge) = await connectedBridge()
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.systemFrame(seq: 3, type: "agent_connecting"))
@@ -25,7 +25,7 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connecting, seq: 3)])
         transport.emit(WireFixture.stateFrame(seq: 5, state: "AGENT_ACTIVE", previous: "AGENT_QUEUED"))
         await waitUntil { bridge.conversationState == .agentActive }
-        #expect(bridge.visibleLiveAgentNotices.isEmpty)
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 3)])
     }
 
     /// Kartu antre baru tampil setelah event `state`; pemicu ikut ke bawah harus berubah saat itu, bukan hanya saat
@@ -50,37 +50,40 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connecting, seq: .max)])
     }
 
-    /// History hanya membawa pesan: sesi agen diberi chip awal sebelum pesan agen pertama dan, bila sudah selesai,
-    /// kartu selesai setelah pesan agen terakhir.
+    /// History hanya membawa pesan: sesi agen diberi kartu "Connected" sebelum pesan agen pertama dan, bila sudah
+    /// selesai, kartu selesai setelah pesan agen terakhir.
     @Test
-    func finishedAgentSessionInHistoryGetsItsChipAndEndedCard() async {
+    func finishedAgentSessionInHistoryGetsItsConnectedAndEndedCards() async {
         let (_, bridge) = await connectedBridge(history: [1, 2, 3])
         defer { bridge.connectionTask?.cancel() }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2), .init(kind: .ended, seq: 3)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 2), .init(kind: .ended, seq: 3)])
     }
 
     @Test
-    func ongoingAgentSessionHasOnlyItsStartChip() async {
+    func ongoingAgentSessionHasOnlyItsConnectedCard() async {
         let (_, bridge) = await connectedBridge(state: "AGENT_ACTIVE", history: [1, 2, 3])
         defer { bridge.connectionTask?.cancel() }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 2)])
     }
 
-    /// Chip awal dari stream (`agent_joined`) tidak ditambah chip turunan saat pesan agen pertama datang.
+    /// Agen bergabung tanpa event antre: kartu "Connected" di akhir daftar, lalu tepat sebelum pesan agen pertama.
+    /// Tidak ada kartu kedua.
     @Test
-    func joinedEventIsTheOnlyStartChip() async {
+    func joinedAgentIsConnectedOnceBeforeAndAfterItsFirstMessage() async {
         let (transport, bridge) = await connectedBridge()
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.systemFrame(seq: 4, type: "agent_joined"))
         transport.emit(WireFixture.stateFrame(seq: 5, state: "AGENT_ACTIVE", previous: "AGENT_QUEUED"))
+        await waitUntil { bridge.conversationState == .agentActive }
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .max)])
         transport.emit(WireFixture.messageFrame(seq: 6, direction: "agent"))
         await waitUntil { bridge.messages.count == 1 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 4)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: .min)])
     }
 
-    /// Nasabah mengirim pesan setelah agen bergabung dan sebelum agen membalas: chip stream tetap satu-satunya.
+    /// Nasabah mengirim pesan setelah agen bergabung dan sebelum agen membalas: tetap satu kartu "Connected".
     @Test
-    func userMessageBeforeTheAgentRepliesKeepsOneStartChip() async {
+    func userMessageBeforeTheAgentRepliesKeepsOneConnectedCard() async {
         let (transport, bridge) = await connectedBridge()
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.systemFrame(seq: 4, type: "agent_joined"))
@@ -88,7 +91,7 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         transport.emit(WireFixture.messageFrame(seq: 6, direction: "user"))
         transport.emit(WireFixture.messageFrame(seq: 7, direction: "agent"))
         await waitUntil { bridge.messages.count == 2 }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 4)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 6)])
     }
 
     /// Sesi yang berakhir saat halaman terbuka memakai kartu dari stream, tidak ditambah kartu dari history.
@@ -99,7 +102,7 @@ struct TanyaAIBridgeLiveAgentNoticeTests {
         transport.emit(WireFixture.systemFrame(seq: 4, type: "agent_ended"))
         transport.emit(WireFixture.stateFrame(seq: 5, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
         await waitUntil { bridge.conversationState == .assistantActive }
-        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .joined, seq: 2), .init(kind: .ended, seq: 4)])
+        #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 2), .init(kind: .ended, seq: 4)])
     }
 
     /// Dibuka lagi setelah serah terima yang tidak sampai ke agen: kartu "tidak dilanjutkan" setelah pesan itu.
