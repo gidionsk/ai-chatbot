@@ -207,7 +207,7 @@ private extension ChatScreen {
         bridge.userTypingChanged(isTyping)
     }
 
-    /// "Batalkan" di bawah kartu antre.
+    /// "Batalkan" di dalam kartu antre.
     func leaveAgentQueue() {
         Task { [bridge] in await bridge.leaveAgentQueue() }
     }

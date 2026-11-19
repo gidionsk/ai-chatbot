@@ -89,7 +89,8 @@ masih mengizinkan `leave-agent` selama `AGENT_QUEUED`). `left:true` langsung kem
 stream. `left:false` atau 409 (agen sudah bergabung) menunggu event `state`.
 
 Tampilan: kartu status mengikuti Figma frame 62/64 (`NoticeCard` DesignKit: bayangan tanpa garis tepi, ikon headset), tombol batal
-`FilledButton` varian `.link` tepat di bawah kartu antre (TODO: Figma baru menaruhnya di dalam kartu), dan pesan agen
+`FilledButton` varian `.outlined` di dalam kartu antre, di bawah garis pemisah (slot aksi `NoticeCard`, Figma node
+1903-8266), dan pesan agen
 mengikuti frame 68 (`SenderMessageCard`: kartu berbayangan, avatar dan label statis "Customer Assistant Tanya OCBC",
 teks polos).
 

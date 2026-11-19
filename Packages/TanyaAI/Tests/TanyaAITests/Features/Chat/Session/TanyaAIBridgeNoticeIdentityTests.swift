@@ -49,7 +49,7 @@ struct TanyaAIBridgeNoticeIdentityTests {
         await waitUntil { bridge.conversationState == .agentQueued }
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 2), .init(kind: .connecting, seq: 3)])
         let items = [ChatListItem](rows: bridge.rows).inserting(bridge.visibleLiveAgentNotices, isLeaveEnabled: true)
-        #expect(items.contains(.leaveAgentQueue(isEnabled: true)))
+        #expect(items.contains(.liveAgentNotice(.init(kind: .connecting, seq: 3), isLeaveEnabled: true)))
         #expect(Set(items.map(\.id)).count == items.count)
     }
 }

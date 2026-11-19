@@ -7,9 +7,9 @@
 
 import XCTest
 
-/// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal, sapaan otomatis mengubah kartu menjadi
-/// "Connected" dengan indikator mencari agen, agen mengetik dan menjawab, lalu kartu sesi berakhir. Tidak ada chip abu.
-/// Kirim ke agen tidak mengubah tombol menjadi stop. Tombol lampiran hanya selama agen melayani.
+/// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal di dalam kartu, sapaan otomatis mengubah
+/// kartu menjadi "Connected" dengan indikator mencari agen, agen mengetik dan menjawab, lalu kartu sesi berakhir. Tidak
+/// ada chip abu. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol lampiran hanya selama agen melayani.
 final class LiveAgentUITests: XCTestCase {
     private let application = XCUIApplication()
 
@@ -21,7 +21,9 @@ final class LiveAgentUITests: XCTestCase {
     func testHandoverQueuesJoinsAnswersAndEnds() {
         launchAndAskForAnAgent()
         XCTAssertTrue(notice("Switching to Live Chat with Human").waitForExistence(timeout: 5))
-        XCTAssertTrue(application.buttons["chat.agent.leaveQueue"].exists)
+        let leave = application.buttons["chat.agent.leaveQueue"]
+        XCTAssertTrue(leave.exists)
+        XCTAssertTrue(notice("Switching to Live Chat with Human").frame.contains(leave.frame), "batal di dalam kartu")
         capture("live-agent-queued")
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "belum ada agen")
         XCTAssertTrue(element("chat.agent.searching").waitForExistence(timeout: 5))
@@ -128,10 +130,11 @@ private extension LiveAgentUITests {
         waitUntilGone(sheet)
     }
 
-    /// Kartu live agent dengan judul tertentu; kartu lain (mis. "Connected") bisa tampil bersamaan.
+    /// Kartu live agent dengan judul tertentu; kartu lain (mis. "Connected") bisa tampil bersamaan. Teks kartu satu
+    /// elemen di dalam kartu, jadi tombol batal tetap elemen sendiri.
     func notice(_ title: String) -> XCUIElement {
         application.descendants(matching: .any).matching(identifier: "chat.agent.notice")
-            .matching(NSPredicate(format: "label CONTAINS %@", title)).firstMatch
+            .containing(NSPredicate(format: "label CONTAINS %@", title)).firstMatch
     }
 
     func element(_ identifier: String) -> XCUIElement {

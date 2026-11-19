@@ -12,8 +12,9 @@ import Testing
 
 /// Posisi kartu live agent di daftar dan kartu selesai dari history.
 struct ArrayLiveAgentNoticeTests {
-    /// Kartu tepat setelah pesan terakhir yang lebih awal, jadi tetap di hari pesan itu; tombol batal di bawah kartu
-    /// antre. Pertanyaan lokal yang belum di-ack tetap di bawah kartu.
+    /// Kartu tepat setelah pesan terakhir yang lebih awal, jadi tetap di hari pesan itu; tombol batal hanya aktif di
+    /// kartu antre dan ada di dalam kartunya, bukan baris sendiri. Pertanyaan lokal yang belum di-ack tetap di bawah
+    /// kartu.
     @Test
     func noticesFollowTheLastEarlierMessage() {
         let firstDay = ChatDayIdentifier(date: Date(timeIntervalSince1970: .zero))
@@ -25,13 +26,14 @@ struct ArrayLiveAgentNoticeTests {
             .message(.local(pending), isSpaced: true)
         ]
         let notices = [LiveAgentNotice(kind: .canceled, seq: 4), LiveAgentNotice(kind: .connecting, seq: 7)]
-        let ids = items.inserting(notices, isLeaveEnabled: false).map(\.id)
+        let inserted = items.inserting(notices, isLeaveEnabled: true)
         #expect(
-            ids == [
+            inserted.map(\.id) == [
                 .date(firstDay), .message("m-2"), .liveAgentNotice(4), .date(secondDay), .message("m-6"),
-                .liveAgentNotice(7),
-                .leaveAgentQueue, .message("q")
+                .liveAgentNotice(7), .message("q")
             ])
+        #expect(inserted[2] == .liveAgentNotice(notices[0], isLeaveEnabled: false))
+        #expect(inserted[5] == .liveAgentNotice(notices[1], isLeaveEnabled: true))
     }
 
     @Test

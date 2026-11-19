@@ -56,8 +56,8 @@ Contoh penempatan yang sudah diterapkan:
 - `Components/Inputs/PinEntry/`: isi sheet PIN (`PinEntry`): `Models/PinPadKey` susunan keypad dan aturan input,
   `Views` titik, tombol keypad, dan `PinEntry`.
 - `Components/Actions/FilledButton.swift`: tombol selebar wadah; `.regular` (Konfirmasi, Pilih), `.outlined` (aksi
-  kedua bergaris seukuran `.regular`, mis. Batalkan di form), dan `.link` (teks kecil bergaris bawah, mis. "Batalkan
-  proses ini").
+  kedua bergaris seukuran `.regular`, mis. Batalkan di form atau di kartu antre), dan `.link` (teks kecil bergaris
+  bawah).
 - `Components/Feedback/LoadingIndicator.swift`: spinner untuk semua loading.
 - `Components/Feedback/StatusCaption.swift`: teks status kecil di bawah pesan terakhir dengan ikon opsional (mencari
   agen, agen mengetik).
@@ -147,8 +147,8 @@ TanyaAI/Features/Chat/Intents/LiveAgent/
     └── LiveAgentNoticeCard.swift
 ```
 
-Komponen visualnya generik di DesignKit: `NoticeCard`, `SenderMessageCard`, `StatusCaption` (mencari agen dan agen
-mengetik, langsung di `ChatListRow`), dan `FilledButton` varian `.link`.
+Komponen visualnya generik di DesignKit: `NoticeCard` (slot aksi untuk tombol batal kartu antre), `SenderMessageCard`,
+`StatusCaption` (mencari agen dan agen mengetik, langsung di `ChatListRow`), dan `FilledButton` varian `.outlined`.
 Tombol lampiran adalah parameter `attachment` milik `MessageComposer`.
 
 ### Menambah intent: langkah yang sudah punya pola

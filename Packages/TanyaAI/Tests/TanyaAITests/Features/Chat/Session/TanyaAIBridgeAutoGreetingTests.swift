@@ -27,7 +27,7 @@ struct TanyaAIBridgeAutoGreetingTests {
         #expect(bridge.visibleLiveAgentNotices == [.init(kind: .connected, seq: 3)])
         #expect(bridge.isSearchingAgent)
         let items = [ChatListItem](rows: bridge.rows).inserting(bridge.visibleLiveAgentNotices, isLeaveEnabled: true)
-        #expect(!items.contains(.leaveAgentQueue(isEnabled: true)))
+        #expect(items.contains(.liveAgentNotice(.init(kind: .connected, seq: 3), isLeaveEnabled: false)))
         transport.emit(WireFixture.systemFrame(seq: 6, type: "agent_joined"))
         await waitUntil { bridge.eventCursor == 6 }
         #expect(!bridge.isSearchingAgent)

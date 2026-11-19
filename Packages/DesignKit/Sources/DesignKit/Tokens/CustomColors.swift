@@ -37,7 +37,7 @@ public enum CustomColors {
     }
 
     public enum Button {
-        /// Figma tombol batal di bawah kartu status.
+        /// Figma #567180, warna tombol batal di kartu status.
         public static let muted = CustomBasePaletteColor.slateBlue
     }
 
