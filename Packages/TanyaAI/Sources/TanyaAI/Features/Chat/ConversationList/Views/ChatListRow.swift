@@ -72,12 +72,14 @@ private extension ChatListRow {
         .accessibilityIdentifier(ChatElementIdentifier.agentSearching)
     }
 
-    /// Spinner bergerak selama bot menyiapkan jawaban, supaya layar tidak terkesan diam.
+    /// Titik berdenyut tanpa teks selama bot menyiapkan jawaban, supaya layar tidak terkesan diam; copy hanya untuk
+    /// VoiceOver.
     var answerLoading: some View {
-        StatusCaption(text: String(ChatCopy.answerLoading, locale: locale)) {
-            LoadingIndicator()
-        }
-        .accessibilityIdentifier(ChatElementIdentifier.answerLoading)
+        TypingDots()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement()
+            .accessibilityLabel(String(ChatCopy.answerLoading, locale: locale))
+            .accessibilityIdentifier(ChatElementIdentifier.answerLoading)
     }
 }
 

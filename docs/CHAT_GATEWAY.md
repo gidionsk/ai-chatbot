@@ -198,9 +198,9 @@ antre, agen bergabung 3 detik kemudian, mengetik lalu menyapa, menjawab pertanya
    (mis. setelah percakapan berganti) tidak mengubah pertanyaan yang sedang ditunggu. 404/410 dari kirim, stop,
    atau `leave-agent` milik percakapan yang sudah diganti init juga tidak menutup percakapan yang baru.
 5. Fase composer: tidak ada titik bergerak di composer. Sejak kirim tombol menjadi stop; nasabah boleh mengetik
-   pertanyaan berikutnya tetapi harus menekan stop (atau menunggu `turn_end`) untuk mengirimnya. Di daftar, spinner
-   dengan "Sedang menyiapkan jawaban..." (`StatusCaption`, copy sementara) tampil tepat di bawah pertanyaan yang
-   ditunggu sampai jawaban pertama tampil atau kunci terbuka, supaya layar tidak terkesan diam (keputusan user
+   pertanyaan berikutnya tetapi harus menekan stop (atau menunggu `turn_end`) untuk mengirimnya. Di daftar, tiga titik
+   berdenyut tanpa teks (`TypingDots`; "Sedang menyiapkan jawaban..." hanya label VoiceOver, copy sementara) tampil
+   tepat di bawah pertanyaan yang ditunggu sampai jawaban pertama tampil atau kunci terbuka, supaya layar tidak terkesan diam (keputusan user
    19 November 2026). Selama antre atau dilayani agen tidak ada loading ini karena kirim tidak dikunci.
 6. Stop: `POST .../cancel`; ditekan sebelum ack = cancel dikirim saat ack tiba (tidak dikirim bila
    kirim gagal). `canceled:true` = kunci tetap sampai `turn_end {"status":"canceled"}` dari

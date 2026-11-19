@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-/// Status singkat di bawah pesan terakhir, mis. sedang mencari, mengetik, atau menyiapkan jawaban: ikon opsional di
-/// kiri lalu teks kecil abu-abu. Ikon dan copy dari pemakai; tanpa ikon tidak ada ruang kosong di kiri teks.
+/// Status singkat di bawah pesan terakhir, mis. sedang mencari atau mengetik: ikon opsional di kiri lalu teks kecil
+/// abu-abu. Ikon dan copy dari pemakai; tanpa ikon tidak ada ruang kosong di kiri teks.
 /// TODO: Konfirmasi ukuran ikon, jarak, dan warna teks dengan Figma node 3262-86657.
 @MainActor
 public struct StatusCaption<Icon: View>: View {

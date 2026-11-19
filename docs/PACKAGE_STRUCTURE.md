@@ -60,7 +60,8 @@ Contoh penempatan yang sudah diterapkan:
   proses ini").
 - `Components/Feedback/LoadingIndicator.swift`: spinner untuk semua loading.
 - `Components/Feedback/StatusCaption.swift`: teks status kecil di bawah pesan terakhir dengan ikon opsional (mencari
-  agen, agen mengetik, bot menyiapkan jawaban).
+  agen, agen mengetik).
+- `Components/Feedback/TypingDots.swift`: tiga titik berdenyut selama bot menyiapkan jawaban; diam saat Reduce Motion.
 - `Components/Lists/SeparatorLine.swift`: garis pemisah 1 pt (daftar, tabel Markdown, di atas composer).
 - `Components/Screen/BottomSheet/Models/BottomSheetMaxHeight.swift`: batas tinggi, di bawah status bar atau bagian layar.
 - `Components/Screen/BottomSheet/Models/BottomSheetLayout.swift`: batas tinggi dan letak sheet dari safe area, layar
