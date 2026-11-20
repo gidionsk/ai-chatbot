@@ -171,12 +171,16 @@ extension TanyaAIChatService {
         schedule(after: SandboxOptions.echoDelay) { $0.emit($0.frames.frame(question)) }
         if !options.isHoldingReply {
             schedule(after: SandboxOptions.echoDelay + SandboxOptions.replyDelay) { service in
-                let reply = SandboxGatewayFrames.reply(to: text)
-                service.emit(service.frames.message(direction: SandboxWireMessage.assistant, text: reply))
+                service.emit(service.assistantReply(to: text))
                 service.finishTurn()
             }
         }
         return ack
+    }
+
+    private func assistantReply(to text: String) -> [String] {
+        if options.isFormDemo { return frames.referenceLetterMessage() }
+        return frames.message(direction: SandboxWireMessage.assistant, text: SandboxGatewayFrames.reply(to: text))
     }
 
     func finishTurn(status: String = SandboxGatewayFrames.completedStatus) {
