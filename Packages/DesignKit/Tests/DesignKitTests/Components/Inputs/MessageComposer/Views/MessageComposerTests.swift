@@ -33,8 +33,8 @@ struct MessageComposerTests {
         window.makeKeyAndVisible()
         defer { window.isHidden = true }
         window.layoutIfNeeded()
-        await waitUntil { editor(in: window) != nil }
-        let editor = try #require(editor(in: window))
+        await waitUntil { textEditor(in: window) != nil }
+        let editor = try #require(textEditor(in: window))
         #expect(editor.isEditable)
         editor.becomeFirstResponder()
         await waitUntil { editor.isFirstResponder }
@@ -55,7 +55,7 @@ private extension MessageComposerTests {
         )
     }
 
-    func editor(in window: UIWindow) -> BoundedTextView? {
+    func textEditor(in window: UIWindow) -> BoundedTextView? {
         window.scrollViews.compactMap { $0 as? BoundedTextView }.first
     }
 
