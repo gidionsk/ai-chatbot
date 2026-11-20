@@ -10,7 +10,7 @@
 /// Tiruan kedua: opsi dan urutan berubah mengikuti kategori; teks wajib hanya saat toggle menyala.
 enum MockProductFormRules {
     static var rules: IntentFormRules<MockProductFieldID> {
-        IntentFormRules(fields: fields, fieldsToReset: { _ in [] })
+        IntentFormRules(fields: fields, fieldsToReset: { $0 == .category ? [.product] : [] })
     }
 
     static func fields(_ values: [MockProductFieldID: FormFieldValue]) -> [FormField<MockProductFieldID>] {

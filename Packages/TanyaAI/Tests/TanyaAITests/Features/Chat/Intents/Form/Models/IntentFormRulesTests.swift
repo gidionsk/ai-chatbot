@@ -25,11 +25,11 @@ struct IntentFormRulesTests {
     }
 
     @Test
-    func aSelectionThatStillExistsInNewOptionsIsPreserved() {
+    func changingTheParentResetsASelectionEvenIfItIsStillAvailable() {
         var state = IntentFormState(rules: MockProductFormRules.rules)
         state.select(["shared"], for: .product)
         state.select(["deposit"], for: .category)
-        #expect(state.value(for: .product) == .singleSelection("shared"))
+        #expect(state.value(for: .product) == .singleSelection(nil))
     }
 
     @Test

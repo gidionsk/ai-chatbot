@@ -15,7 +15,7 @@ enum MockLetterFormRules {
 
     static func fields(_ values: [MockLetterFieldID: FormFieldValue]) -> [FormField<MockLetterFieldID>] {
         let fields = commonFields
-        switch values[.format] ?? .singleSelection("softcopy") {
+        switch values[.format] {
         case .singleSelection("hardcopy"):
             return fields + [FormField(id: .address, initialValue: .text("Stored address"), isRequired: true)]
         case .singleSelection("softcopy"):
@@ -26,8 +26,14 @@ enum MockLetterFormRules {
     }
 
     static func fieldsToReset(_ changed: MockLetterFieldID) -> [MockLetterFieldID] {
-        guard changed == .purpose else { return [] }
-        return [.format, .embassy, .accounts, .currency, .balance, .address, .email]
+        switch changed {
+        case .purpose:
+            return [.format, .embassy, .accounts, .currency, .balance]
+        case .format:
+            return [.address, .email]
+        default:
+            return []
+        }
     }
 }
 

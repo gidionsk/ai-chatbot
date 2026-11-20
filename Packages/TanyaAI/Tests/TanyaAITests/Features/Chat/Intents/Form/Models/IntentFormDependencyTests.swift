@@ -11,6 +11,100 @@ import Testing
 
 struct IntentFormDependencyTests {
     @Test
+    func changingTheParentUsesTheNewChildDefaultEvenIfTheOldChoiceRemainsAvailable() {
+        let choices = [FormOption(code: "old", title: "Old"), FormOption(code: "new", title: "New")]
+        let rules = IntentFormRules<TestFormFieldID>(
+            fields: { values in
+                [
+                    FormField(id: .parentToggle, initialValue: .toggle(false)),
+                    FormField(
+                        id: .firstChoice,
+                        initialValue: .singleSelection(values[.parentToggle] == .toggle(true) ? "new" : "old"),
+                        options: choices
+                    )
+                ]
+            },
+            fieldsToReset: { $0 == .parentToggle ? [.firstChoice] : [] }
+        )
+        var state = IntentFormState(rules: rules)
+        #expect(state.value(for: .firstChoice) == .singleSelection("old"))
+        state[toggle: .parentToggle] = true
+        #expect(state.value(for: .firstChoice) == .singleSelection("new"))
+    }
+
+    @Test(arguments: [false, true])
+    func changingTheParentResetsAllDescendants(isCyclic: Bool) {
+        let rules = IntentFormRules<TestFormFieldID>(
+            fields: { values in
+                [
+                    FormField(id: .parentToggle, initialValue: .toggle(false)),
+                    FormField(id: .childText, initialValue: .text("Child")),
+                    FormField(
+                        id: .grandchildText,
+                        initialValue: .text(values[.childText] == .text("Child") ? "Grandchild" : "Pending")
+                    )
+                ]
+            },
+            fieldsToReset: { fieldID in
+                switch fieldID {
+                case .parentToggle:
+                    return [.childText]
+                case .childText:
+                    return [.grandchildText]
+                case .grandchildText:
+                    return isCyclic ? [.parentToggle] : []
+                default:
+                    return []
+                }
+            }
+        )
+        var state = IntentFormState(rules: rules)
+        state[text: .childText] = "Edited child"
+        state[text: .grandchildText] = "Edited grandchild"
+        state[toggle: .parentToggle] = true
+        #expect(state.value(for: .parentToggle) == .toggle(true))
+        #expect(state.value(for: .childText) == .text("Child"))
+        #expect(state.value(for: .grandchildText) == .text("Grandchild"))
+    }
+
+    @Test
+    func aParentDefaultRevealsItsChildOnInitAndReset() {
+        let rules = IntentFormRules<TestFormFieldID>(
+            fields: { values in
+                let parent = FormField<TestFormFieldID>(id: .parentToggle, initialValue: .toggle(true))
+                guard values[.parentToggle] == .toggle(true) else { return [parent] }
+                return [parent, FormField(id: .childText, initialValue: .text("Shown by default"))]
+            },
+            fieldsToReset: { $0 == .parentToggle ? [.childText] : [] }
+        )
+        var state = IntentFormState(rules: rules)
+        #expect(state.visibleFields.map(\.id) == [.parentToggle, .childText])
+        #expect(state.value(for: .childText) == .text("Shown by default"))
+        state[toggle: .parentToggle] = false
+        #expect(state.value(for: .childText) == nil)
+        state.reset()
+        #expect(state.visibleFields.map(\.id) == [.parentToggle, .childText])
+        #expect(state.value(for: .childText) == .text("Shown by default"))
+    }
+
+    @Test
+    func fieldReconciliationStopsWhenRulesKeepAlternating() {
+        var evaluations = 0
+        let rules = IntentFormRules<TestFormFieldID>(
+            fields: { values in
+                evaluations += 1
+                let parent = FormField<TestFormFieldID>(id: .parentToggle, initialValue: .toggle(true))
+                guard values[.childText] == nil else { return [parent] }
+                return [parent, FormField(id: .childText, initialValue: .text("Alternating"))]
+            },
+            fieldsToReset: { _ in [] }
+        )
+        let state = IntentFormState(rules: rules)
+        #expect(evaluations == 3)
+        #expect(Set(state.values.keys) == Set(state.visibleFields.map(\.id)))
+    }
+
+    @Test
     func aDifferentPurposeResetsEveryFollowingFieldBeforeRecomputingVisibility() {
         var state = editedLetterState()
         state.select(["other"], for: .purpose)
