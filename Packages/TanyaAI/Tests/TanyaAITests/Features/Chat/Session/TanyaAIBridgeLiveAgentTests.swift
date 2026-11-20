@@ -141,6 +141,8 @@ struct TanyaAIBridgeLiveAgentTests {
         await waitUntil { transport.isAckHeld }
         transport.drop()
         await waitUntil { bridge.conversationID == "lain" && bridge.connection == .live }
+        // Antrean percakapan baru punya state dan acuan yang sama, tetapi tombol batalnya tidak ikut terkunci.
+        #expect(!bridge.isLeavingAgent)
         transport.releaseAck()
         await leave.value
         #expect(bridge.conversationState == .agentQueued)

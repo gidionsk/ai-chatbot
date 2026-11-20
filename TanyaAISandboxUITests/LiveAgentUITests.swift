@@ -66,10 +66,11 @@ final class LiveAgentUITests: XCTestCase {
     /// Sheet lampiran yang masih terbuka ikut tertutup saat agen mengakhiri sesi, jadi Galeri tidak bisa diketuk lagi.
     func testAttachmentSheetClosesWhenTheAgentEndsTheSession() {
         launchAndAskForAnAgent()
-        XCTAssertTrue(element("chat.agent.message").waitForExistence(timeout: 15))
-        send("Cek status kartu saya")
+        // Sapaan otomatis sudah datang selama antre; penutupan sesi baru dijadwalkan untuk pesan saat agen bergabung,
+        // yaitu saat tombol lampiran muncul.
         let attachment = application.buttons["composer.attachment"]
-        XCTAssertTrue(attachment.waitForExistence(timeout: 5))
+        XCTAssertTrue(attachment.waitForExistence(timeout: 15))
+        send("Cek status kartu saya")
         attachment.tap()
         let sheet = element("sheet")
         XCTAssertTrue(sheet.waitForExistence(timeout: 3))

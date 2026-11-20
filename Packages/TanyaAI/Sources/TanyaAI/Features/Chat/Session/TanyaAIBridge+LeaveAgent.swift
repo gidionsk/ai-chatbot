@@ -12,7 +12,9 @@ extension TanyaAIBridge {
     /// atau sesi yang sudah berganti tidak mengunci yang baru.
     var isLeavingAgent: Bool { leavingAgentScope == liveAgentScope }
 
-    var liveAgentScope: LiveAgentScope { LiveAgentScope(state: conversationState, queueStartSeq: queueStartSeq) }
+    var liveAgentScope: LiveAgentScope {
+        LiveAgentScope(conversationID: conversationID, state: conversationState, queueStartSeq: queueStartSeq)
+    }
 
     /// `leave-agent` untuk "Batalkan" di kartu antre dan "End Session" di bar sesi agen (keputusan user 19 November
     /// 2026: keduanya memakai endpoint yang sama). `left:true` = langsung kembali ke bot tanpa menunggu event
@@ -29,7 +31,7 @@ extension TanyaAIBridge {
         do {
             let data = try await transport.leaveAgent(conversationID: conversationID)
             let result = try JSONDecoder.wire.decode(WireEnvelope<WireLeaveAgent>.self, from: data).data
-            guard result.isLeft, self.conversationID == conversationID, liveAgentScope == scope else { return }
+            guard result.isLeft, liveAgentScope == scope else { return }
             conversationState = .assistantActive
         } catch {
             didFailRequest(error, conversationID: conversationID)
