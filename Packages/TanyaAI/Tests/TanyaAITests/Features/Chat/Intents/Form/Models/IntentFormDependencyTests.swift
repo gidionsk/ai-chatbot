@@ -93,11 +93,20 @@ struct IntentFormDependencyTests {
             fields: { values in
                 let format = FormField<TestFormFieldID>(id: .parentToggle, initialValue: .toggle(true))
                 let address = FormField<TestFormFieldID>(
-                    id: .childText, initialValue: .text(String()), isRequired: true)
+                    id: .childText,
+                    initialValue: .text(String()),
+                    isRequired: true
+                )
                 let email = FormField<TestFormFieldID>(
-                    id: .grandchildText, initialValue: .text(String()), isRequired: true)
+                    id: .grandchildText,
+                    initialValue: .text(String()),
+                    isRequired: true
+                )
                 let extra = FormField<TestFormFieldID>(
-                    id: .requiredText, initialValue: .text(String()), isRequired: true)
+                    id: .requiredText,
+                    initialValue: .text(String()),
+                    isRequired: true
+                )
                 if values[extra.id] != nil { return [format] }
                 if values[email.id] != nil { return [email, extra] }
                 if values[address.id] != nil { return [address, email] }

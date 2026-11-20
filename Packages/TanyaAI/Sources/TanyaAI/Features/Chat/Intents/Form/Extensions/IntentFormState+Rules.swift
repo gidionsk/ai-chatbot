@@ -21,10 +21,11 @@ extension IntentFormState {
         fields: [FormField<FieldID>], values: [FieldID: FormFieldValue]
     ) {
         var candidate = values
-        var seen: Set<[FieldID: FormFieldValue]> = []
+        var seen: [[FieldID: FormFieldValue]] = []
         var fields: [FormField<FieldID>] = []
         // Draft berulang menandakan hasil stabil atau aturan yang berputar.
-        while seen.insert(candidate).inserted {
+        while !seen.contains(candidate) {
+            seen.append(candidate)
             fields = rules.fields(candidate)
             // Pakai draft asli setiap putaran agar default sementara bisa mengikuti aturan terbaru.
             candidate = refreshedValues(for: fields)

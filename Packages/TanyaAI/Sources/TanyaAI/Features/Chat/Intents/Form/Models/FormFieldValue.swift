@@ -6,7 +6,7 @@
 //
 
 /// Nilai draft form. Jenis nilai sekaligus menentukan jenis input, tanpa tipe UI atau data PIN.
-enum FormFieldValue: Hashable {
+enum FormFieldValue: Equatable {
     case text(String)
     case singleSelection(String?)
     case multipleSelection([String])
