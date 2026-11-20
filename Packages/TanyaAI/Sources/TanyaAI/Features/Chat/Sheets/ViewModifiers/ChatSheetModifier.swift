@@ -20,11 +20,11 @@ struct ChatSheetModifier: ViewModifier {
     @Binding private var sheet: ChatSheet?
     /// Picker sistem yang sedang terbuka; nil = tertutup.
     @State private var source: ChatAttachmentSource?
-    /// Sesi agen pemilik picker terakhir.
+    /// Sesi agen pemilik picker yang masih berlaku; nil = tidak ada. Callback picker membawa sesinya sendiri dan
+    /// membandingkannya dengan nilai ini. Disimpan sebagai state karena callback picker sistem memegang salinan
+    /// modifier dari saat picker dibuka; state selalu dibaca dari nilai terbaru, jadi hasil picker lama (mis. foto
+    /// yang masih dimuat) tidak lolos setelah picker sesi lain dibuka.
     @State private var pickerSession: AgentSessionKey?
-    /// Sesi pemilik picker sudah tidak dilayani agen. Disimpan sebagai state karena callback picker sistem memegang
-    /// salinan modifier dari saat picker dibuka; state selalu dibaca dari nilai terbaru.
-    @State private var isPickerStale = false
     /// Sesi agen yang sedang melayani, tempat lampiran boleh dipilih; nil = lampiran tidak tersedia.
     private let attachmentSession: AgentSessionKey?
     /// Antrean atau sesi agen yang barnya tampil; nil = bar tidak tampil.
@@ -71,13 +71,19 @@ struct ChatSheetModifier: ViewModifier {
         }
     }
 
+    /// Sesi picker ditangkap saat callback dibuat, bukan dibaca saat hasilnya tiba.
     @ViewBuilder
     private func picker(_ source: ChatAttachmentSource) -> some View {
+        let session = pickerSession
         switch source {
         case .gallery:
-            PhotoAttachmentPicker(onPick: deliver, onReject: rejectFormat, onDismiss: closePicker)
+            PhotoAttachmentPicker(
+                onPick: { deliver($0, from: session) },
+                onReject: { rejectFormat(from: session) },
+                onDismiss: closePicker
+            )
         case .file:
-            DocumentAttachmentPicker(onPick: deliver, onDismiss: closePicker)
+            DocumentAttachmentPicker(onPick: { deliver($0, from: session) }, onDismiss: closePicker)
         }
     }
 }
@@ -89,13 +95,15 @@ private extension ChatSheetModifier {
     func choose(_ source: ChatAttachmentSource, for session: AgentSessionKey) {
         sheet = nil
         pickerSession = session
-        isPickerStale = false
         self.source = source
     }
 
-    /// File dari picker yang sesinya sudah berganti atau berakhir dibuang, tidak diteruskan ke sesi lain.
-    func deliver(_ file: URL) {
-        guard !isPickerStale else { return FileManager.default.discardChatAttachment(at: file) }
+    /// File dari picker yang sesinya sudah berganti atau berakhir (termasuk saat picker sesi lain sudah dibuka)
+    /// dibuang, tidak diteruskan.
+    func deliver(_ file: URL, from session: AgentSessionKey?) {
+        guard let session, session == pickerSession else {
+            return FileManager.default.discardChatAttachment(at: file)
+        }
         onPick(file)
     }
 
@@ -111,9 +119,9 @@ private extension ChatSheetModifier {
 
     /// Pilihan Galeri / File dibuka lagi dengan pesan format, supaya nasabah bisa langsung memilih ulang.
     /// Tidak dibuka lagi bila sesi agen sudah berganti atau berakhir selama picker tampil.
-    func rejectFormat() {
-        guard !isPickerStale, let pickerSession else { return }
-        sheet = .attachment(pickerSession, isFormatRejected: true)
+    func rejectFormat(from session: AgentSessionKey?) {
+        guard let session, session == pickerSession else { return }
+        sheet = .attachment(session, isFormatRejected: true)
     }
 
     func closePicker() {
@@ -124,7 +132,7 @@ private extension ChatSheetModifier {
     /// terpilih di mode bot atau di sesi lain dan Yes tidak mengakhiri sesi lain.
     func closeStale(attachmentSession: AgentSessionKey?, leaveSession: AgentSessionKey?) {
         if let pickerSession, pickerSession != attachmentSession {
-            isPickerStale = true
+            self.pickerSession = nil
             source = nil
         }
         guard let sheet, !sheet.isCurrent(attachmentSession: attachmentSession, leaveSession: leaveSession) else {
