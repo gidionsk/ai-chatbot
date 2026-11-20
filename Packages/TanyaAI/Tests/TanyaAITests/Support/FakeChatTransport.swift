@@ -31,13 +31,17 @@ final class FakeChatTransport: TanyaAIChatTransport {
     var isHoldingTyping = false
     var isHoldingCancel = false
     var isHoldingLeave = false
+    /// True = setiap respons `leave-agent` ditahan berurutan sampai `releaseLeave()` (request tumpang tindih).
+    var isHoldingLeaves = false
     private(set) var calls: [String] = []
     /// Jumlah stream yang sudah ditutup (putus, selesai, atau dibatalkan pemakai).
     private(set) var closedStreams = 0
     private var continuation: AsyncThrowingStream<String, Error>.Continuation?
     private var heldAck: CheckedContinuation<Void, Never>?
+    private var heldLeaves: [CheckedContinuation<Void, Never>] = []
 
     var isAckHeld: Bool { heldAck != nil }
+    var heldLeaveCount: Int { heldLeaves.count }
     var typingCalls: [String] { calls.filter { $0.hasPrefix("typing:") } }
 
     func initialize() async throws -> Data {
@@ -79,6 +83,9 @@ final class FakeChatTransport: TanyaAIChatTransport {
             isHoldingLeave = false
             await withCheckedContinuation { heldAck = $0 }
         }
+        if isHoldingLeaves {
+            await withCheckedContinuation { heldLeaves.append($0) }
+        }
         return try result.get()
     }
 
@@ -117,6 +124,11 @@ final class FakeChatTransport: TanyaAIChatTransport {
             }
             self.continuation = continuation
         }
+    }
+
+    /// Melepas respons `leave-agent` tertua yang ditahan lewat `isHoldingLeaves`.
+    func releaseLeave() {
+        heldLeaves.removeFirst().resume()
     }
 
     /// Baris SSE ke stream yang sedang terbuka.

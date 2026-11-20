@@ -46,8 +46,8 @@ public final class TanyaAIBridge: ObservableObject {
     /// `seq` pesan serah terima yang datang lewat stream sejak sinkronisasi history terakhir. Penutupnya datang dari
     /// event stream, jadi pesan ini tidak diberi kartu "tidak dilanjutkan" selama event antre masih tertunda.
     private(set) var streamedHandoverSeqs: Set<Int> = []
-    /// Permintaan `leave-agent` sedang diproses; tombol batal dan End Session tidak dikirim dua kali.
-    @Published var isLeavingAgent = false
+    /// Antrean atau sesi yang menunggu respons `leave-agent` (lihat `isLeavingAgent`); nil = tidak ada request.
+    @Published var leavingAgentScope: LiveAgentScope?
     /// Indikator "agen sedang mengetik"; dimatikan oleh `typing:false`, pesan agen, atau batas `ttl_s`.
     @Published var isAgentTyping = false
     /// Penghapus indikator mengetik setelah batas waktunya; diganti setiap event `typing` baru.

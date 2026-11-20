@@ -188,6 +188,31 @@ struct TanyaAIBridgeLiveAgentTests {
         #expect(bridge.visibleLiveAgentNotices.map(\.kind) == [.connecting])
     }
 
+    /// Request sesi lama yang masih menggantung tidak mengunci Batalkan antrean baru, dan selesainya tidak melepas
+    /// status request antrean baru.
+    @Test
+    func pendingLeaveOnlyLocksItsOwnQueue() async {
+        let (transport, bridge) = await connectedBridge(state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        transport.isHoldingLeaves = true
+        let endSession = Task { await bridge.leaveAgent() }
+        await waitUntil { transport.heldLeaveCount == 1 }
+        transport.emit(WireFixture.stateFrame(seq: 3, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.eventCursor == 4 }
+        #expect(!bridge.isLeavingAgent)
+        let cancelQueue = Task { await bridge.leaveAgent() }
+        await waitUntil { transport.heldLeaveCount == 2 }
+        transport.releaseLeave()
+        await endSession.value
+        #expect(bridge.isLeavingAgent, "request antrean baru masih berjalan")
+        #expect(bridge.conversationState == .agentQueued)
+        transport.releaseLeave()
+        await cancelQueue.value
+        #expect(!bridge.isLeavingAgent)
+        #expect(bridge.conversationState == .assistantActive)
+    }
+
     @Test
     func leaveWithoutAnAgentIsNotSent() async {
         let (transport, bridge) = await connectedBridge(state: "ASSISTANT_ACTIVE")

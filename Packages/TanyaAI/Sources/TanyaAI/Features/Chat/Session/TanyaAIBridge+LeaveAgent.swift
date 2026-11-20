@@ -8,6 +8,12 @@
 import Foundation
 
 extension TanyaAIBridge {
+    /// Tombol batal dan End Session tidak dikirim dua kali untuk antrean atau sesi yang sama. Request milik antrean
+    /// atau sesi yang sudah berganti tidak mengunci yang baru.
+    var isLeavingAgent: Bool { leavingAgentScope == liveAgentScope }
+
+    var liveAgentScope: LiveAgentScope { LiveAgentScope(state: conversationState, queueStartSeq: queueStartSeq) }
+
     /// `leave-agent` untuk "Batalkan" di kartu antre dan "End Session" di bar sesi agen (keputusan user 19 November
     /// 2026: keduanya memakai endpoint yang sama). `left:true` = langsung kembali ke bot tanpa menunggu event
     /// `state`; kartu penutup datang dari stream. `left:false` = sudah tidak antre/dilayani, state dari stream. 409
@@ -17,19 +23,22 @@ extension TanyaAIBridge {
     /// `markQueueStart`) juga diabaikan; state berikutnya tetap datang dari stream.
     func leaveAgent() async {
         guard conversationState.isLiveAgent, !isLeavingAgent, let conversationID else { return }
-        let startState = conversationState
-        let startQueueSeq = queueStartSeq
-        isLeavingAgent = true
-        defer { isLeavingAgent = false }
+        let scope = liveAgentScope
+        leavingAgentScope = scope
+        defer { finishLeaving(scope) }
         do {
             let data = try await transport.leaveAgent(conversationID: conversationID)
             let result = try JSONDecoder.wire.decode(WireEnvelope<WireLeaveAgent>.self, from: data).data
-            guard result.isLeft, self.conversationID == conversationID, conversationState == startState,
-                queueStartSeq == startQueueSeq
-            else { return }
+            guard result.isLeft, self.conversationID == conversationID, liveAgentScope == scope else { return }
             conversationState = .assistantActive
         } catch {
             didFailRequest(error, conversationID: conversationID)
         }
+    }
+
+    /// Hanya status request milik `scope` yang dilepas; request antrean atau sesi berikutnya tetap berjalan.
+    private func finishLeaving(_ scope: LiveAgentScope) {
+        guard leavingAgentScope == scope else { return }
+        leavingAgentScope = nil
     }
 }

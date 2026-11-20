@@ -148,7 +148,9 @@ dari antre/agen atau antrean baru dimulai. Init tidak membawa nama, jadi saat ha
 event bernama ikut replay. Lampiran tetap mengikuti `AGENT_ACTIVE` saja. End Session memanggil
 `leave-agent` yang sama dengan Batalkan: `left:true` langsung kembali ke bot, 409 atau gagal lain membuat tombol aktif
 lagi. `left:true` yang datang setelah antrean atau sesi tempat request dimulai sudah berganti (state lain atau acuan
-antrean baru) diabaikan, jadi antrean berikutnya tidak ikut kembali ke bot; state datang dari stream. Tanpa dialog konfirmasi sampai ada Figma.
+antrean baru) diabaikan, jadi antrean berikutnya tidak ikut kembali ke bot; state datang dari stream. Status request
+juga terikat ke antrean atau sesi asalnya (`LiveAgentScope`): request lama yang masih berjalan tidak mengunci Batalkan
+antrean baru, dan selesainya hanya melepas status request itu sendiri. Tanpa dialog konfirmasi sampai ada Figma.
 
 Selama `AGENT_ACTIVE` composer menampilkan tombol `+` di dalam kartu sebelah kiri field (Figma `typing-area`:
 lingkaran 24, garis 1 N200; ikon masih PDF dummy). Ketuk = bottom sheet DesignKit (bukan popover) berisi Galeri

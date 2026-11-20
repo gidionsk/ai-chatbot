@@ -97,7 +97,7 @@ scroll progress. Service bisnis, validasi rekening, serta flow transfer milik ho
 | `Chat/FollowUps` | Saran pertanyaan berikutnya. |
 | `Chat/Messages` | `Models` nilai pesan, `Views` bubble, `Extensions` merge pesan. |
 | `Chat/ConversationList` | `Models` item/state/action/input/hari; `Views` baris dan table adapter; `Controllers` table/scroll; `Formatting` tanggal; `Extensions` penyusunan baris. |
-| `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi (`ChatTurn`, `UserTypingSignal`). |
+| `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi (`ChatTurn`, `UserTypingSignal`, `LiveAgentScope`). |
 | `Chat/Gateway` | `Models` kontrak respons/event/history, `Decoding`, `Streaming`, serta metadata protokol. HTTP tetap host. |
 | `Chat/Keys` | Key copy, image, identifier, tautan, dan `Extensions` accessor-nya. |
 | `Chat/Intents` | `Models/ChatIntent` daftar intent dari gateway. |
