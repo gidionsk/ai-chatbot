@@ -21,18 +21,15 @@ extension IntentFormState {
         fields: [FormField<FieldID>], values: [FieldID: FormFieldValue]
     ) {
         var candidate = values
-        var pass = Int.zero
-        var largestFieldCount = Int.zero
-        while true {
-            let fields = rules.fields(candidate)
+        var seen: Set<[FieldID: FormFieldValue]> = []
+        var fields: [FormField<FieldID>] = []
+        // Draft berulang menandakan hasil stabil atau aturan yang berputar.
+        while seen.insert(candidate).inserted {
+            fields = rules.fields(candidate)
             // Pakai draft asli setiap putaran agar default sementara bisa mengikuti aturan terbaru.
-            let refreshed = refreshedValues(for: fields)
-            largestFieldCount = max(largestFieldCount, fields.count)
-            // Aturan yang sama dengan input yang sama menghasilkan field yang sama.
-            guard refreshed != candidate, pass < largestFieldCount else { return (fields, refreshed) }
-            candidate = refreshed
-            pass = (Int.zero..<largestFieldCount).index(after: pass)
+            candidate = refreshedValues(for: fields)
         }
+        return (fields, candidate)
     }
 }
 

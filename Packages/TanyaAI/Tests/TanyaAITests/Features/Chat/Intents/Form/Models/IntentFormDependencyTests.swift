@@ -88,11 +88,42 @@ struct IntentFormDependencyTests {
     }
 
     @Test
-    func fieldReconciliationStopsWhenRulesKeepAlternating() {
-        var evaluations = 0
+    func fieldReconciliationReachesTheStableFormOnInitAndReset() {
         let rules = IntentFormRules<TestFormFieldID>(
             fields: { values in
-                evaluations += 1
+                let format = FormField<TestFormFieldID>(id: .parentToggle, initialValue: .toggle(true))
+                let address = FormField<TestFormFieldID>(
+                    id: .childText, initialValue: .text(String()), isRequired: true)
+                let email = FormField<TestFormFieldID>(
+                    id: .grandchildText, initialValue: .text(String()), isRequired: true)
+                let extra = FormField<TestFormFieldID>(
+                    id: .requiredText, initialValue: .text(String()), isRequired: true)
+                if values[extra.id] != nil { return [format] }
+                if values[email.id] != nil { return [email, extra] }
+                if values[address.id] != nil { return [address, email] }
+                if values[format.id] != nil { return [format] }
+                return [format, address]
+            },
+            fieldsToReset: { _ in [] }
+        )
+        var state = IntentFormState(rules: rules)
+        #expect(state.visibleFields.map(\.id) == [.parentToggle])
+        #expect(state.values == [.parentToggle: .toggle(true)])
+        let isValid = state.validate()
+        #expect(isValid)
+
+        state[toggle: .parentToggle] = false
+        state.reset()
+        #expect(state.visibleFields.map(\.id) == [.parentToggle])
+        #expect(state.values == [.parentToggle: .toggle(true)])
+        let isValidAfterReset = state.validate()
+        #expect(isValidAfterReset)
+    }
+
+    @Test
+    func fieldReconciliationStopsWhenRulesKeepAlternating() {
+        let rules = IntentFormRules<TestFormFieldID>(
+            fields: { values in
                 let parent = FormField<TestFormFieldID>(id: .parentToggle, initialValue: .toggle(true))
                 guard values[.childText] == nil else { return [parent] }
                 return [parent, FormField(id: .childText, initialValue: .text("Alternating"))]
@@ -100,7 +131,6 @@ struct IntentFormDependencyTests {
             fieldsToReset: { _ in [] }
         )
         let state = IntentFormState(rules: rules)
-        #expect(evaluations == 3)
         #expect(Set(state.values.keys) == Set(state.visibleFields.map(\.id)))
     }
 
