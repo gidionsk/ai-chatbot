@@ -92,11 +92,11 @@ struct TanyaAIBridgeLiveAgentTests {
     func leavingTheQueueReturnsToTheAssistant() async {
         let (transport, bridge) = await connectedBridge(state: "AGENT_QUEUED")
         defer { bridge.connectionTask?.cancel() }
-        await bridge.leaveAgent()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(transport.calls.filter { $0 == "leave" }.count == 1)
         #expect(bridge.conversationState == .assistantActive)
         #expect(!bridge.isLeavingAgent)
-        await bridge.leaveAgent()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(transport.calls.filter { $0 == "leave" }.count == 1, "sudah tidak antre")
     }
 
@@ -110,7 +110,7 @@ struct TanyaAIBridgeLiveAgentTests {
         let (transport, bridge) = await connectedBridge(state: "AGENT_QUEUED")
         defer { bridge.connectionTask?.cancel() }
         transport.leaveResult = result
-        await bridge.leaveAgent()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(bridge.conversationState == .agentQueued)
         #expect(!bridge.isLeavingAgent)
         #expect(bridge.connection == .live)
@@ -122,7 +122,7 @@ struct TanyaAIBridgeLiveAgentTests {
         defer { bridge.connectionTask?.cancel() }
         let unauthorized = TanyaAITransportError.response(statusCode: 401, body: WireFixture.error(isRetryable: false))
         transport.leaveResult = .failure(unauthorized)
-        await bridge.leaveAgent()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(bridge.connection == .expired)
     }
 
@@ -137,7 +137,7 @@ struct TanyaAIBridgeLiveAgentTests {
         transport.initResults = [.success(WireFixture.initialize(conversationID: "lain", state: "AGENT_QUEUED"))]
         transport.leaveResult = result
         transport.isHoldingLeave = true
-        let leave = Task { await bridge.leaveAgent() }
+        let leave = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
         await waitUntil { transport.isAckHeld }
         transport.drop()
         await waitUntil { bridge.conversationID == "lain" && bridge.connection == .live }
@@ -154,7 +154,7 @@ struct TanyaAIBridgeLiveAgentTests {
     func endingTheAgentSessionReturnsToTheAssistant() async {
         let (transport, bridge) = await connectedBridge(state: "AGENT_ACTIVE")
         defer { bridge.connectionTask?.cancel() }
-        await bridge.leaveAgent()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(transport.calls.filter { $0 == "leave" }.count == 1)
         #expect(bridge.conversationState == .assistantActive)
         #expect(!bridge.isLeavingAgent)
@@ -166,7 +166,7 @@ struct TanyaAIBridgeLiveAgentTests {
         defer { bridge.connectionTask?.cancel() }
         let conflict = TanyaAITransportError.response(statusCode: 409, body: WireFixture.error(isRetryable: false))
         transport.leaveResult = .failure(conflict)
-        await bridge.leaveAgent()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(bridge.conversationState == .agentActive)
         #expect(!bridge.isLeavingAgent)
         #expect(bridge.connection == .live)
@@ -179,7 +179,7 @@ struct TanyaAIBridgeLiveAgentTests {
         let (transport, bridge) = await connectedBridge(state: state)
         defer { bridge.connectionTask?.cancel() }
         transport.isHoldingLeave = true
-        let leave = Task { await bridge.leaveAgent() }
+        let leave = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
         await waitUntil { transport.isAckHeld }
         transport.emit(WireFixture.stateFrame(seq: 3, state: "ASSISTANT_ACTIVE", previous: state))
         transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
@@ -197,13 +197,13 @@ struct TanyaAIBridgeLiveAgentTests {
         let (transport, bridge) = await connectedBridge(state: "AGENT_ACTIVE")
         defer { bridge.connectionTask?.cancel() }
         transport.isHoldingLeaves = true
-        let endSession = Task { await bridge.leaveAgent() }
+        let endSession = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
         await waitUntil { transport.heldLeaveCount == 1 }
         transport.emit(WireFixture.stateFrame(seq: 3, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
         transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
         await waitUntil { bridge.eventCursor == 4 }
         #expect(!bridge.isLeavingAgent)
-        let cancelQueue = Task { await bridge.leaveAgent() }
+        let cancelQueue = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
         await waitUntil { transport.heldLeaveCount == 2 }
         transport.releaseLeave()
         await endSession.value
@@ -219,7 +219,7 @@ struct TanyaAIBridgeLiveAgentTests {
     func leaveWithoutAnAgentIsNotSent() async {
         let (transport, bridge) = await connectedBridge(state: "ASSISTANT_ACTIVE")
         defer { bridge.connectionTask?.cancel() }
-        await bridge.leaveAgent()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(!transport.calls.contains("leave"))
     }
 }

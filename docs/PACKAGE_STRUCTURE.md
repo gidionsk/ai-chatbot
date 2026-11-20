@@ -146,8 +146,6 @@ TanyaAI/Features/Chat/Intents/LiveAgent/
 │   ├── Array+AgentSession.swift
 │   ├── Array+LiveAgentNotice.swift
 │   └── LiveAgentNoticeKind+Copy.swift
-├── ViewModifiers/
-│   └── LeaveAgentConfirmationModifier.swift  // sheet konfirmasi End Session di root ChatScreen
 └── Views/
     ├── AgentSessionBanner.swift
     ├── LiveAgentMessageRow.swift
@@ -156,7 +154,8 @@ TanyaAI/Features/Chat/Intents/LiveAgent/
 
 Komponen visualnya generik di DesignKit: `NoticeCard` (slot aksi untuk tombol batal kartu antre), `SenderMessageCard`,
 `StatusCaption` (agen mengetik, langsung di `ChatListRow`), `ActionBanner` (bar sesi agen), `ConfirmationPrompt`
-(konfirmasi End Session), dan `FilledButton` varian `.outlined`.
+(konfirmasi End Session, sebagai `ChatSheet.leaveAgent` di `Sheets/ViewModifiers/ChatSheetModifier.swift`), dan
+`FilledButton` varian `.outlined`.
 Tombol lampiran adalah parameter `attachment` milik `MessageComposer`; kunci field selama kartu Switching adalah
 parameter `isInputEnabled`-nya.
 

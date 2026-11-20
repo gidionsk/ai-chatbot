@@ -23,10 +23,8 @@ public struct ChatScreen<Content: View>: View {
     @State private var scrollProgress = CGFloat.zero
     @State private var isLatestVisible = true
     @State private var latestJumpID: UUID?
-    /// Bottom sheet pilihan Galeri / File sedang tampil.
-    @State private var isChoosingAttachment = false
-    /// Bottom sheet konfirmasi End Session sedang tampil.
-    @State private var isConfirmingLeave = false
+    /// Bottom sheet yang sedang tampil (lampiran atau konfirmasi End Session); nil = tertutup.
+    @State private var sheet: ChatSheet?
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
@@ -59,21 +57,16 @@ public struct ChatScreen<Content: View>: View {
         )
         .overlay { loadingIndicator }
         .modifier(
-            AttachmentPickerModifier(
-                isPresented: $isChoosingAttachment,
-                isAvailable: isAgentSession,
-                onPick: attach
-            )
-        )
-        .modifier(
-            LeaveAgentConfirmationModifier(
-                isPresented: $isConfirmingLeave,
-                isAvailable: isBannerVisible,
-                onConfirm: leaveAgent
+            ChatSheetModifier(
+                sheet: $sheet,
+                isAttachable: isAgentSession,
+                agentSession: isBannerVisible ? bridge.agentSessionKey : nil,
+                onPick: attach,
+                onLeave: leave
             )
         )
         // Swipe-back milik navigasi host, jadi host yang menahannya selama sheet terbuka.
-        .onChange(of: isChoosingAttachment || isConfirmingLeave) { onSheetChange?($0) }
+        .onChange(of: sheet != nil) { onSheetChange?($0) }
         // Dibatalkan otomatis saat halaman hilang; tampil lagi = init ulang dan mengejar history.
         .task { await bridge.run() }
     }
@@ -95,7 +88,7 @@ public struct ChatScreen<Content: View>: View {
     private func agentSessionBanner(headerHeight: CGFloat) -> some View {
         if isBannerVisible {
             // End Session dikonfirmasi dulu di bottom sheet.
-            AgentSessionBanner(onEnd: { isConfirmingLeave = true })
+            AgentSessionBanner(onEnd: { sheet = .leaveAgent(bridge.agentSessionKey) })
                 .disabled(!isEnabled || bridge.isLeavingAgent)
                 .padding(.top, headerHeight)
         }
@@ -225,15 +218,20 @@ private extension ChatScreen {
         bridge.userTypingChanged(isTyping)
     }
 
-    /// "Batalkan" di dalam kartu antre dan Yes di konfirmasi End Session.
+    /// "Batalkan" di dalam kartu antre: antrean yang tampil saat diketuk.
     func leaveAgent() {
-        Task { [bridge] in await bridge.leaveAgent() }
+        leave(bridge.agentSessionKey)
+    }
+
+    /// Batalkan atau Yes di konfirmasi End Session; bridge mengecek ulang `session` tepat sebelum request.
+    func leave(_ session: AgentSessionKey) {
+        Task { [bridge] in await bridge.leaveAgent(from: session) }
     }
 
     /// Lampiran (PDF/gambar) hanya saat dilayani agen; nil = tombol tidak tampil. Ketuk = bottom sheet Galeri / File.
     var attachAction: (() -> Void)? {
         guard isAgentSession else { return nil }
-        return { isChoosingAttachment = true }
+        return { sheet = .attachment(isFormatRejected: false) }
     }
 
     /// File pilihan nasabah. Salinannya langsung dibuang supaya tidak menumpuk di folder sementara.

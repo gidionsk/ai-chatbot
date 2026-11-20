@@ -150,8 +150,10 @@ termasuk selama masih antre, sampai antrean atau sesi agen ditutup; event penutu
 belum datang (`TanyaAIBridge.isAgentSessionBannerVisible`, keputusan user 20 November 2026). Bar tidak menunggu nama
 agen. Bar menempel di bawah header, dan daftar mulai di bawah bar. End Session membuka bottom sheet konfirmasi dulu
 (Figma node 1903-8266: "Are you sure to exit this mode?" dengan Yes dan No; `ConfirmationPrompt` DesignKit lewat
-`LeaveAgentConfirmationModifier`, Yes sementara `FilledButton` `.regular`). Sheet ikut tertutup bila bar hilang selama
-terbuka. Yes memanggil `leave-agent` yang sama dengan Batalkan: `left:true` langsung kembali ke bot, 409 atau gagal lain membuat tombol aktif
+`ChatSheet.leaveAgent`, Yes sementara `FilledButton` `.regular`). Konfirmasi menyimpan antrean atau sesi saat End Session
+diketuk (`AgentSessionKey`: percakapan dan acuan antrean, tanpa state, jadi antre yang berlanjut menjadi dilayani agen
+tetap berlaku). Sheet ikut tertutup bila bar hilang atau sesinya berganti (mis. reconnect ke percakapan lain), dan
+`leaveAgent(from:)` mengecek ulang tepat sebelum request. Yes memanggil `leave-agent` yang sama dengan Batalkan: `left:true` langsung kembali ke bot, 409 atau gagal lain membuat tombol aktif
 lagi. `left:true` yang datang setelah antrean atau sesi tempat request dimulai sudah berganti (state lain atau acuan
 antrean baru) diabaikan, jadi antrean berikutnya tidak ikut kembali ke bot; state datang dari stream. Status request
 juga terikat ke antrean atau sesi asalnya (`LiveAgentScope`: percakapan, state, acuan antrean): request lama yang masih berjalan tidak mengunci Batalkan
@@ -160,8 +162,9 @@ antrean baru, dan selesainya hanya melepas status request itu sendiri.
 Selama `AGENT_ACTIVE` composer menampilkan tombol `+` di dalam kartu sebelah kiri field (Figma `typing-area`:
 lingkaran 24, garis 1 N200; ikon masih PDF dummy). Ketuk = bottom sheet DesignKit (bukan popover) berisi Galeri
 dan File dengan keterangan format, tanpa kamera (keputusan user 18 November 2026; isi sheet sementara `OptionList`
-sampai ada Figma). Sheet dipasang di root `ChatScreen` lewat `AttachmentPickerModifier`; saat intent form memakai
-sheet di halaman yang sama, gabungkan ke satu `.bottomSheet(item:)`. Galeri memakai `PHPicker` (tanpa izin galeri, representasi asli supaya HEIC tetap HEIC) dan File
+sampai ada Figma). Semua bottom sheet halaman chat (lampiran dan konfirmasi End Session) lewat satu
+`.bottomSheet(item:)` di root `ChatScreen` (`ChatSheetModifier` dengan `ChatSheet`); sheet intent form nanti menjadi case
+baru di sana. Galeri memakai `PHPicker` (tanpa izin galeri, representasi asli supaya HEIC tetap HEIC) dan File
 memakai document picker `asCopy`. Format hanya PDF, HEIC, JPG/JPEG, dan PNG (`UTType.chatAttachments`); foto galeri
 berformat lain (mis. GIF) ditolak: galeri sistem tidak bisa memfilter per format, jadi sheet dibuka lagi dengan pesan
 merah (keputusan user; copy sementara). Contract v1.5.3 belum punya endpoint

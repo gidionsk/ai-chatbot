@@ -12,6 +12,11 @@ extension TanyaAIBridge {
     /// atau sesi yang sudah berganti tidak mengunci yang baru.
     var isLeavingAgent: Bool { leavingAgentScope == liveAgentScope }
 
+    /// Diambil pemanggil saat Batalkan atau End Session diketuk, lalu diberikan ke `leaveAgent(from:)`.
+    var agentSessionKey: AgentSessionKey {
+        AgentSessionKey(conversationID: conversationID, queueStartSeq: queueStartSeq)
+    }
+
     var liveAgentScope: LiveAgentScope {
         LiveAgentScope(conversationID: conversationID, state: conversationState, queueStartSeq: queueStartSeq)
     }
@@ -22,9 +27,13 @@ extension TanyaAIBridge {
     /// atau gagal lain = tombol aktif lagi sampai event `state` menyembunyikannya. Respons milik percakapan yang sudah
     /// diganti init (reconnect) diabaikan, kecuali 401 yang berlaku untuk sesi. `left:true` yang datang setelah
     /// antrean atau sesi tempat request dimulai sudah berganti (state lain atau acuan antrean baru, lihat
-    /// `markQueueStart`) juga diabaikan; state berikutnya tetap datang dari stream.
-    func leaveAgent() async {
-        guard conversationState.isLiveAgent, !isLeavingAgent, let conversationID else { return }
+    /// `markQueueStart`) juga diabaikan; state berikutnya tetap datang dari stream. `session` = antrean atau sesi
+    /// yang tampil saat tombol diketuk; bila sudah berganti (percakapan lain atau acuan antrean baru setelah reconnect)
+    /// request tidak dikirim, supaya konfirmasi yang lama tidak mengakhiri sesi lain.
+    func leaveAgent(from session: AgentSessionKey) async {
+        guard session == agentSessionKey, conversationState.isLiveAgent, !isLeavingAgent, let conversationID else {
+            return
+        }
         let scope = liveAgentScope
         leavingAgentScope = scope
         defer { finishLeaving(scope) }
