@@ -59,8 +59,9 @@ Contoh penempatan yang sudah diterapkan:
   kedua bergaris seukuran `.regular`, mis. Batalkan di form atau di kartu antre), dan `.link` (teks kecil bergaris
   bawah).
 - `Components/Feedback/LoadingIndicator.swift`: spinner untuk semua loading.
-- `Components/Feedback/StatusCaption.swift`: teks status kecil di bawah pesan terakhir dengan ikon opsional (mencari
-  agen, agen mengetik).
+- `Components/Feedback/StatusCaption.swift`: teks status kecil di bawah pesan terakhir (agen mengetik).
+- `Components/Feedback/ConfirmationPrompt.swift`: isi bottom sheet konfirmasi (judul, keterangan, aksi utama dan
+  tombol batal bertumpuk sebagai footer), mis. konfirmasi End Session.
 - `Components/Feedback/ActionBanner.swift`: bar status gelap selebar layar dengan teks dan tombol kecil merah,
   mis. bar sesi agen di bawah header.
 - `Components/Feedback/TypingDots.swift`: tiga titik berdenyut selama bot menyiapkan jawaban; diam saat Reduce Motion.
@@ -133,18 +134,20 @@ PR #52 di basis `startingpoint`; keduanya dipertahankan pada struktur ini.
 
 Intent pertama adalah `LiveAgent` (serah terima ke agen manusia). Flow ini digerakkan event gateway,
 bukan form host, jadi decode tetap di `Gateway`, state dan aksi `leave-agent` di `Session`
-(`TanyaAIBridge+LiveAgent`, `TanyaAIBridge+LeaveAgent`, nama agen untuk bar sesi di `TanyaAIBridge+AgentName`), dan
-hanya nilai yang dilihat nasabah di `Intents/LiveAgent`:
+(`TanyaAIBridge+LiveAgent`, `TanyaAIBridge+LeaveAgent`), dan hanya nilai yang dilihat nasabah di `Intents/LiveAgent`:
 
 ```text
 TanyaAI/Features/Chat/Intents/LiveAgent/
 ├── Models/
+│   ├── AgentSessionScan.swift
 │   ├── LiveAgentNotice.swift
 │   └── LiveAgentNoticeKind.swift
 ├── Extensions/
 │   ├── Array+AgentSession.swift
 │   ├── Array+LiveAgentNotice.swift
 │   └── LiveAgentNoticeKind+Copy.swift
+├── ViewModifiers/
+│   └── LeaveAgentConfirmationModifier.swift  // sheet konfirmasi End Session di root ChatScreen
 └── Views/
     ├── AgentSessionBanner.swift
     ├── LiveAgentMessageRow.swift
@@ -152,9 +155,10 @@ TanyaAI/Features/Chat/Intents/LiveAgent/
 ```
 
 Komponen visualnya generik di DesignKit: `NoticeCard` (slot aksi untuk tombol batal kartu antre), `SenderMessageCard`,
-`StatusCaption` (mencari agen dan agen mengetik, langsung di `ChatListRow`), `ActionBanner` (bar sesi agen), dan
-`FilledButton` varian `.outlined`.
-Tombol lampiran adalah parameter `attachment` milik `MessageComposer`.
+`StatusCaption` (agen mengetik, langsung di `ChatListRow`), `ActionBanner` (bar sesi agen), `ConfirmationPrompt`
+(konfirmasi End Session), dan `FilledButton` varian `.outlined`.
+Tombol lampiran adalah parameter `attachment` milik `MessageComposer`; kunci field selama kartu Switching adalah
+parameter `isInputEnabled`-nya.
 
 ### Menambah intent: langkah yang sudah punya pola
 

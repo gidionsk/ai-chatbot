@@ -61,9 +61,6 @@ private extension TanyaAIBridge {
         let history = try await catchUpHistory(
             conversationID: session.conversationId, latestSeq: isSameConversation ? messages.latestSeq : nil
         )
-        if !isSameConversation {
-            agentName = nil
-        }
         replaceOrMerge(history, conversationID: session.conversationId)
         conversationState = session.state
         markQueueStart()

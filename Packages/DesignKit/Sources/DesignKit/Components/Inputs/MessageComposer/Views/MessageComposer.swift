@@ -16,18 +16,21 @@ public struct MessageComposer: View {
     private let placeholder: String
     private let actionLabel: String
     private let isEnabled: Bool
+    private let isInputEnabled: Bool
     private let action: MessageComposerAction
     private let attachment: MessageComposerAttachment?
     private let onSend: () -> Void
     private let onStop: () -> Void
 
-    /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol;
-    /// draft selalu bisa diketik. `attachment` nil = tanpa tombol lampiran.
+    /// `actionLabel` = label aksesibilitas tombol sesuai `action`. `isEnabled` false hanya mengunci tombol; draft tetap
+    /// bisa diketik. `isInputEnabled` false = field nonaktif (abu-abu, tidak bisa diketik, keyboard ditutup) dan
+    /// draft tidak bisa dikirim; stop tetap mengikuti `isEnabled`. `attachment` nil = tanpa tombol lampiran.
     public init(
         text: Binding<String>,
         placeholder: String,
         actionLabel: String,
         isEnabled: Bool = true,
+        isInputEnabled: Bool = true,
         action: MessageComposerAction = .send,
         attachment: MessageComposerAttachment? = nil,
         onSend: @escaping () -> Void,
@@ -37,6 +40,7 @@ public struct MessageComposer: View {
         self.placeholder = placeholder
         self.actionLabel = actionLabel
         self.isEnabled = isEnabled
+        self.isInputEnabled = isInputEnabled
         self.action = action
         self.attachment = attachment
         self.onSend = onSend
@@ -65,7 +69,7 @@ public struct MessageComposer: View {
     private var field: some View {
         ZStack(alignment: .leading) {
             GrowingTextInput(
-                text: $text, font: inputFont, textColor: UIColor(colors.colorsTextPrimaryDark),
+                text: $text, font: inputFont, textColor: UIColor(textColor),
                 lineSpacing: lineSpacing, accessibilityLabel: placeholder
             )
             .fixedSize(horizontal: false, vertical: true)
@@ -75,11 +79,12 @@ public struct MessageComposer: View {
                 Text(placeholder)
                     .font(Font(inputFont))
                     .lineLimit(CustomTextLines.composerInput.lowerBound)
-                    .foregroundColor(colors.colorsTextSecondary)
+                    .foregroundColor(isInputEnabled ? colors.colorsTextSecondary : colors.colorsTextDisabled)
                     .accessibilityHidden(true)
                     .allowsHitTesting(false)
             }
         }
+        .disabled(!isInputEnabled)
     }
 
     /// Satu tombol untuk semua fase: kirim atau stop. Ikon berwarna utuh per fase; hanya stopping yang diredupkan
@@ -145,10 +150,12 @@ private extension MessageComposer {
         return max(.zero, leading - inputFont.lineHeight)
     }
 
+    var textColor: Color { isInputEnabled ? colors.colorsTextPrimaryDark : colors.colorsTextDisabled }
+
     var isActionEnabled: Bool {
         switch action {
         case .send:
-            return isEnabled && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            return isEnabled && isInputEnabled && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .stop:
             return isEnabled
         case .stopping:

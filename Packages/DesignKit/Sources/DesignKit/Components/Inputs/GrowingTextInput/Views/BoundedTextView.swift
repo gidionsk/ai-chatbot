@@ -16,6 +16,13 @@ public final class BoundedTextView: UITextView {
     private var measuredHeight: CGFloat = .zero
     private var measuredWidth: CGFloat = .zero
 
+    /// Editor yang tidak bisa diketik dibaca VoiceOver sebagai nonaktif. Dihitung setiap dibaca dari trait bawaan,
+    /// karena trait itu ikut berubah selama fokus (status mengetik) dan tidak boleh dibekukan.
+    public override var accessibilityTraits: UIAccessibilityTraits {
+        get { isEditable ? super.accessibilityTraits : super.accessibilityTraits.union(.notEnabled) }
+        set { super.accessibilityTraits = newValue }
+    }
+
     public override var intrinsicContentSize: CGSize {
         CGSize(width: UIView.noIntrinsicMetric, height: max(measuredHeight, lineHeight))
     }

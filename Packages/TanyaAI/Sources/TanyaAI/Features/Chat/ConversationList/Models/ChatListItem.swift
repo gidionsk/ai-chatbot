@@ -18,8 +18,6 @@ enum ChatListItem: Identifiable, Equatable {
     /// yang membawa tombol batal di dalam kartunya.
     case liveAgentNotice(LiveAgentNotice, isLeaveEnabled: Bool)
     case agentTyping
-    /// "Mencari customer assistant..." selama antre setelah sapaan otomatis agen.
-    case agentSearching
     /// Loading di bawah pertanyaan yang belum dijawab bot.
     case answerLoading
     /// Konten yang disisipkan pemakai `ChatScreen`.
@@ -39,8 +37,6 @@ enum ChatListItem: Identifiable, Equatable {
             return .liveAgentNotice(notice.seq)
         case .agentTyping:
             return .agentTyping
-        case .agentSearching:
-            return .agentSearching
         case .answerLoading:
             return .answerLoading
         case .content:
@@ -57,8 +53,7 @@ enum ChatListItem: Identifiable, Equatable {
     /// Tanpa `default`: baris baru wajib memilih jaraknya di sini.
     var topSpacing: CGFloat {
         switch self {
-        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping, .agentSearching,
-            .answerLoading:
+        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping, .answerLoading:
             return FigmaSize.spacingLarge.scaledToArtwork
         case .date(_, isSpaced: false), .message(_, isSpaced: false), .welcome, .followUps, .content:
             return .zero

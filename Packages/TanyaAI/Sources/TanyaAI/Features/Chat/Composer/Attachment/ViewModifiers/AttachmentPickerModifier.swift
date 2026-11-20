@@ -37,7 +37,7 @@ struct AttachmentPickerModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .bottomSheet(isPresented: $isPresented, closeLabel: String(ChatCopy.attachmentClose, locale: locale)) {
+            .bottomSheet(isPresented: $isPresented, closeLabel: String(ChatCopy.sheetClose, locale: locale)) {
                 VStack(alignment: .leading, spacing: .zero) {
                     OptionList(
                         title: String(ChatCopy.liveAgentAttachment, locale: locale),

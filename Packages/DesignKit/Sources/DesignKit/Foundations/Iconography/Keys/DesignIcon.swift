@@ -31,7 +31,4 @@ public enum DesignIcon: String, CaseIterable {
     case plus
     /// TODO: Ganti PDF dummy dengan aset Figma `reply`, nama tetap.
     case reply
-    /// Bintang empat sudut di indikator mencari agen (Figma node 3262-86657).
-    /// TODO: Ganti PDF dummy dengan aset Figma sparkle, nama tetap.
-    case sparkle
 }

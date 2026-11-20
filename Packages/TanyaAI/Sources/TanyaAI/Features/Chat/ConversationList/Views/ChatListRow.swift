@@ -12,7 +12,6 @@ import SwiftUI
 @MainActor
 struct ChatListRow<Content: View>: View {
     @Environment(\.locale) private var locale
-    @Environment(\.designColors) private var colors
     let item: ChatListItem
     let welcome: WelcomeContent?
     let content: Content
@@ -42,8 +41,6 @@ struct ChatListRow<Content: View>: View {
             // TODO: Desain indikator mengetik belum ada di Figma; sementara teks miring tanpa ikon.
             StatusCaption(text: String(ChatCopy.liveAgentTyping, locale: locale), isItalic: true)
                 .accessibilityIdentifier(ChatElementIdentifier.agentTyping)
-        case .agentSearching:
-            agentSearching
         case .answerLoading:
             answerLoading
         case .content:
@@ -55,15 +52,6 @@ struct ChatListRow<Content: View>: View {
 // MARK: - Status
 
 private extension ChatListRow {
-    /// Sparkle dummy di kiri teks (Figma node 3262-86657).
-    var agentSearching: some View {
-        StatusCaption(text: String(ChatCopy.liveAgentSearching, locale: locale)) {
-            Image(DesignIcon.sparkle).resizable().scaledToFit()
-                .foregroundColor(colors.colorsIconColored)
-        }
-        .accessibilityIdentifier(ChatElementIdentifier.agentSearching)
-    }
-
     /// Titik berdenyut tanpa teks selama bot menyiapkan jawaban, supaya layar tidak terkesan diam; copy hanya untuk
     /// VoiceOver.
     var answerLoading: some View {

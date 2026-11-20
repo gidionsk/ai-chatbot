@@ -25,12 +25,16 @@ enum ChatCopy: String, CaseIterable {
     /// Label pengirim di atas bubble agen; statis, bukan nama agen dari gateway.
     case liveAgentSender = "liveAgent.sender"
     case liveAgentTyping = "liveAgent.typing"
-    /// Indikator selama antre setelah sapaan otomatis agen, sampai agen bergabung.
-    case liveAgentSearching = "liveAgent.searching"
     case leaveAgentQueue = "liveAgent.leaveQueue"
     /// Bar di bawah header selama dilayani agen (Figma). TODO: Copy final id/zh dari UI/UX; sementara copy Figma.
     case agentSessionBanner = "liveAgent.session.banner"
     case endAgentSession = "liveAgent.session.end"
+    /// Bottom sheet konfirmasi setelah End Session diketuk (Figma). TODO: Copy final id/zh dari UI/UX; sementara copy
+    /// Figma seperti bar sesi agen.
+    case leaveAgentConfirmTitle = "liveAgent.leaveConfirm.title"
+    case leaveAgentConfirmMessage = "liveAgent.leaveConfirm.message"
+    case leaveAgentConfirm = "liveAgent.leaveConfirm.confirm"
+    case leaveAgentCancel = "liveAgent.leaveConfirm.cancel"
     /// Label aksesibilitas tombol lampiran saat dilayani agen.
     case liveAgentAttachment = "liveAgent.attachment"
     case agentConnectingTitle = "liveAgent.connecting.title"
@@ -51,8 +55,8 @@ enum ChatCopy: String, CaseIterable {
     case attachmentGalleryFormats = "attachment.gallery.formats"
     case attachmentFile = "attachment.file"
     case attachmentFileFormats = "attachment.file.formats"
-    /// Label aksesibilitas grabber sheet.
-    case attachmentClose = "attachment.close"
+    /// Label aksesibilitas grabber bottom sheet halaman chat (lampiran dan konfirmasi End Session).
+    case sheetClose = "sheet.close"
     /// TODO: Copy sementara dari tim iOS; ganti dengan copy final UI/UX.
     case attachmentUnsupportedFormat = "attachment.unsupportedFormat"
 }

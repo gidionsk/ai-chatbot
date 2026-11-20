@@ -84,9 +84,14 @@ History hanya berisi `Message`, jadi kartu hanya ada selama halaman terbuka. Saa
 `seq`-nya setelah pesan terakhir masih ikut replay SSE (cursor = seq pesan terakhir) selama outbox belum
 dipangkas; kartu sebelum pesan terakhir tidak kembali. Pesan agen tetap ada di history (`direction: agent`).
 
-"Batalkan" hanya di kartu antre "Switching to Live Chat with Human", sebelum sapaan otomatis (mengikuti Figma; contract
-masih mengizinkan `leave-agent` selama `AGENT_QUEUED`). `left:true` langsung kembali ke bot, kartu batal datang dari
-stream. `left:false` atau 409 (agen sudah bergabung) menunggu event `state`.
+"Batalkan" hanya di kartu antre "Switching to Live Chat with Human", sebelum sapaan otomatis (mengikuti Figma). Setelah
+sapaan, antrean dibatalkan lewat End Session di bar sesi agen (keputusan user 20 November 2026; contract mengizinkan
+`leave-agent` selama `AGENT_QUEUED`). `left:true` langsung kembali ke bot, kartu batal datang dari stream.
+`left:false` atau 409 (agen sudah bergabung) menunggu event `state`.
+
+Selama kartu Switching tampil, composer dikunci (`ComposerSection(isInputEnabled:)` → `MessageComposer`): field abu-abu
+dan tidak bisa diketik, keyboard yang masih terbuka ditutup, dan draft tidak bisa dikirim, supaya nasabah tidak mengirim
+pesan sebelum tersambung (keputusan user 20 November 2026; tampilan nonaktif umum karena Figma hanya memberi catatan).
 
 Tampilan: kartu status mengikuti Figma frame 62/64 (`NoticeCard` DesignKit: bayangan tanpa garis tepi, ikon headset), tombol batal
 `FilledButton` varian `.outlined` di dalam kartu antre, di bawah garis pemisah (slot aksi `NoticeCard`, Figma node
@@ -109,9 +114,8 @@ Kartu pembuka sesi agen ada satu per sesi:
   dan setiap init yang masih antre atau dengan agen (antrean, sesi, atau percakapan bisa sudah berganti selama putus),
   atau jawaban bot terakhir bila lebih baru. Di luar antre dan sesi agen acuan ini dilupakan.
 
-Selama antre setelah sapaan otomatis, "Mencari customer assistant..." tampil di bawah pesan terakhir sampai agen
-bergabung atau antrean ditutup; indikator agen mengetik didahulukan. Ikonnya sparkle dummy (TODO: aset dan ukuran
-Figma). Keduanya memakai `StatusCaption` DesignKit; indikator mengetik tanpa ikon.
+Indikator "Mencari customer assistant..." di Figma tidak dibuat: kemampuan itu belum ada di sistem agen (keputusan
+user 20 November 2026).
 
 Kartu selesai dari history ditaruh setelah pesan agen terakhir sebuah sesi (sesi berakhir saat bot menjawab lagi, atau
 di akhir bila tidak sedang antre atau dilayani agen), kecuali stream sudah memberi kartu penutup untuk sesi itu. Waktu
@@ -140,17 +144,18 @@ maupun stream), percakapan berganti, atau sesi berakhir, status dilupakan tanpa 
 mengetik ikut dihapus. Gagal diabaikan kecuali 401 yang mengakhiri sesi. Balasan ke agen memakai `sendMessage`
 yang sama dengan bot; bedanya tidak ada turn lock dan `turn_end`.
 
-Selama `AGENT_ACTIVE` dengan nama agen bar hitam "You're now in mode talking with CA" + End Session (`ActionBanner`
-DesignKit, warna dan ukuran sementara dari foto Figma) menempel di bawah header, dan daftar mulai di bawah bar. Nama
-agen dari `agent.name` event `state` menuju `AGENT_ACTIVE` atau `data.agent.name` `agent_joined`, mana yang lebih dulu
-(keputusan user 20 November 2026: `AGENT_ACTIVE` tanpa nama belum dianggap agen manusia). Nama dilupakan saat keluar
-dari antre/agen atau antrean baru dimulai. Init tidak membawa nama, jadi saat halaman dibuka lagi bar baru tampil bila
-event bernama ikut replay. Lampiran tetap mengikuti `AGENT_ACTIVE` saja. End Session memanggil
-`leave-agent` yang sama dengan Batalkan: `left:true` langsung kembali ke bot, 409 atau gagal lain membuat tombol aktif
+Bar hitam "You're now in mode talking with CA" + End Session (`ActionBanner` DesignKit, warna dan ukuran sementara dari
+foto Figma) tampil sejak kartu Switching berganti "Connected" (sapaan otomatis, `agent_joined`, atau `AGENT_ACTIVE`),
+termasuk selama masih antre, sampai antrean atau sesi agen ditutup; event penutup menyembunyikannya walau event `state`
+belum datang (`TanyaAIBridge.isAgentSessionBannerVisible`, keputusan user 20 November 2026). Bar tidak menunggu nama
+agen. Bar menempel di bawah header, dan daftar mulai di bawah bar. End Session membuka bottom sheet konfirmasi dulu
+(Figma node 1903-8266: "Are you sure to exit this mode?" dengan Yes dan No; `ConfirmationPrompt` DesignKit lewat
+`LeaveAgentConfirmationModifier`, Yes sementara `FilledButton` `.regular`). Sheet ikut tertutup bila bar hilang selama
+terbuka. Yes memanggil `leave-agent` yang sama dengan Batalkan: `left:true` langsung kembali ke bot, 409 atau gagal lain membuat tombol aktif
 lagi. `left:true` yang datang setelah antrean atau sesi tempat request dimulai sudah berganti (state lain atau acuan
 antrean baru) diabaikan, jadi antrean berikutnya tidak ikut kembali ke bot; state datang dari stream. Status request
 juga terikat ke antrean atau sesi asalnya (`LiveAgentScope`: percakapan, state, acuan antrean): request lama yang masih berjalan tidak mengunci Batalkan
-antrean baru, dan selesainya hanya melepas status request itu sendiri. Tanpa dialog konfirmasi sampai ada Figma.
+antrean baru, dan selesainya hanya melepas status request itu sendiri.
 
 Selama `AGENT_ACTIVE` composer menampilkan tombol `+` di dalam kartu sebelah kiri field (Figma `typing-area`:
 lingkaran 24, garis 1 N200; ikon masih PDF dummy). Ketuk = bottom sheet DesignKit (bukan popover) berisi Galeri
@@ -172,6 +177,7 @@ indikator mengetik ikut menggeser daftar ke bawah bila pembaca sedang di ujung d
 
 Sandbox `--live-agent`: pertanyaan pertama dijawab bot dengan serah terima ke agen, sapaan otomatis 2 detik setelah
 antre, agen bergabung 3 detik kemudian, mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
+End Session selama antre membatalkan antrean; selama dilayani agen mengakhiri sesi.
 
 ## Selisih dengan contract 1.5.3 yang belum dikerjakan
 
@@ -181,8 +187,8 @@ antre, agen bergabung 3 detik kemudian, mengetik lalu menyapa, menjawab pertanya
 - End Session memakai `leave-agent` saat `AGENT_ACTIVE` (aturan baru dari user 19 November 2026), sedangkan contract
   v1.5.3 masih menulis 409 (OQ-P11). Event yang menyusul di stream setelah `left:true` belum dikonfirmasi BE.
 - Di UAT, `agent_joined` dan `AGENT_ACTIVE` (`agent: null`) datang sebelum sapaan otomatis dan pesan "masih dalam
-  antrian", jadi kartu langsung "Connected" dan "Mencari customer assistant..." tidak muncul. Bar sesi sementara
-  menunggu nama agen; penanda agen manusia yang sebenarnya belum dikonfirmasi BE, dan init belum membawa nama agen.
+  antrian", jadi kartu langsung "Connected" dan bar sesi tampil sedikit sebelum sapaan. Penanda agen manusia yang
+  sebenarnya belum dikonfirmasi BE.
 - Pesan agen bisa `type: html` (disanitasi gateway); tanpa HTML renderer tag tampil sebagai teks.
 - CTA `action` belum tampil; `success_id` sudah dibaca, tetapi kartu suksesnya ikut fitur intent. Copy kartu live agent selain kartu antre masih placeholder.
 

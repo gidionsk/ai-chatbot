@@ -17,7 +17,6 @@ enum ChatElementIdentifier {
     static let answer = "chat.answer"
     static let agentMessage = "chat.agent.message"
     static let agentTyping = "chat.agent.typing"
-    static let agentSearching = "chat.agent.searching"
     static let answerLoading = "chat.answer.loading"
     static let liveAgentNotice = "chat.agent.notice"
     /// Tombol batal di dalam kartu antre.

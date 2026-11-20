@@ -30,14 +30,16 @@ extension TanyaAIBridge {
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
     }
 
-    /// "Mencari customer assistant..." selama antre setelah sapaan otomatis agen (pesan agen antrean ini sebelum agen
-    /// bergabung), sampai agen bergabung atau antrean ditutup. Indikator agen mengetik didahulukan.
-    var isSearchingAgent: Bool {
-        guard conversationState == .agentQueued, !isAgentTyping else { return false }
-        let assistantSeq = lastAssistantSeq
-        guard isAgentMessage(after: sessionBoundarySeq(assistantSeq: assistantSeq)) else { return false }
-        let startSeq = Swift.max(queueStartSeq ?? .min, assistantSeq)
-        return !liveAgentNotices.contains { $0.kind != .connecting && $0.seq > startSeq }
+    /// Kartu Switching (dengan tombol batal) sedang tampil: antre dan belum ada sapaan otomatis, `agent_joined`, atau
+    /// event penutup. Selama itu composer dikunci dan bar sesi agen belum tampil (keputusan user 20 November 2026).
+    var isSwitchingToAgent: Bool { openingNotices.contains { $0.kind == .connecting } }
+
+    /// Bar "You're now in mode talking with CA" + End Session: sejak kartu Switching berganti "Connected" (sapaan
+    /// otomatis, `agent_joined`, atau `AGENT_ACTIVE`), termasuk selama masih antre, sampai antrean atau sesi agen
+    /// ditutup. Event penutup menyembunyikannya walau event `state` belum datang.
+    var isAgentSessionBannerVisible: Bool {
+        guard conversationState.isLiveAgent, !isSwitchingToAgent else { return false }
+        return !isLiveAgentClosed(after: Swift.max(queueStartSeq ?? .min, lastAssistantSeq))
     }
 
     /// Kartu pembuka sesi yang sedang berjalan selama belum ada pesan agen atau `agent_joined`: "Switching" dengan
@@ -52,27 +54,24 @@ extension TanyaAIBridge {
         let boundarySeq = sessionBoundarySeq(assistantSeq: assistantSeq)
         let isJoined = liveAgentNotices.contains { $0.kind == .joined && $0.seq > boundarySeq }
         guard !isJoined, !isAgentMessage(after: boundarySeq) else { return [] }
-        let startSeq = Swift.max(queueStartSeq ?? .min, assistantSeq)
-        let closing = liveAgentNotices.filter { $0.kind != .connecting && $0.kind != .joined }
-        guard !closing.contains(where: { $0.seq > startSeq }) else { return [] }
+        guard !isLiveAgentClosed(after: Swift.max(queueStartSeq ?? .min, assistantSeq)) else { return [] }
         let kind: LiveAgentNoticeKind = conversationState == .agentActive ? .connected : .connecting
         let opener = liveAgentNotices.last { $0.kind == .connecting && $0.seq > assistantSeq }
-        guard let opener, !closing.contains(where: { $0.seq > opener.seq }) else {
+        guard let opener, !isLiveAgentClosed(after: opener.seq) else {
             return [LiveAgentNotice(kind: kind, seq: .max)]
         }
         return [LiveAgentNotice(kind: kind, seq: opener.seq)]
     }
 
     /// Pemicu ikut ke bawah bila pembaca di ujung daftar: pesan masuk terbaru, kartu live agent terbaru yang tampil,
-    /// atau indikator mengetik dan mencari agen. Hanya perubahannya yang dipakai, bukan isinya; nil selama belum ada
+    /// atau indikator agen mengetik. Hanya perubahannya yang dipakai, bukan isinya; nil selama belum ada
     /// apa pun. Kartu antre (dan tombol batalnya) baru tampil saat event `state` tiba setelah event `system`-nya, jadi
     /// yang dipakai kartu yang tampil, bukan kartu terakhir dari stream: `latestNotice` =
     /// `visibleLiveAgentNotices.last`, diberikan pemanggil supaya daftar kartu cukup dihitung sekali per render.
     func incomingContentID(latestNotice: LiveAgentNotice?) -> String? {
         let typing = isAgentTyping ? String(describing: ChatListItemID.agentTyping) : nil
-        let searching = isSearchingAgent ? String(describing: ChatListItemID.agentSearching) : nil
         let notice = latestNotice.map { $0.kind.rawValue + String($0.seq) }
-        let parts = [latestIncomingMessageID, notice, typing, searching].compactMap { $0 }
+        let parts = [latestIncomingMessageID, notice, typing].compactMap { $0 }
         return parts.isEmpty ? nil : parts.joined()
     }
 }
@@ -80,7 +79,7 @@ extension TanyaAIBridge {
 // MARK: - Typing
 
 extension TanyaAIBridge {
-    /// Acuan awal antrean atau sesi agen untuk kartu pembuka dan indikator mencari agen: seq terakhir yang diketahui.
+    /// Acuan awal antrean atau sesi agen untuk kartu pembuka dan bar sesi agen: seq terakhir yang diketahui.
     /// Dipanggil saat stream memindahkan state ke antre (= seq event `state`) dan setiap init, karena antrean, sesi,
     /// atau percakapan bisa sudah berganti selama putus walau nilai state-nya sama; event penutup sebelum acuan milik
     /// antrean lama. Di luar antre dan sesi agen acuannya dilupakan.
@@ -100,7 +99,6 @@ extension TanyaAIBridge {
         if previous != .agentQueued {
             markQueueStart()
         }
-        forgetAgent(previous: previous)
         guard !conversationState.isLiveAgent else { return }
         showAgentTyping(false)
         resetUserTyping()
@@ -207,6 +205,12 @@ private extension TanyaAIBridge {
     func sessionBoundarySeq(assistantSeq: Int) -> Int {
         let closedSeq = liveAgentNotices.last { $0.kind != .joined }?.seq ?? .min
         return Swift.max(assistantSeq, closedSeq)
+    }
+
+    /// Antrean atau sesi agen sudah ditutup event lain (batal, antre habis, agen tidak tersedia, selesai) setelah
+    /// `seq`, walau event `state`-nya bisa belum datang.
+    func isLiveAgentClosed(after seq: Int) -> Bool {
+        liveAgentNotices.contains { $0.kind != .connecting && $0.kind != .joined && $0.seq > seq }
     }
 
     /// Ada pesan agen setelah batas sesi: sapaan otomatis selama antre, atau balasan agen.

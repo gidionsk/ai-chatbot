@@ -47,12 +47,6 @@ public enum CustomSizes {
         public static let outgoingLeadingInset: CGFloat = 48
     }
 
-    /// Ikon di kiri teks status (mis. sparkle).
-    /// TODO: Cocokkan dengan nilai Figma node 3262-86657; sementara 20.
-    public enum StatusCaption {
-        public static let icon: CGFloat = 20
-    }
-
     /// TODO: Cocokkan dengan Figma; belum ada desain titik menunggu jawaban.
     public enum TypingDots {
         public static let dot: CGFloat = 8

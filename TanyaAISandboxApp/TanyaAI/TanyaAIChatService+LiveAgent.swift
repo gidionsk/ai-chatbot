@@ -9,7 +9,7 @@ import Foundation
 
 /// `--live-agent`: pertanyaan pertama diserahkan bot ke agen. Selama antre sistem agen mengirim sapaan otomatis,
 /// lalu agen bergabung setelah jeda, menyapa, menjawab pertanyaan berikutnya, dan menutup percakapan. "Batalkan"
-/// sebelum sapaan otomatis mengembalikan ke bot.
+/// sebelum sapaan otomatis, atau End Session setelahnya selama masih antre, mengembalikan ke bot.
 extension TanyaAIChatService {
     func acceptForLiveAgent(_ text: String, clientMessageID: String) -> Data {
         let ack = frames.ack()

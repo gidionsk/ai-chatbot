@@ -19,10 +19,13 @@
 /* TODO: Copy final live agent dari UI/UX; kartu antre, kartu terhubung, label pengirim dan indikator mencari mengikuti Figma, sisanya placeholder. */
 "liveAgent.sender" = "Tanya OCBC 客服";
 "liveAgent.typing" = "客服正在输入...";
-"liveAgent.searching" = "正在寻找客服...";
 "liveAgent.leaveQueue" = "取消";
 "liveAgent.session.banner" = "您正在与客服专员对话";
 "liveAgent.session.end" = "结束会话";
+"liveAgent.leaveConfirm.title" = "确定要退出此模式吗？";
+"liveAgent.leaveConfirm.message" = "您将返回自助服务模式";
+"liveAgent.leaveConfirm.confirm" = "是";
+"liveAgent.leaveConfirm.cancel" = "否";
 "liveAgent.attachment" = "附加 PDF 或图片";
 "liveAgent.connecting.title" = "正在转接人工客服";
 "liveAgent.connecting.message" = "正在为您连接我们的客服";
@@ -40,5 +43,5 @@
 "attachment.gallery.formats" = "HEIC、JPG 或 PNG";
 "attachment.file" = "文件";
 "attachment.file.formats" = "PDF、HEIC、JPG 或 PNG";
-"attachment.close" = "关闭";
+"sheet.close" = "关闭";
 "attachment.unsupportedFormat" = "不支持此照片格式。请选择 HEIC、JPG 或 PNG 照片。";

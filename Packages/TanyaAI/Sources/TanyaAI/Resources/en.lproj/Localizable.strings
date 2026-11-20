@@ -19,10 +19,13 @@
 /* TODO: Copy final live agent dari UI/UX; kartu antre, kartu terhubung, label pengirim dan indikator mencari mengikuti Figma, sisanya placeholder. */
 "liveAgent.sender" = "Tanya OCBC Customer Assistant";
 "liveAgent.typing" = "Agent is typing...";
-"liveAgent.searching" = "Looking for a customer assistant...";
 "liveAgent.leaveQueue" = "Cancel";
 "liveAgent.session.banner" = "You're now in mode talking with CA";
 "liveAgent.session.end" = "End Session";
+"liveAgent.leaveConfirm.title" = "Are you sure to exit this mode?";
+"liveAgent.leaveConfirm.message" = "You're getting back to self service mode";
+"liveAgent.leaveConfirm.confirm" = "Yes";
+"liveAgent.leaveConfirm.cancel" = "No";
 "liveAgent.attachment" = "Attach PDF or image";
 "liveAgent.connecting.title" = "Switching to Live Chat with Human";
 "liveAgent.connecting.message" = "Connecting you to our customer assistant";
@@ -40,5 +43,5 @@
 "attachment.gallery.formats" = "HEIC, JPG, or PNG";
 "attachment.file" = "File";
 "attachment.file.formats" = "PDF, HEIC, JPG, or PNG";
-"attachment.close" = "Close";
+"sheet.close" = "Close";
 "attachment.unsupportedFormat" = "This photo format isn't supported. Choose a HEIC, JPG, or PNG photo.";

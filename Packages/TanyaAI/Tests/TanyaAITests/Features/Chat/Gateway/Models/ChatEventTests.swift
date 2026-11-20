@@ -89,21 +89,9 @@ struct ChatEventTests {
         #expect(try JSONDecoder.wire.decode(WireEnvelope<WireInit>.self, from: data).data.state == .assistantActive)
     }
 
-    /// Nama agen hanya ikut saat menuju `AGENT_ACTIVE`.
-    @Test(arguments: [
-        ("AGENT_QUEUED", ConversationState.agentQueued, String?.none), ("AGENT_ACTIVE", .agentActive, "Durenk"),
-        ("X", .unknown, nil)
-    ])
-    func stateFrameCarriesTheNextState(wire: String, expected: ConversationState, agentName: String?) {
-        let event = ChatEvent(frame(WireFixture.stateFrame(seq: 5, state: wire)))
-        #expect(event == .state(expected, agentName: agentName))
-    }
-
-    /// UAT: `AGENT_ACTIVE` dengan `agent: null` tetap memindahkan state, tanpa nama.
-    @Test
-    func activeStateWithoutAnAgentHasNoName() {
-        let event = ChatEvent(frame(WireFixture.stateFrame(seq: 5, state: "AGENT_ACTIVE", isAgentNamed: false)))
-        #expect(event == .state(.agentActive, agentName: nil))
+    @Test(arguments: [("AGENT_QUEUED", ConversationState.agentQueued), ("AGENT_ACTIVE", .agentActive), ("X", .unknown)])
+    func stateFrameCarriesTheNextState(wire: String, expected: ConversationState) {
+        #expect(ChatEvent(frame(WireFixture.stateFrame(seq: 5, state: wire))) == .state(expected))
     }
 
     /// Token contract §7.6 yang menjadi chip atau kartu, di posisi `id:` frame-nya.
@@ -114,21 +102,7 @@ struct ChatEventTests {
     ])
     func systemFrameBecomesANoticeAtItsSeq(type: String, kind: LiveAgentNoticeKind) {
         let event = ChatEvent(frame(WireFixture.systemFrame(seq: 6, type: type)))
-        #expect(event == .notice(LiveAgentNotice(kind: kind, seq: 6), agentName: nil))
-    }
-
-    /// `agent_joined` membawa nama agen; `topic` antre atau `data` yang tidak dikenal tidak menghilangkan kartunya.
-    @Test(arguments: [
-        ("agent_joined", #"{"agent":{"name":"Durenk"}}"#, String?("Durenk")),
-        ("agent_joined", #"{"agent":null}"#, nil),
-        ("agent_connecting", #"{"topic":"kartu"}"#, nil),
-        ("agent_ended", #""teks""#, nil)
-    ])
-    func systemFrameDataCarriesTheAgentName(type: String, data: String, agentName: String?) {
-        let event = ChatEvent(frame(WireFixture.systemFrame(seq: 6, type: type, data: data)))
-        guard case .notice(let notice, let name) = event else { return #expect(Bool(false)) }
-        #expect(notice.seq == 6)
-        #expect(name == agentName)
+        #expect(event == .notice(LiveAgentNotice(kind: kind, seq: 6)))
     }
 
     /// `ttl_s` dibaca lewat decoder snake_case; tanpa `ttl_s` dipakai 10 detik seperti contoh contract.
