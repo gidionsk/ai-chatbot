@@ -17,10 +17,11 @@ struct IntentFormViewTests {
     @Test
     func confirmationErrorsAddSpaceBelowTheExistingInputs() throws {
         try FontFace.registerFonts()
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text(String()), isRequired: true),
-            FormField(id: .firstChoice, initialValue: .singleSelection(nil), isRequired: true)
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .requiredText, initialValue: .text(String()), isRequired: true),
+                FormField(id: .firstChoice, initialValue: .singleSelection(nil), isRequired: true)
+            ]))
         let plain = size(of: form(state))
         let isValid = state.validate()
         #expect(!isValid)
@@ -31,17 +32,10 @@ struct IntentFormViewTests {
     @Test
     func aHiddenDependentFieldTakesNoSpaceUntilItsParentMatches() throws {
         try FontFace.registerFonts()
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .parentToggle, initialValue: .toggle(false)),
-            FormField(
-                id: .childText,
-                initialValue: .text("Stored email"),
-                isEnabled: false,
-                condition: FormFieldCondition(fieldID: .parentToggle, value: .toggle(true))
-            )
-        ])
+        var state = IntentFormState(rules: MockLetterFormRules.rules)
+        state.select([], for: .format)
         let hidden = size(of: form(state))
-        state.update(.toggle(true), for: .parentToggle)
+        state.select(["hardcopy"], for: .format)
         let visible = size(of: form(state))
         #expect(visible.height > hidden.height + FigmaSize.spacingLarge.scaledToArtwork)
     }
@@ -49,7 +43,7 @@ struct IntentFormViewTests {
     @Test
     func aMissingFieldRendersNoInput() {
         let field = IntentFormField(
-            state: .constant(IntentFormState<TestFormFieldID>(fields: [])),
+            state: .constant(IntentFormState<TestFormFieldID>(rules: .fixed([]))),
             fieldID: .requiredText,
             presentation: presentation,
             selectionText: nil,
@@ -75,7 +69,7 @@ private extension IntentFormViewTests {
         FormFieldPresentation(label: "Field", placeholder: "Choose or enter", requiredError: "Required")
     }
 
-    func form(_ state: IntentFormState<TestFormFieldID>) -> some View {
+    func form<FieldID: Hashable>(_ state: IntentFormState<FieldID>) -> some View {
         IntentFormView(
             state: .constant(state),
             title: "Form",
@@ -90,13 +84,14 @@ private extension IntentFormViewTests {
     }
 
     func options(subtitle: String?) -> some View {
-        let state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(
-                id: .firstChoice,
-                initialValue: .singleSelection(nil),
-                options: [FormOption(code: "01", title: "Account", subtitle: subtitle)]
-            )
-        ])
+        let state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(
+                    id: .firstChoice,
+                    initialValue: .singleSelection(nil),
+                    options: [FormOption(code: "01", title: "Account", subtitle: subtitle)]
+                )
+            ]))
         return IntentFormOptions(
             state: .constant(state),
             fieldID: .firstChoice,
