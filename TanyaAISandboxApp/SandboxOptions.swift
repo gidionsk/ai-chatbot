@@ -96,6 +96,7 @@ struct SandboxOptions {
     private static let slowIconsFlag = "--slow-icons"
     private static let hideTermsFlag = "--hide-terms"
     private static let liveAgentFlag = "--live-agent"
+    private static let holdGreetingFlag = "--hold-greeting"
 
     /// Opsi dari argumen peluncuran proses ini.
     static var current: SandboxOptions {
@@ -119,6 +120,9 @@ struct SandboxOptions {
     let isHidingTerms: Bool
     /// `--live-agent`: pertanyaan pertama diserahkan ke agen tiruan (antre → bergabung → menjawab → selesai).
     let isLiveAgent: Bool
+    /// `--hold-greeting` (bersama `--live-agent`): sapaan otomatis dan agen tidak pernah datang, jadi kartu Switching
+    /// tetap tampil (untuk UI test composer terkunci tanpa berlomba dengan jeda sapaan).
+    let isHoldingGreeting: Bool
     let isHeaderDemo: Bool
     /// `--sheet-demo`: area scroll berisi tombol yang membuka bottom sheet contoh di atas halaman Tanya AI.
     let isSheetDemo: Bool
@@ -148,6 +152,7 @@ struct SandboxOptions {
         isSendingLateQuestion = arguments.contains(Self.lateQuestionFlag)
         isHidingTerms = arguments.contains(Self.hideTermsFlag)
         isLiveAgent = arguments.contains(Self.liveAgentFlag)
+        isHoldingGreeting = arguments.contains(Self.holdGreetingFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
         isSheetDemo = arguments.contains(Self.sheetDemoFlag)
         isSheetMaxSet = arguments.contains(Self.sheetMaxFlag)

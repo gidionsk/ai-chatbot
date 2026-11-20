@@ -27,8 +27,6 @@ final class LiveAgentUITests: XCTestCase {
         XCTAssertTrue(notice("Switching to Live Chat with Human").frame.contains(leave.frame), "batal di dalam kartu")
         capture("live-agent-queued")
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "belum ada agen")
-        XCTAssertFalse(element("chat.agent.session").exists, "bar sesi agen belum tampil selama Switching")
-        assertInputLockedWhileSwitching()
         XCTAssertTrue(notice("Connected to Customer Assistant").waitForExistence(timeout: 5), "sapaan otomatis")
         XCTAssertFalse(application.buttons["chat.agent.leaveQueue"].exists, "batal hanya sebelum sapaan otomatis")
         XCTAssertTrue(element("chat.agent.session").exists, "bar sesi agen sejak sapaan otomatis, masih antre")
@@ -101,6 +99,23 @@ final class LiveAgentUITests: XCTestCase {
         XCTAssertFalse(attachment.exists, "agen sudah selesai")
     }
 
+    /// `--hold-greeting`: sapaan tidak pernah datang, jadi fase Switching bisa diperiksa tanpa berlomba dengan jedanya.
+    /// Keyboard dari pertanyaan sebelumnya ditutup, field tidak bisa diketik, dan bar sesi agen belum tampil; batal
+    /// antre membuka composer lagi.
+    func testComposerIsLockedWhileSwitching() {
+        launchAndAskForAnAgent(holdingGreeting: true)
+        let leave = application.buttons["chat.agent.leaveQueue"]
+        XCTAssertTrue(leave.waitForExistence(timeout: 5))
+        let input = application.textViews["composer.input"]
+        waitUntilGone(application.keyboards.firstMatch)
+        XCTAssertFalse(input.isEnabled)
+        XCTAssertFalse(element("chat.agent.session").exists, "bar sesi agen belum tampil selama Switching")
+        capture("live-agent-switching-locked")
+        leave.tap()
+        XCTAssertTrue(notice("Agent Request Canceled").waitForExistence(timeout: 5))
+        XCTAssertTrue(input.isEnabled, "composer terbuka lagi setelah batal antre")
+    }
+
     func testLeavingTheQueueShowsTheCanceledCard() {
         launchAndAskForAnAgent()
         let leave = application.buttons["chat.agent.leaveQueue"]
@@ -123,8 +138,9 @@ final class LiveAgentUITests: XCTestCase {
 // MARK: - Helpers
 
 private extension LiveAgentUITests {
-    func launchAndAskForAnAgent() {
-        application.launchArguments = ["--language", "en", "--live-agent"]
+    func launchAndAskForAnAgent(holdingGreeting isHoldingGreeting: Bool = false) {
+        let hold = isHoldingGreeting ? ["--hold-greeting"] : []
+        application.launchArguments = ["--language", "en", "--live-agent"] + hold
         application.launch()
         let open = application.buttons["sandbox.open"]
         XCTAssertTrue(open.waitForExistence(timeout: 10))
@@ -138,14 +154,6 @@ private extension LiveAgentUITests {
         input.tap()
         input.typeText(text)
         application.buttons["composer.send"].tap()
-    }
-
-    /// Selama kartu Switching, keyboard yang masih terbuka dari pertanyaan sebelumnya ditutup dan field tidak bisa
-    /// diketik.
-    func assertInputLockedWhileSwitching() {
-        let input = application.textViews["composer.input"]
-        waitUntilGone(application.keyboards.firstMatch)
-        XCTAssertFalse(input.isEnabled)
     }
 
     /// Di dalam kartu composer sebelah kiri field, seukuran dan sejajar dengan tombol kirim. Diketuk = bottom sheet

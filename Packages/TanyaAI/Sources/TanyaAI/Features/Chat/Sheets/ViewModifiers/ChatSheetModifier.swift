@@ -10,35 +10,38 @@ import SwiftUI
 
 /// Semua bottom sheet halaman chat lewat satu `.bottomSheet(item:)` DesignKit di root halaman, supaya latar gelap
 /// menutupi header dan composer: pilihan sumber lampiran lalu picker sistem untuk sumber yang dipilih, dan konfirmasi
-/// End Session. Picker sistem tetap `.sheet` karena itu layar milik iOS, bukan isi sheet DesignKit. Sheet yang sudah
-/// tidak berlaku ditutup sendiri: lampiran saat agen tidak melayani lagi, konfirmasi saat bar sesi agen hilang atau
-/// antrean/sesinya berganti (mis. reconnect ke percakapan lain), supaya Yes tidak mengakhiri sesi lain.
+/// End Session. Picker sistem tetap `.sheet` karena itu layar milik iOS, bukan isi sheet DesignKit. Keduanya terikat ke
+/// sesi agen saat dibuka; sheet dan picker yang sudah tidak berlaku ditutup sendiri: lampiran saat agen tidak melayani
+/// lagi atau sesinya berganti (mis. reconnect ke percakapan lain yang juga dilayani agen), konfirmasi saat bar sesi
+/// agen hilang atau sesinya berganti, supaya lampiran atau Yes tidak terbawa ke sesi lain.
 @MainActor
 struct ChatSheetModifier: ViewModifier {
     @Environment(\.locale) private var locale
     @Binding private var sheet: ChatSheet?
     /// Picker sistem yang sedang terbuka; nil = tertutup.
     @State private var source: ChatAttachmentSource?
-    /// Sesi agen berakhir. Disimpan sebagai state karena callback picker sistem memegang salinan modifier dari saat
-    /// picker dibuka, yang `isAttachable`-nya masih true; state selalu dibaca dari nilai terbaru.
-    @State private var isSessionEnded = false
-    /// Lampiran masih boleh dipilih (agen masih melayani).
-    private let isAttachable: Bool
+    /// Sesi agen pemilik picker terakhir.
+    @State private var pickerSession: AgentSessionKey?
+    /// Sesi pemilik picker sudah tidak dilayani agen. Disimpan sebagai state karena callback picker sistem memegang
+    /// salinan modifier dari saat picker dibuka; state selalu dibaca dari nilai terbaru.
+    @State private var isPickerStale = false
+    /// Sesi agen yang sedang melayani, tempat lampiran boleh dipilih; nil = lampiran tidak tersedia.
+    private let attachmentSession: AgentSessionKey?
     /// Antrean atau sesi agen yang barnya tampil; nil = bar tidak tampil.
-    private let agentSession: AgentSessionKey?
+    private let leaveSession: AgentSessionKey?
     private let onPick: (URL) -> Void
     private let onLeave: (AgentSessionKey) -> Void
 
     init(
         sheet: Binding<ChatSheet?>,
-        isAttachable: Bool,
-        agentSession: AgentSessionKey?,
+        attachmentSession: AgentSessionKey?,
+        leaveSession: AgentSessionKey?,
         onPick: @escaping (URL) -> Void,
         onLeave: @escaping (AgentSessionKey) -> Void
     ) {
         _sheet = sheet
-        self.isAttachable = isAttachable
-        self.agentSession = agentSession
+        self.attachmentSession = attachmentSession
+        self.leaveSession = leaveSession
         self.onPick = onPick
         self.onLeave = onLeave
     }
@@ -47,15 +50,15 @@ struct ChatSheetModifier: ViewModifier {
         content
             .bottomSheet(item: $sheet, closeLabel: String(ChatCopy.sheetClose, locale: locale)) { sheetContent($0) }
             .sheet(item: $source) { picker($0) }
-            .onChange(of: isAttachable, perform: closeAttachment)
-            .onChange(of: agentSession, perform: closeStaleConfirmation)
+            .onChange(of: attachmentSession) { closeStale(attachmentSession: $0, leaveSession: leaveSession) }
+            .onChange(of: leaveSession) { closeStale(attachmentSession: attachmentSession, leaveSession: $0) }
     }
 
     @ViewBuilder
     private func sheetContent(_ sheet: ChatSheet) -> some View {
         switch sheet {
-        case .attachment(let isFormatRejected):
-            AttachmentSourceSheet(isFormatRejected: isFormatRejected, onSelect: choose)
+        case .attachment(let session, let isFormatRejected):
+            AttachmentSourceSheet(isFormatRejected: isFormatRejected) { choose($0, for: session) }
         case .leaveAgent(let session):
             ConfirmationPrompt(
                 title: String(ChatCopy.leaveAgentConfirmTitle, locale: locale),
@@ -72,9 +75,9 @@ struct ChatSheetModifier: ViewModifier {
     private func picker(_ source: ChatAttachmentSource) -> some View {
         switch source {
         case .gallery:
-            PhotoAttachmentPicker(onPick: onPick, onReject: rejectFormat, onDismiss: closePicker)
+            PhotoAttachmentPicker(onPick: deliver, onReject: rejectFormat, onDismiss: closePicker)
         case .file:
-            DocumentAttachmentPicker(onPick: onPick, onDismiss: closePicker)
+            DocumentAttachmentPicker(onPick: deliver, onDismiss: closePicker)
         }
     }
 }
@@ -82,10 +85,18 @@ struct ChatSheetModifier: ViewModifier {
 // MARK: - Helpers
 
 private extension ChatSheetModifier {
-    /// Sheet ditutup lalu picker sistem dibuka untuk sumber yang diketuk.
-    func choose(_ source: ChatAttachmentSource) {
+    /// Sheet ditutup lalu picker sistem dibuka untuk sumber yang diketuk, terikat ke sesi sheet-nya.
+    func choose(_ source: ChatAttachmentSource, for session: AgentSessionKey) {
         sheet = nil
+        pickerSession = session
+        isPickerStale = false
         self.source = source
+    }
+
+    /// File dari picker yang sesinya sudah berganti atau berakhir dibuang, tidak diteruskan ke sesi lain.
+    func deliver(_ file: URL) {
+        guard !isPickerStale else { return FileManager.default.discardChatAttachment(at: file) }
+        onPick(file)
     }
 
     /// Yes: sheet ditutup, `leave-agent` untuk antrean atau sesi saat End Session diketuk (dicek ulang bridge).
@@ -99,28 +110,26 @@ private extension ChatSheetModifier {
     }
 
     /// Pilihan Galeri / File dibuka lagi dengan pesan format, supaya nasabah bisa langsung memilih ulang.
-    /// Tidak dibuka lagi bila sesi agen sudah berakhir selama picker tampil.
+    /// Tidak dibuka lagi bila sesi agen sudah berganti atau berakhir selama picker tampil.
     func rejectFormat() {
-        guard !isSessionEnded else { return }
-        sheet = .attachment(isFormatRejected: true)
+        guard !isPickerStale, let pickerSession else { return }
+        sheet = .attachment(pickerSession, isFormatRejected: true)
     }
 
     func closePicker() {
         source = nil
     }
 
-    /// Sesi agen berakhir: sheet lampiran dan picker sistem ikut ditutup supaya lampiran tidak terpilih di mode bot.
-    func closeAttachment(isStillAttachable: Bool) {
-        isSessionEnded = !isStillAttachable
-        guard !isStillAttachable else { return }
-        source = nil
-        guard case .attachment = sheet else { return }
-        sheet = nil
-    }
-
-    /// Konfirmasi milik antrean atau sesi yang sudah tidak tampil ditutup.
-    func closeStaleConfirmation(current: AgentSessionKey?) {
-        guard case .leaveAgent(let session) = sheet, session != current else { return }
-        sheet = nil
+    /// Sesi agen berakhir atau berganti: picker sistem dan sheet milik sesi lama ikut ditutup, supaya lampiran tidak
+    /// terpilih di mode bot atau di sesi lain dan Yes tidak mengakhiri sesi lain.
+    func closeStale(attachmentSession: AgentSessionKey?, leaveSession: AgentSessionKey?) {
+        if let pickerSession, pickerSession != attachmentSession {
+            isPickerStale = true
+            source = nil
+        }
+        guard let sheet, !sheet.isCurrent(attachmentSession: attachmentSession, leaveSession: leaveSession) else {
+            return
+        }
+        self.sheet = nil
     }
 }

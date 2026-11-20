@@ -61,6 +61,7 @@ private extension TanyaAIChatService {
             )
             service.moveAgent(to: SandboxGatewayFrames.agentQueued, notice: SandboxGatewayFrames.agentConnecting)
             service.finishTurn()
+            guard !service.options.isHoldingGreeting else { return }
             service.schedule(after: SandboxOptions.agentAutoGreetingDelay) { service in
                 let greeting = SandboxGatewayFrames.agentAutoGreeting
                 service.emit(service.frames.message(direction: SandboxWireMessage.agent, text: greeting))

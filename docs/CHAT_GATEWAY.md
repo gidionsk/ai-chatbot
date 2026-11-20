@@ -164,7 +164,9 @@ lingkaran 24, garis 1 N200; ikon masih PDF dummy). Ketuk = bottom sheet DesignKi
 dan File dengan keterangan format, tanpa kamera (keputusan user 18 November 2026; isi sheet sementara `OptionList`
 sampai ada Figma). Semua bottom sheet halaman chat (lampiran dan konfirmasi End Session) lewat satu
 `.bottomSheet(item:)` di root `ChatScreen` (`ChatSheetModifier` dengan `ChatSheet`); sheet intent form nanti menjadi case
-baru di sana. Galeri memakai `PHPicker` (tanpa izin galeri, representasi asli supaya HEIC tetap HEIC) dan File
+baru di sana. Sheet lampiran dan picker sistem terikat ke sesi agen saat dibuka (`AgentSessionKey`): bila agen berhenti
+melayani atau sesinya berganti (mis. reconnect ke percakapan lain yang juga `AGENT_ACTIVE`), keduanya ditutup dan file
+dari picker lama dibuang (`ChatSheet.isCurrent`). Galeri memakai `PHPicker` (tanpa izin galeri, representasi asli supaya HEIC tetap HEIC) dan File
 memakai document picker `asCopy`. Format hanya PDF, HEIC, JPG/JPEG, dan PNG (`UTType.chatAttachments`); foto galeri
 berformat lain (mis. GIF) ditolak: galeri sistem tidak bisa memfilter per format, jadi sheet dibuka lagi dengan pesan
 merah (keputusan user; copy sementara). Contract v1.5.3 belum punya endpoint
@@ -180,7 +182,8 @@ indikator mengetik ikut menggeser daftar ke bawah bila pembaca sedang di ujung d
 
 Sandbox `--live-agent`: pertanyaan pertama dijawab bot dengan serah terima ke agen, sapaan otomatis 2 detik setelah
 antre, agen bergabung 3 detik kemudian, mengetik lalu menyapa, menjawab pertanyaan berikutnya, lalu menutup percakapan.
-End Session selama antre membatalkan antrean; selama dilayani agen mengakhiri sesi.
+End Session selama antre membatalkan antrean; selama dilayani agen mengakhiri sesi. `--hold-greeting` menahan sapaan
+dan agen, jadi kartu Switching tetap tampil (UI test composer terkunci).
 
 ## Selisih dengan contract 1.5.3 yang belum dikerjakan
 
