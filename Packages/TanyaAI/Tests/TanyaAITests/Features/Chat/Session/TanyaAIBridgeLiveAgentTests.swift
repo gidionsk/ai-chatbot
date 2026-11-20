@@ -170,6 +170,24 @@ struct TanyaAIBridgeLiveAgentTests {
         #expect(bridge.connection == .live)
     }
 
+    /// `left:true` yang terlambat milik sesi atau antrean yang sudah ditutup stream tidak mengembalikan antrean baru
+    /// ke bot; tombol Batalkan antrean baru tetap ada.
+    @Test(arguments: ["AGENT_ACTIVE", "AGENT_QUEUED"])
+    func lateLeaveDoesNotEndTheNextQueue(state: String) async {
+        let (transport, bridge) = await connectedBridge(state: state)
+        defer { bridge.connectionTask?.cancel() }
+        transport.isHoldingLeave = true
+        let leave = Task { await bridge.leaveAgent() }
+        await waitUntil { transport.isAckHeld }
+        transport.emit(WireFixture.stateFrame(seq: 3, state: "ASSISTANT_ACTIVE", previous: state))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.eventCursor == 4 }
+        transport.releaseAck()
+        await leave.value
+        #expect(bridge.conversationState == .agentQueued)
+        #expect(bridge.visibleLiveAgentNotices.map(\.kind) == [.connecting])
+    }
+
     @Test
     func leaveWithoutAnAgentIsNotSent() async {
         let (transport, bridge) = await connectedBridge(state: "ASSISTANT_ACTIVE")
