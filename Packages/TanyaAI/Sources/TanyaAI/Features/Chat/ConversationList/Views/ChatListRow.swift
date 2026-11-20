@@ -16,6 +16,9 @@ struct ChatListRow<Content: View>: View {
     let welcome: WelcomeContent?
     let content: Content
     let actions: ChatRowActions
+    var referenceLetter: ReferenceLetterForm?
+    var isReferenceLetterEnabled = false
+    var onSheet: (ChatBottomSheet) -> Void = { _ in }
 
     var body: some View {
         rowContent
@@ -32,7 +35,14 @@ struct ChatListRow<Content: View>: View {
         case .date(let day, _):
             dateChip(day)
         case .message(let row, _):
-            MessageRow(row: row, onOpenLink: actions.onOpenLink)
+            VStack(alignment: .leading, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
+                MessageRow(row: row, onOpenLink: actions.onOpenLink)
+                if isReferenceLetterEnabled, case .message(let message) = row,
+                    message.intent == .referenceLetter, message.author == .assistant, message.status == .active
+                {
+                    referenceLetterCard(for: message)
+                }
+            }
         case .followUps(let questions, let isEnabled):
             FollowUpsSection(questions: questions, isEnabled: isEnabled, onSelect: actions.onSelectFollowUp)
         case .liveAgentNotice(let notice):
@@ -56,6 +66,18 @@ struct ChatListRow<Content: View>: View {
 // MARK: - Helpers
 
 private extension ChatListRow {
+    @ViewBuilder
+    func referenceLetterCard(for message: ChatMessage) -> some View {
+        if let referenceLetter, message.successID == nil || referenceLetter.receipt != nil {
+            ReferenceLetterCard(form: referenceLetter, messageID: message.id, onSheet: onSheet)
+        } else {
+            ReferenceLetterCard.status(
+                copy: message.successID == nil ? .referenceLetterHistory : .referenceLetterComplete,
+                locale: locale
+            )
+        }
+    }
+
     @ViewBuilder
     func welcomeSection(isEnabled: Bool) -> some View {
         if let welcome {

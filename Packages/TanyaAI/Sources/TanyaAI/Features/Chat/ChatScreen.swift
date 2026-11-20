@@ -19,12 +19,11 @@ public struct ChatScreen<Content: View>: View {
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
     @Environment(\.designColors) private var colors
-    @ObservedObject private var bridge: TanyaAIBridge
+    @ObservedObject var bridge: TanyaAIBridge
     @State private var scrollProgress = CGFloat.zero
     @State private var isLatestVisible = true
     @State private var latestJumpID: UUID?
-    /// Bottom sheet pilihan Galeri / File sedang tampil.
-    @State private var isChoosingAttachment = false
+    @State var sheet: ChatBottomSheet?
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
@@ -58,13 +57,20 @@ public struct ChatScreen<Content: View>: View {
         .overlay { loadingIndicator }
         .modifier(
             AttachmentPickerModifier(
-                isPresented: $isChoosingAttachment,
+                sheet: $sheet,
                 isAvailable: isAttachable,
+                isDismissable: !bridge.isSubmittingReferenceLetter,
+                intentSheet: referenceLetterSheet,
                 onPick: attach
             )
         )
         // Swipe-back milik navigasi host, jadi host yang menahannya selama sheet terbuka.
-        .onChange(of: isChoosingAttachment) { onSheetChange?($0) }
+        .onChange(of: sheet != nil) { onSheetChange?($0) }
+        .onChange(of: bridge.conversationID) { _ in sheet = nil }
+        .onDisappear {
+            sheet = nil
+            onSheetChange?(false)
+        }
         // Dibatalkan otomatis saat halaman hilang; tampil lagi = init ulang dan mengejar history.
         .task { await bridge.run() }
     }
@@ -78,8 +84,6 @@ public struct ChatScreen<Content: View>: View {
         .overlay(alignment: .bottom) { latestButton }
     }
 
-    /// Mengambang di tengah, tepat di atas composer, selama ujung daftar di luar layar.
-    /// TODO: Konfirmasi jarak ke composer dengan Figma; sementara perkiraan dari foto.
     @ViewBuilder
     private var latestButton: some View {
         if !isLatestVisible {
@@ -90,13 +94,17 @@ public struct ChatScreen<Content: View>: View {
         }
     }
 
-    /// Baris table tidak mewarisi environment halaman, jadi nilainya dipasang di sini. `id` mencegah state view
-    /// terbawa saat sel dipakai ulang untuk pesan lain.
+    /// Baris yang dihosting table menerima environment secara eksplisit.
     private func listRow(_ item: ChatListItem, actions: ChatRowActions) -> some View {
-        ChatListRow(item: item, welcome: welcome, content: content, actions: actions)
-            .id(item.id)
-            .designColors(colors)
-            .environment(\.locale, locale)
+        ChatListRow(
+            item: item, welcome: welcome, content: content, actions: actions,
+            referenceLetter: bridge.referenceLetter(for: item),
+            isReferenceLetterEnabled: bridge.services.referenceLetter != nil,
+            onSheet: { if isEnabled && bridge.isReady { sheet = $0 } }
+        )
+        .id(item.id)
+        .designColors(colors)
+        .environment(\.locale, locale)
     }
 
     /// Hanya saat pertama dibuka; menyambung ulang tidak menutupi pesan yang sudah tampil. Gagal permanen
@@ -116,9 +124,6 @@ public struct ChatScreen<Content: View>: View {
         )
     }
 
-    /// Menempel di atas layar selebar layar; bagian bawah yang tidak tertutup gambar memakai warna surface.
-    /// Sengaja `scaledToFit`, bukan `scaledToFill` + `clipped`: di iOS 17 kombinasi itu membuat latar dan isi scroll
-    /// hilang (putih) selama swipe back interaktif di host.
     private var backgroundImage: some View {
         Image(ChatImage.chatBackground).resizable()
             .scaledToFit()
@@ -211,12 +216,9 @@ private extension ChatScreen {
     /// Lampiran (PDF/gambar) hanya saat dilayani agen; nil = tombol tidak tampil. Ketuk = bottom sheet Galeri / File.
     var attachAction: (() -> Void)? {
         guard isAttachable else { return nil }
-        return { isChoosingAttachment = true }
+        return { sheet = .attachment }
     }
 
-    /// File pilihan nasabah. Salinannya langsung dibuang supaya tidak menumpuk di folder sementara.
-    /// TODO: Upload lewat transport dan kartu preview setelah endpoint upload dan parameter stream ada di contract
-    /// gateway; saat itu file dibuang oleh pemilik upload setelah selesai (atau bila agen sudah tidak melayani).
     func attach(_ file: URL) {
         FileManager.default.discardChatAttachment(at: file)
     }
@@ -224,5 +226,19 @@ private extension ChatScreen {
     /// Shortcut dikirim sebagai chat; bubble pertanyaan langsung tampil.
     func select(_ shortcut: WelcomeShortcut) {
         bridge.send(shortcut.prompt)
+    }
+}
+
+/// Satu pilihan aktif per halaman chat.
+enum ChatBottomSheet: Hashable {
+    case attachment
+    case referenceLetterChoices(messageID: String, field: ReferenceLetterFieldID)
+    case referenceLetterPIN(messageID: String)
+
+    var referenceLetterMessageID: String? {
+        switch self {
+        case .attachment: return nil
+        case .referenceLetterChoices(let messageID, _), .referenceLetterPIN(let messageID): return messageID
+        }
     }
 }

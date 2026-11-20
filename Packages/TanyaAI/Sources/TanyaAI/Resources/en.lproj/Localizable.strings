@@ -38,3 +38,27 @@
 "attachment.file.formats" = "PDF, HEIC, JPG, or PNG";
 "attachment.close" = "Close";
 "attachment.unsupportedFormat" = "This photo format isn't supported. Choose a HEIC, JPG, or PNG photo.";
+
+"referenceLetter.title" = "Order a reference letter";
+"referenceLetter.confirm" = "Send";
+"referenceLetter.cancel" = "Cancel";
+"referenceLetter.choose" = "Select";
+"referenceLetter.required" = "Please complete this field.";
+"referenceLetter.purpose" = "Purpose of the reference letter";
+"referenceLetter.format" = "Document format";
+"referenceLetter.embassy" = "Embassy or recipient institution";
+"referenceLetter.accounts" = "Accounts to include";
+"referenceLetter.currency" = "Currency to display";
+"referenceLetter.balance" = "Show balance information";
+"referenceLetter.investment" = "Show investment funds";
+"referenceLetter.language" = "Letter language";
+"referenceLetter.email" = "Delivery email";
+"referenceLetter.address" = "Delivery address";
+"referenceLetter.accountCount" = "%ld accounts selected";
+"referenceLetter.retry" = "Retry loading the reference letter form";
+"referenceLetter.PIN" = "Enter your 6-digit transaction PIN";
+"referenceLetter.deleteDigit" = "Delete digit";
+"referenceLetter.submitFailed" = "Unable to send the request. Try again.";
+"referenceLetter.complete" = "You have ordered a reference letter.";
+"referenceLetter.cancelled" = "You cancelled the reference letter request.";
+"referenceLetter.history" = "You previously requested a reference letter.";

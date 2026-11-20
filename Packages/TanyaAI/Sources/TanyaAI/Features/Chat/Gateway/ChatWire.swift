@@ -10,6 +10,8 @@ import Foundation
 /// Metadata teknis contract chat-gateway 1.5.0: prefix baris SSE, nama event, dan batas paging.
 /// Bukan copy untuk pengguna.
 enum ChatWire {
+    /// Jumlah digit PIN transaksi untuk pengajuan Surat Referensi.
+    static let referenceLetterPinLength = 6
     static let idField = "id:"
     static let eventField = "event:"
     static let dataField = "data:"
