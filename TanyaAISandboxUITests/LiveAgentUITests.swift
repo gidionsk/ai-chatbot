@@ -52,7 +52,8 @@ final class LiveAgentUITests: XCTestCase {
     /// End Session di bar bawah header membuka konfirmasi: No hanya menutup sheet, Yes memanggil `leave-agent` dan
     /// sesi berakhir tanpa menunggu agen menutupnya.
     func testEndSessionAsksForConfirmationThenLeavesTheAgent() {
-        launchAndAskForAnAgent()
+        // History panjang, supaya daftar benar-benar bisa digulir selama bar tampil.
+        launchAndAskForAnAgent(extraArguments: ["--long-history"])
         // Tunggu agen bergabung (tombol lampiran), supaya End Session mengakhiri sesi, bukan membatalkan antrean.
         XCTAssertTrue(application.buttons["composer.attachment"].waitForExistence(timeout: 15))
         let banner = element("chat.agent.session")
@@ -60,6 +61,10 @@ final class LiveAgentUITests: XCTestCase {
         let title = application.staticTexts["Tanya AI"].firstMatch
         XCTAssertGreaterThanOrEqual(banner.frame.minY, title.frame.maxY, "di bawah header")
         capture("live-agent-session-banner")
+        // Daftar mulai di bawah bar, jadi efek scroll header (latar, bayangan, gradient) tidak menimpa bar.
+        application.tables.firstMatch.swipeUp()
+        XCTAssertTrue(element("header").exists)
+        XCTAssertFalse(element("header.scrolled").exists, "tanpa efek scroll header selama bar tampil")
         banner.buttons["End Session"].tap()
         let sheet = element("sheet")
         XCTAssertTrue(sheet.waitForExistence(timeout: 3))
@@ -103,7 +108,7 @@ final class LiveAgentUITests: XCTestCase {
     /// Keyboard dari pertanyaan sebelumnya ditutup, field tidak bisa diketik, dan bar sesi agen belum tampil; batal
     /// antre membuka composer lagi.
     func testComposerIsLockedWhileSwitching() {
-        launchAndAskForAnAgent(holdingGreeting: true)
+        launchAndAskForAnAgent(extraArguments: ["--hold-greeting"])
         let leave = application.buttons["chat.agent.leaveQueue"]
         XCTAssertTrue(leave.waitForExistence(timeout: 5))
         let input = application.textViews["composer.input"]
@@ -138,9 +143,8 @@ final class LiveAgentUITests: XCTestCase {
 // MARK: - Helpers
 
 private extension LiveAgentUITests {
-    func launchAndAskForAnAgent(holdingGreeting isHoldingGreeting: Bool = false) {
-        let hold = isHoldingGreeting ? ["--hold-greeting"] : []
-        application.launchArguments = ["--language", "en", "--live-agent"] + hold
+    func launchAndAskForAnAgent(extraArguments: [String] = []) {
+        application.launchArguments = ["--language", "en", "--live-agent"] + extraArguments
         application.launch()
         let open = application.buttons["sandbox.open"]
         XCTAssertTrue(open.waitForExistence(timeout: 10))

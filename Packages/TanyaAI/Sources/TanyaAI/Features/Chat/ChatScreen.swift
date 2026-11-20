@@ -50,7 +50,8 @@ public struct ChatScreen<Content: View>: View {
         ScreenScaffold(
             title: String(ChatCopy.title, locale: locale),
             backLabel: String(ChatCopy.back, locale: locale),
-            scrollProgress: scrollProgress, onBack: close,
+            // Selama bar sesi agen tampil daftar mulai di bawah bar, jadi efek scroll header tidak dipakai.
+            scrollProgress: isBannerVisible ? .zero : scrollProgress, onBack: close,
             content: { conversation(headerHeight: $0) }, trailing: { EmptyView() },
             footer: { composer },
             background: { ChatBackground() }

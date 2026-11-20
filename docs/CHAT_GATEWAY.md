@@ -148,7 +148,8 @@ Bar hitam "You're now in mode talking with CA" + End Session (`ActionBanner` Des
 foto Figma) tampil sejak kartu Switching berganti "Connected" (sapaan otomatis, `agent_joined`, atau `AGENT_ACTIVE`),
 termasuk selama masih antre, sampai antrean atau sesi agen ditutup; event penutup menyembunyikannya walau event `state`
 belum datang (`TanyaAIBridge.isAgentSessionBannerVisible`, keputusan user 20 November 2026). Bar tidak menunggu nama
-agen. Bar menempel di bawah header, dan daftar mulai di bawah bar. End Session membuka bottom sheet konfirmasi dulu
+agen. Bar menempel di bawah header, dan daftar mulai di bawah bar; selama itu header tidak memakai efek scroll (latar,
+bayangan, gradient), karena efek itu hanya untuk isi yang lewat di bawah header (keputusan user 20 November 2026). End Session membuka bottom sheet konfirmasi dulu
 (Figma node 1903-8266: "Are you sure to exit this mode?" dengan Yes dan No; `ConfirmationPrompt` DesignKit lewat
 `ChatSheet.leaveAgent`, Yes sementara `FilledButton` `.regular`). Konfirmasi menyimpan antrean atau sesi saat End Session
 diketuk (`AgentSessionKey`: percakapan dan acuan antrean, tanpa state, jadi antre yang berlanjut menjadi dilayani agen
