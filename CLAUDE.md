@@ -43,7 +43,7 @@ usulan ditulis di body PR sebagai pertanyaan untuk owner. Bila berbeda, ikuti do
   `DesignColorIcon` `send-on`/`send-off`/`send-pause` (dummy, nama aset Byon); stopping = redup `.plain` bawaan.
   Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Field form DesignKit: `SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`, dan isi sheet `OptionList`
-  (satu atau banyak pilihan, loading; pilihan sebelumnya tercentang dan langsung terlihat di daftar panjang). Contoh di sandbox `--form-demo`; mesin form intent menyusul di TanyaAI.
+  (satu atau banyak pilihan, loading; pilihan sebelumnya tercentang dan langsung terlihat di daftar panjang). Contoh intent Surat Referensi di sandbox `--form-demo`; kirim pertanyaan chat untuk membuka form.
 - Isi sheet PIN DesignKit: `PinEntry` (titik per digit, error, keypad angka tanpa keyboard sistem). PIN lewat binding
   pemakai, `onComplete` sekali saat penuh; tidak disimpan/di-log. Pemeriksaan PIN milik host; selama memeriksa
   pemakai memasang `.disabled` dan `isDismissable: false`. Contoh: Konfirmasi di `--form-demo`.
@@ -53,7 +53,9 @@ usulan ditulis di body PR sebagai pertanyaan untuk owner. Bila berbeda, ikuti do
   status bar, atau `.screenFraction(x)`); isi yang lebih panjang di-scroll. Isi membawa judul dan padding sendiri.
   `isDismissable: false` = terkunci (PIN diperiksa host); `.bottomSheetFooter { }` pada isi = tombol menempel di
   bawah; field teks di isi boleh, sheet naik ke atas keyboard; layar tanpa notch diberi jarak atas 16 pt.
-  Belum ada pemicu di chat; contoh ada di sandbox `--sheet-demo`. Service untuk isi seperti PIN tetap di host.
+  Chat memakai satu presenter untuk lampiran, End Session, opsi form, dan PIN. Inquiry serta alur PIN dan ACK Surat
+  Referensi memakai `ReferenceLetterService` dari host. PIN gagal tampil di sheet PIN. ACK gagal diteruskan ke
+  host setelah sheet PIN hilang. Lihat [struktur intent form](docs/PACKAGE_STRUCTURE.md#intent-berbentuk-form).
   Swipe-back ditahan host selama sheet terbuka (milik navigasi host, bukan package).
 - Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.

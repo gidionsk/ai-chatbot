@@ -205,82 +205,28 @@ rancangan lama (view model per intent di host, coordinator PIN existing):
   tidak disimpan atau di-log. PIN salah = sheet tetap terbuka dengan error dari host.
 - Selesai atau batal menjadi kartu status; di history cukup kartu "pernah request" dari `intent` pesan bot.
 
-Komponennya sudah ada di DesignKit (`SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`, `OptionList`,
-`PinEntry`, `.bottomSheet(item:)`); contoh susunannya di sandbox `--form-demo`, termasuk sheet PIN setelah Konfirmasi. Tiga hal di bawah **belum punya pola di kode**,
-karena `LiveAgent` tidak membutuhkannya. Ketiganya dirancang bersama intent form pertama, bukan disiapkan kosong:
+Komponen DesignKit yang dipakai mencakup `SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`,
+`OptionList`, dan `PinEntry`. Opsi dan PIN dibuka lewat `ChatSheetModifier` bersama sheet lampiran dan End Session.
 
-| Belum ada | Kenapa belum | Arah yang sudah disepakati |
-| --- | --- | --- |
-| State form per instance | `LiveAgent` hanya punya satu state per percakapan | Di TanyaAI, di luar sel table, dengan id instance = id pesan pemicunya |
-| Sheet yang dibuka dari baris chat | Belum ada baris yang membuka sheet | `.bottomSheet(item:)` di root `ChatScreen`; package memberi tahu host saat sheet terbuka supaya swipe-back ditahan |
-| Data dan service dari host | Transport sekarang hanya untuk chat-gateway | Satu protocol per intent, terpisah dari `TanyaAIChatTransport`; rancangannya di bawah |
+### Intent berbentuk form
 
-### Rancangan struktur intent form
+- Intent `request-bank-reference-letter` dari pesan baru di stream membuat satu draft per ID pesan. History
+  menampilkan statusnya. `TanyaAIBridge` menyimpan draft dan membersihkannya saat percakapan berganti.
+- Host memasang `TanyaAIIntentServices(referenceLetter: ...)` pada bridge. Service Byon hanya dipanggil melalui
+  `ReferenceLetterService`. `TanyaAIChatTransport` tetap menangani gateway dan `success-id` opsional.
+- Host melakukan inquiry serta dekripsi email. Jika gagal, kartu tidak tampil dan host menangani pesan atau
+  deeplink pembaruan profil. Introduction dan pesan ACK dirender sebagai Markdown, dengan link diteruskan ke host.
+- `submit(_:pin:)` memverifikasi PIN lalu mengirim ACK. `ReferenceLetterSubmissionError.pinVerification`
+  menahan sheet PIN dengan pesan inline dan input kosong. Jika backend menandai PIN diblokir, keypad nonaktif.
+  `ReferenceLetterSubmissionError.acknowledgement` menutup sheet PIN dan memanggil
+  `presentAcknowledgementError(_:)` pada host setelah sheet hilang. Host menampilkan sheet error miliknya.
+- Fase kartu, daftar field, dan error validasi ada di data table per ID baris. Table mengukur ulang baris yang
+  berubah, termasuk saat loading menjadi form atau kartu sukses/batal.
 
-Disepakati user 16 November 2026. Belum ada di kode: dibangun di PR intent form pertama (surat referensi), dan nama
-tipe boleh berubah saat itu. `LiveAgent` tidak mengikuti rancangan ini karena flow-nya digerakkan event gateway.
-
-**Service host tidak lewat `TanyaAIChatTransport`.** Transport hanya untuk endpoint chat-gateway: mengembalikan
-`Data` mentah yang di-decode TanyaAI, dan error koneksinya diulang otomatis. Service Byon (daftar rekening, submit,
-PIN) punya model dan error sendiri yang sudah ada di host, dan submit atau PIN tidak boleh diulang otomatis. Endpoint
-chat-gateway baru untuk sebuah intent (seperti `leaveAgent`) tetap masuk transport.
-
-Dibuat sekali, bersama intent form pertama:
-
-```text
-TanyaAI/Bridging/
-└── TanyaAIIntentServices.swift        // struct publik: satu properti opsional per service intent
-
-TanyaAI/Features/Chat/Intents/Form/    // mesin bersama, bukan intent
-├── Models/                            // jenis field, nilai form, state per instance, kontrak IntentFormRules, status
-├── Extensions/                        // validasi saat Konfirmasi dan penerapan aturan form
-└── Views/                             // kartu form, isi sheet (OptionList, PinEntry), kartu selesai/batal
-
-TanyaAI/Features/Chat/Session/
-└── TanyaAIBridge+Form.swift           // state form per id pesan, buka sheet, alur submit dan PIN
-```
-
-Bridge menerimanya lewat `TanyaAIBridge(transport:services:)` dengan `services` opsional, jadi host yang belum
-memakai intent form tidak berubah. Intent yang service-nya tidak diberikan host tidak menampilkan form.
-
-Per intent, contoh surat referensi:
-
-```text
-TanyaAI/Features/Chat/Intents/ReferenceLetter/
-├── Protocols/
-│   └── ReferenceLetterService.swift            // publik, diimplementasikan host
-├── Models/
-│   ├── ReferenceLetterFieldID.swift            // enum id field
-│   └── ReferenceLetterRequest.swift            // publik, nilai bertipe yang dikirim ke host
-└── Extensions/
-    ├── ReferenceLetterFieldID+Definition.swift // IntentFormRules untuk field yang berlaku dan anak yang di-reset
-    └── ReferenceLetterRequest+Values.swift     // nilai form menjadi request
-```
-
-```swift
-public protocol ReferenceLetterService: AnyObject {
-    func accounts() async throws -> [ReferenceLetterAccount]
-    func submit(_ request: ReferenceLetterRequest, pin: String) async throws
-}
-```
-
-Di luar folder intent hanya beberapa baris: case `ChatIntent`, properti di `TanyaAIIntentServices`, copy di
-`ChatCopy` dan tiga `Localizable.strings`, lalu test, service tiruan sandbox, dan UI test. Folder `Views/` per intent
-hanya dibuat bila intent butuh tampilan yang tidak ada di mesin, misalnya kartu produk reksa dana.
-
-Alasan bentuknya:
-
-- Protocol di folder intent, bukan di `Bridging`: menambah intent cukup menyalin satu folder. `public` tidak
-  bergantung pada letak folder, dan `Protocols/` sudah termasuk jenis folder yang diizinkan.
-- Protocol bertipe, bukan dictionary `[String: Any]`: pemetaan field ke request dicek compiler, dan host tinggal
-  memanggil service yang sudah ada.
-- Wadah `TanyaAIIntentServices`: init bridge tidak bertambah panjang setiap ada intent.
-- PIN hanya diteruskan ke host dalam satu pemanggilan, tidak disimpan atau di-log package.
-
-Diputuskan saat membangun, dari request surat referensi yang sebenarnya:
-
-- PIN ikut `submit` (seperti contoh di atas), atau service PIN bersama bila di host cek PIN adalah langkah terpisah.
-- Bentuk error dari host ke package, supaya pesan seperti "PIN salah" tampil di sheet.
+Sandbox memakai service tiruan dan stream gateway melalui `--form-demo`. UI test memakai
+`--reference-letter-pin-blocked`, `--reference-letter-ack-failure`, dan `--reference-letter-inquiry-failure`
+untuk menguji ketiga kegagalan. `--reference-letter-slow-inquiry` menunda inquiry agar perubahan tinggi baris
+bisa diukur saat hasilnya datang.
 
 ## Panduan developer berikutnya
 

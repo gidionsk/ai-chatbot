@@ -25,7 +25,7 @@ final class PinEntryUITests: XCTestCase {
         XCTAssertFalse(application.staticTexts["12"].exists, "angka PIN tidak tampil")
         application.buttons["pin.delete"].tap()
         XCTAssertEqual(dots.value as? String, "1")
-        XCTAssertEqual(application.buttons["pin.delete"].label, "Delete")
+        XCTAssertEqual(application.buttons["pin.delete"].label, "Delete digit")
         capture("pin-entry")
     }
 
@@ -42,11 +42,35 @@ final class PinEntryUITests: XCTestCase {
         waitUntilGone(error)
     }
 
+    func testBlockedPINDisablesTheKeypad() {
+        let sheet = openPinSheet(extraArguments: ["--reference-letter-pin-blocked"])
+        enter("123456")
+        let error = application.staticTexts["Your transaction PIN is blocked."]
+        XCTAssertTrue(error.waitForExistence(timeout: 5))
+        XCTAssertTrue(sheet.exists)
+        XCTAssertEqual(dots.value as? String, "0")
+        XCTAssertFalse(application.buttons["pin.digit.1"].isEnabled)
+        XCTAssertFalse(application.buttons["pin.digit.0"].isEnabled)
+        XCTAssertFalse(application.staticTexts["The host could not submit your reference letter."].exists)
+    }
+
+    func testAckErrorMovesToTheHostSheet() {
+        openPinSheet(extraArguments: ["--reference-letter-ack-failure"])
+        enter("123456")
+        let hostError = application.staticTexts["The host could not submit your reference letter."]
+        XCTAssertTrue(hostError.waitForExistence(timeout: 5))
+        XCTAssertFalse(dots.exists, "PIN must be dismissed before the host error is displayed")
+        XCTAssertFalse(application.descendants(matching: .any)["chat.referenceLetter.success"].exists)
+    }
+
     func testTheAcceptedPinClosesTheSheet() {
         let sheet = openPinSheet()
         enter("123456")
         waitUntilGone(sheet)
-        XCTAssertTrue(application.staticTexts["sandbox.form.submitted"].exists)
+        let success = application.descendants(matching: .any)["chat.referenceLetter.success"]
+        XCTAssertTrue(success.waitForExistence(timeout: 5))
+        let note = application.staticTexts["Surat referensi akan diproses dalam 3 hari kerja."]
+        XCTAssertTrue(note.waitForExistence(timeout: 5))
     }
 }
 
@@ -55,25 +79,34 @@ final class PinEntryUITests: XCTestCase {
 private extension PinEntryUITests {
     var dots: XCUIElement { application.descendants(matching: .any)["pin.dots"] }
 
-    /// Format softcopy (email tersimpan) dan satu rekening, lalu Konfirmasi.
+    /// Format softcopy sudah terpilih. Isi kedutaan, rekening, dan mata uang sebelum mengirim.
     @discardableResult
-    func openPinSheet() -> XCUIElement {
-        application.launchArguments = ["--language", "en", "--form-demo", "--with-history"]
-        application.launch()
-        let entry = application.buttons["sandbox.open"]
-        XCTAssertTrue(entry.waitForExistence(timeout: 10))
-        entry.tap()
+    func openPinSheet(extraArguments: [String] = []) -> XCUIElement {
+        application.launchReferenceLetter(extraArguments: extraArguments)
         let sheet = application.descendants(matching: .any)["sheet"]
-        application.buttons["sandbox.form.format"].tap()
-        application.buttons["Softcopy"].tap()
-        waitUntilGone(sheet)
-        application.buttons["sandbox.form.accounts"].tap()
-        let account = application.buttons["Tanda 360 - 5262 8191 2892 82"]
+        let embassy = application.textFields["Embassy or recipient institution"]
+        application.revealReferenceLetter(embassy)
+        embassy.tap()
+        embassy.typeText("Example Embassy")
+
+        let accounts = application.buttons["Accounts to include"]
+        application.revealReferenceLetter(accounts)
+        accounts.tap()
+        let account = application.buttons["Tanda 360 - 2345 5678 2386"]
         XCTAssertTrue(account.waitForExistence(timeout: 5))
         account.tap()
-        application.buttons["Choose"].tap()
+        application.buttons["Select"].tap()
         waitUntilGone(sheet)
-        application.buttons["sandbox.form.confirm"].tap()
+
+        let currency = application.buttons["Currency to display"]
+        application.revealReferenceLetter(currency)
+        currency.tap()
+        application.buttons["IDR"].tap()
+        waitUntilGone(sheet)
+
+        let confirm = application.buttons["Confirm"]
+        application.revealReferenceLetter(confirm)
+        confirm.tap()
         XCTAssertTrue(application.buttons["pin.digit.1"].waitForExistence(timeout: 5))
         return sheet
     }
