@@ -15,9 +15,10 @@ import SwiftUI
 /// lagi atau sesinya berganti (mis. reconnect ke percakapan lain yang juga dilayani agen), konfirmasi saat bar sesi
 /// agen hilang atau sesinya berganti, supaya lampiran atau Yes tidak terbawa ke sesi lain.
 @MainActor
-struct ChatSheetModifier<IntentSheet: View>: ViewModifier {
+struct ChatSheetModifier: ViewModifier {
     @Environment(\.locale) private var locale
     @Binding private var sheet: ChatSheet?
+    @ObservedObject private var bridge: TanyaAIBridge
     /// Picker sistem yang sedang terbuka; nil = tertutup.
     @State private var source: ChatAttachmentSource?
     /// Sesi agen pemilik picker yang masih berlaku; nil = tidak ada. Callback picker membawa sesinya sendiri dan
@@ -29,25 +30,21 @@ struct ChatSheetModifier<IntentSheet: View>: ViewModifier {
     private let attachmentSession: AgentSessionKey?
     /// Antrean atau sesi agen yang barnya tampil; nil = bar tidak tampil.
     private let leaveSession: AgentSessionKey?
-    private let isDismissable: Bool
-    private let intentSheet: (ChatSheet) -> IntentSheet
     private let onPick: (URL) -> Void
     private let onLeave: (AgentSessionKey) -> Void
 
     init(
         sheet: Binding<ChatSheet?>,
+        bridge: TanyaAIBridge,
         attachmentSession: AgentSessionKey?,
         leaveSession: AgentSessionKey?,
-        isDismissable: Bool,
-        intentSheet: @escaping (ChatSheet) -> IntentSheet,
         onPick: @escaping (URL) -> Void,
         onLeave: @escaping (AgentSessionKey) -> Void
     ) {
         _sheet = sheet
+        _bridge = ObservedObject(wrappedValue: bridge)
         self.attachmentSession = attachmentSession
         self.leaveSession = leaveSession
-        self.isDismissable = isDismissable
-        self.intentSheet = intentSheet
         self.onPick = onPick
         self.onLeave = onLeave
     }
@@ -62,6 +59,8 @@ struct ChatSheetModifier<IntentSheet: View>: ViewModifier {
             .sheet(item: $source) { picker($0) }
             .onChange(of: attachmentSession) { closeStale(attachmentSession: $0, leaveSession: leaveSession) }
             .onChange(of: leaveSession) { closeStale(attachmentSession: attachmentSession, leaveSession: $0) }
+            .onChange(of: bridge.conversationID) { _ in closeReferenceLetter() }
+            .onDisappear(perform: closeReferenceLetter)
     }
 
     @ViewBuilder
@@ -78,9 +77,22 @@ struct ChatSheetModifier<IntentSheet: View>: ViewModifier {
                 onConfirm: { confirmLeave(session) },
                 onCancel: close
             )
-        case .referenceLetterChoices, .referenceLetterPIN:
-            intentSheet(sheet)
+        case .referenceLetterChoices(let id, _), .referenceLetterPIN(let id):
+            if let form = bridge.referenceLetters[id] {
+                ReferenceLetterSheetContent(
+                    form: form,
+                    activeSheet: $sheet,
+                    item: sheet,
+                    isSubmitting: bridge.isSubmittingReferenceLetter,
+                    onSubmit: { try await bridge.submitReferenceLetter(pin: $0, messageID: id) }
+                )
+            }
         }
+    }
+
+    private var isDismissable: Bool {
+        guard case .referenceLetterPIN = sheet else { return true }
+        return !bridge.isSubmittingReferenceLetter
     }
 
     /// Sesi picker ditangkap saat callback dibuat, bukan dibaca saat hasilnya tiba.
@@ -132,8 +144,18 @@ private extension ChatSheetModifier {
     /// Pilihan Galeri / File dibuka lagi dengan pesan format, supaya nasabah bisa langsung memilih ulang.
     /// Tidak dibuka lagi bila sesi agen sudah berganti atau berakhir selama picker tampil.
     func rejectFormat(from session: AgentSessionKey?) {
-        guard let session, session == pickerSession, sheet == nil else { return }
-        sheet = .attachment(session, isFormatRejected: true)
+        guard
+            let rejected = ChatSheet.rejectedAttachment(
+                from: session,
+                pickerSession: pickerSession,
+                activeSheet: sheet
+            )
+        else { return }
+        sheet = rejected
+    }
+
+    func closeReferenceLetter() {
+        sheet = sheet?.afterConversationChange()
     }
 
     func closePicker() {

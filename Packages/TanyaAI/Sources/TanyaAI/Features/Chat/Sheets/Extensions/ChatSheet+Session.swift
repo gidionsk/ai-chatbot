@@ -19,4 +19,17 @@ extension ChatSheet {
             return true
         }
     }
+
+    static func rejectedAttachment(
+        from session: AgentSessionKey?,
+        pickerSession: AgentSessionKey?,
+        activeSheet: ChatSheet?
+    ) -> ChatSheet? {
+        guard let session, session == pickerSession, activeSheet == nil else { return nil }
+        return .attachment(session, isFormatRejected: true)
+    }
+
+    func afterConversationChange() -> ChatSheet? {
+        referenceLetterMessageID == nil ? self : nil
+    }
 }

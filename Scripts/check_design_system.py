@@ -19,6 +19,7 @@ METADATA = {
     'Foundations/Accessibility/ComponentIdentifier.swift', 'Foundations/Iconography/Keys/DesignColorIcon.swift',
     'Features/Chat/Keys/ChatElementIdentifier.swift', 'Features/Chat/Keys/ChatCopy.swift',
     'Features/Chat/Keys/TanyaAILink.swift', 'Features/Chat/Intents/Models/ChatIntent.swift',
+    'Features/Chat/Intents/ReferenceLetter/Models/ReferenceLetterPIN.swift',
     'Features/Chat/Gateway/ChatWire.swift', 'Features/Chat/Session/ChatBackoff.swift',
     'Features/Chat/Gateway/Models/ConversationState.swift', 'Features/Chat/Gateway/Models/WireError.swift',
     'Features/Chat/Gateway/Models/WireCancel.swift', 'Features/Chat/Gateway/Models/WireLeaveAgent.swift',

@@ -32,6 +32,8 @@ enum ChatElementIdentifier {
     /// Pesan foto galeri berformat lain di sheet lampiran.
     static let attachmentFormatError = "chat.attachment.formatError"
 
+    static let referenceLetterLoading = "chat.referenceLetter.loading"
     static let referenceLetterForm = "chat.referenceLetter.form"
+    static let referenceLetterCancelled = "chat.referenceLetter.cancelled"
     static let referenceLetterSuccess = "chat.referenceLetter.success"
 }

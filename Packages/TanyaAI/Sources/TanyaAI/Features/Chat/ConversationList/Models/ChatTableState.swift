@@ -19,4 +19,6 @@ struct ChatTableState: Equatable {
     var latestJumpID: UUID?
     var historyPhase = ChatHistoryPhase.loading
     var rowInputs = ChatRowInputs()
+    /// Hanya fase, field yang tampak, dan error inline yang memengaruhi pengukuran baris.
+    var referenceLetterLayouts: [ChatListItemID: ReferenceLetterLayout] = [:]
 }

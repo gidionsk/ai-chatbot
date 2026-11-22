@@ -60,6 +60,7 @@ enum ChatCopy: String, CaseIterable {
     /// TODO: Copy sementara dari tim iOS; ganti dengan copy final UI/UX.
     case attachmentUnsupportedFormat = "attachment.unsupportedFormat"
 
+    /// TODO: Copy sementara dari tim iOS; ganti dengan copy final UI/UX. Berlaku untuk semua key referenceLetter.
     case referenceLetterTitle = "referenceLetter.title"
     case referenceLetterConfirm = "referenceLetter.confirm"
     case referenceLetterCancel = "referenceLetter.cancel"
@@ -76,9 +77,9 @@ enum ChatCopy: String, CaseIterable {
     case referenceLetterEmail = "referenceLetter.email"
     case referenceLetterAddress = "referenceLetter.address"
     case referenceLetterAccountCount = "referenceLetter.accountCount"
-    case referenceLetterRetry = "referenceLetter.retry"
     case referenceLetterPIN = "referenceLetter.PIN"
     case referenceLetterDeleteDigit = "referenceLetter.deleteDigit"
+    case referenceLetterPINBlocked = "referenceLetter.pinBlocked"
     case referenceLetterSubmitFailed = "referenceLetter.submitFailed"
     case referenceLetterComplete = "referenceLetter.complete"
     case referenceLetterCancelled = "referenceLetter.cancelled"

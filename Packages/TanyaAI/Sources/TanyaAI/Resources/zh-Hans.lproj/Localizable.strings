@@ -47,7 +47,7 @@
 "attachment.unsupportedFormat" = "不支持此照片格式。请选择 HEIC、JPG 或 PNG 照片。";
 
 "referenceLetter.title" = "申请银行资信证明";
-"referenceLetter.confirm" = "提交";
+"referenceLetter.confirm" = "确认";
 "referenceLetter.cancel" = "取消";
 "referenceLetter.choose" = "选择";
 "referenceLetter.required" = "请填写此栏。";
@@ -62,9 +62,9 @@
 "referenceLetter.email" = "接收邮箱";
 "referenceLetter.address" = "邮寄地址";
 "referenceLetter.accountCount" = "已选择 %ld 个账户";
-"referenceLetter.retry" = "重试加载资信证明表单";
 "referenceLetter.PIN" = "请输入 6 位交易密码";
 "referenceLetter.deleteDigit" = "删除数字";
+"referenceLetter.pinBlocked" = "你的交易密码已锁定。";
 "referenceLetter.submitFailed" = "无法提交申请。请重试。";
 "referenceLetter.complete" = "资信证明申请已提交。";
 "referenceLetter.cancelled" = "资信证明申请已取消。";

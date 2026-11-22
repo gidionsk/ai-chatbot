@@ -47,7 +47,7 @@
 "attachment.unsupportedFormat" = "Format foto tidak didukung. Pilih foto HEIC, JPG, atau PNG.";
 
 "referenceLetter.title" = "Pesan Surat Referensi";
-"referenceLetter.confirm" = "Kirim";
+"referenceLetter.confirm" = "Konfirmasi";
 "referenceLetter.cancel" = "Batalkan";
 "referenceLetter.choose" = "Pilih";
 "referenceLetter.required" = "Mohon lengkapi kolom ini.";
@@ -62,9 +62,9 @@
 "referenceLetter.email" = "Email pengiriman";
 "referenceLetter.address" = "Alamat pengiriman";
 "referenceLetter.accountCount" = "Terpilih %ld rekening";
-"referenceLetter.retry" = "Muat ulang form surat referensi";
 "referenceLetter.PIN" = "Masukkan 6 digit PIN Transaksi kamu";
 "referenceLetter.deleteDigit" = "Hapus angka";
+"referenceLetter.pinBlocked" = "PIN transaksi kamu diblokir.";
 "referenceLetter.submitFailed" = "Permintaan belum berhasil dikirim. Coba lagi.";
 "referenceLetter.complete" = "Kamu telah melakukan pemesanan surat referensi.";
 "referenceLetter.cancelled" = "Kamu membatalkan pemesanan surat referensi.";

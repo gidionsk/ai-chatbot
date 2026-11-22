@@ -22,9 +22,11 @@ public final class TanyaAIBridge: ObservableObject {
     /// Pertanyaan terbaru yang dikirim dari halaman ini. Hanya berubah saat kirim, jadi salinan dari stream atau
     /// bubble gagal yang tersisa tidak dianggap kiriman baru.
     @Published var latestSentQuestionID: String?
-    /// Pesan terlihat terbaru di luar turn nasabah dan salinan pertanyaan dari halaman ini.
+    /// Pesan terlihat terbaru yang datang di luar turn nasabah, termasuk pertanyaan dari kanal lain. Jawaban turn
+    /// sendiri dan salinan pertanyaan dari halaman ini tidak dihitung, karena pertanyaannya tetap parkir.
     @Published private(set) var latestIncomingMessageID: String?
-    /// ID salinan pertanyaan dari halaman ini, juga saat tidak ada turn (antre atau dengan agen).
+    /// ID pesan gateway yang merupakan salinan pertanyaan dari halaman ini. Selama antre atau dengan agen tidak ada
+    /// turn, jadi hanya ini yang membedakan salinan kiriman sendiri dari pesan masuk.
     var sentMessageIDs: Set<String> = []
     /// True setelah history pertama selesai; sebelum itu halaman menampilkan loading, bukan sambutan.
     @Published private(set) var isHistoryLoaded = false
@@ -57,12 +59,16 @@ public final class TanyaAIBridge: ObservableObject {
     var userTypingRefresh: Task<Void, Never>?
     /// Satu-satunya pengirim `typing` yang berjalan; selesai saat tidak ada sinyal yang menunggu.
     var userTypingDelivery: Task<Void, Never>?
+    /// Percakapan dari `/v1/chat/init` terakhir; nil sebelum init pertama berhasil.
     var conversationID: String?
+    /// `id` event SSE terbesar yang sudah diterima (termasuk `turn_end`), bagian dari `Last-Event-ID`.
     var eventCursor: Int?
+    /// Loop sambungan yang sedang berjalan; dibatalkan saat sesi habis agar stream yang terbuka ikut ditutup.
     var connectionTask: Task<Void, Never>?
     let transport: TanyaAIChatTransport
     let services: TanyaAIIntentServices
-    @Published var referenceLetters: [String: ReferenceLetterForm] = [:]
+    var referenceLetters: [String: ReferenceLetterForm] = [:]
+    @Published var referenceLetterLayouts: [ChatListItemID: ReferenceLetterLayout] = [:]
     @Published var isSubmittingReferenceLetter = false
     let onSessionExpired: (() -> Void)?
     let onConnectionFailed: ((Error) -> Void)?
@@ -73,20 +79,26 @@ public final class TanyaAIBridge: ObservableObject {
     /// sambungan; host menampilkan error sesuai polanya. Error berupa `TanyaAITransportError` dari transport, atau
     /// `DecodingError` bila respons init/history tidak terbaca.
     public convenience init(
-        transport: TanyaAIChatTransport, services: TanyaAIIntentServices = TanyaAIIntentServices(),
+        transport: TanyaAIChatTransport,
+        services: TanyaAIIntentServices = TanyaAIIntentServices(),
         onSessionExpired: (() -> Void)? = nil,
         onConnectionFailed: ((Error) -> Void)? = nil
     ) {
         self.init(
-            transport: transport, onSessionExpired: onSessionExpired, onConnectionFailed: onConnectionFailed,
-            sleep: ChatBackoff.sleep(seconds:), services: services
+            transport: transport,
+            onSessionExpired: onSessionExpired,
+            onConnectionFailed: onConnectionFailed,
+            sleep: ChatBackoff.sleep(seconds:),
+            services: services
         )
     }
 
     /// `sleep` disuntikkan test agar jeda reconnect instan.
     init(
-        transport: TanyaAIChatTransport, onSessionExpired: (() -> Void)?,
-        onConnectionFailed: ((Error) -> Void)? = nil, sleep: @escaping (TimeInterval) async throws -> Void,
+        transport: TanyaAIChatTransport,
+        onSessionExpired: (() -> Void)?,
+        onConnectionFailed: ((Error) -> Void)? = nil,
+        sleep: @escaping (TimeInterval) async throws -> Void,
         services: TanyaAIIntentServices = TanyaAIIntentServices()
     ) {
         self.transport = transport
@@ -94,46 +106,6 @@ public final class TanyaAIBridge: ObservableObject {
         self.onSessionExpired = onSessionExpired
         self.onConnectionFailed = onConnectionFailed
         self.sleep = sleep
-    }
-}
-
-// MARK: - State
-
-extension TanyaAIBridge {
-    /// Sejak kirim sampai `turn_end` pertanyaan itu; kirim dan shortcut nonaktif.
-    var isAwaitingReply: Bool { turn.isAwaiting }
-
-    /// Stop sejak kirim sampai `turn_end`.
-    var turnPhase: ChatTurnPhase { turn.phase }
-
-    /// Daftar tampil: pesan gateway dengan pertanyaan lokal di posisi saat dikirim.
-    var rows: [ChatRow] { messages.rows(with: localQuestions) }
-
-    /// Replay stream dimulai setelah pesan atau event terakhir yang sudah diterima.
-    var lastEventID: String? {
-        [messages.latestSeq, eventCursor].compactMap { $0 }.max().map(String.init)
-    }
-
-    /// Loading hanya selama pembukaan pertama masih berjalan; gagal permanen atau sesi habis menghentikannya.
-    var isLoadingHistory: Bool { !isHistoryLoaded && connection == .connecting }
-
-    var historyPhase: ChatHistoryPhase {
-        guard isHistoryLoaded else { return .loading }
-        return messages.isEmpty ? .empty : .restored
-    }
-
-    /// Sambutan hanya untuk percakapan kosong; bubble pertanyaan pertama langsung menggantikannya.
-    var isWelcomeVisible: Bool { isHistoryLoaded && messages.isEmpty && localQuestions.isEmpty }
-
-    /// Saran hanya dari jawaban terakhir, dan hilang selama menunggu jawaban berikutnya.
-    var followUps: [String] {
-        guard !isAwaitingReply, let latest = messages.last, latest.author == .assistant else { return [] }
-        return latest.followUps
-    }
-
-    /// Bisa mengirim setelah init berhasil, juga selama menyambung ulang; tidak setelah ditutup atau sesi habis.
-    var isReady: Bool {
-        conversationID != nil && connection != .closed && connection != .expired
     }
 }
 
@@ -217,7 +189,7 @@ extension TanyaAIBridge {
         guard self.conversationID == nil || self.conversationID == conversationID else {
             messages = history.merging([])
             localQuestions = []
-            referenceLetters = [:]
+            resetReferenceLetters()
             sentMessageIDs = []
             liveAgentNotices = []
             streamedHandoverSeqs = []

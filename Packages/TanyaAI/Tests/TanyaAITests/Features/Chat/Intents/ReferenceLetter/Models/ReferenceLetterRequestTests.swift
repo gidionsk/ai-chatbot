@@ -67,6 +67,19 @@ struct ReferenceLetterRequestTests {
         #expect(draft.value(for: .address) == nil)
         #expect(draft[text: .email] == Self.inquiry.decryptedEmail)
     }
+
+    @Test(arguments: [false, true])
+    @MainActor
+    func deliveryAndLanguageFollowInquiry(isLanguageAvailable: Bool) {
+        let inquiry = ReferenceLetterServiceDouble.makeInquiry(isLanguageAvailable: isLanguageAvailable)
+        var draft = IntentFormState(rules: ReferenceLetterFieldID.rules(inquiry: inquiry))
+        #expect(draft.visibleFields.first { $0.id == .email }?.isEnabled == false)
+        #expect((draft.value(for: .language) != nil) == isLanguageAvailable)
+        draft.select(["HARDCOPY"], for: .format)
+        #expect(draft.value(for: .email) == nil)
+        #expect(draft[text: .address] == inquiry.address)
+        #expect(draft.visibleFields.first { $0.id == .address }?.isEnabled == false)
+    }
 }
 
 private extension ReferenceLetterRequestTests {

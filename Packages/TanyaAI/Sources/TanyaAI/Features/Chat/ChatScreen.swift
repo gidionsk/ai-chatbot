@@ -8,17 +8,23 @@
 import DesignKit
 import SwiftUI
 
-/// Halaman chat; draft composer dan koneksi gateway dimiliki pemiliknya masing-masing.
+/// Halaman chat: fitur ini memiliki header-nya sendiri, draft hidup di `ComposerSection`, dan `content` disisipkan
+/// pemakai.
+/// `welcome` (dari BE) hanya tampil bila history kosong; sebelum history pertama selesai, loading di tengah.
+/// Shortcut yang diketuk dikirim lewat `bridge` seperti chat.
+/// Selama halaman tampil, `bridge` tersambung ke gateway. Setelah kirim, bubble pertanyaan langsung tampil dan
+/// tombol menjadi stop sampai jawaban selesai; shortcut nonaktif selama menunggu.
 @MainActor
 public struct ChatScreen<Content: View>: View {
     @Environment(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
     @Environment(\.designColors) private var colors
-    @ObservedObject var bridge: TanyaAIBridge
+    @ObservedObject private var bridge: TanyaAIBridge
     @State private var scrollProgress = CGFloat.zero
     @State private var isLatestVisible = true
     @State private var latestJumpID: UUID?
-    @State var sheet: ChatSheet?
+    /// Bottom sheet yang sedang tampil; nil = tertutup.
+    @State private var sheet: ChatSheet?
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
@@ -54,23 +60,16 @@ public struct ChatScreen<Content: View>: View {
         .modifier(
             ChatSheetModifier(
                 sheet: $sheet,
+                bridge: bridge,
                 attachmentSession: isAgentSession ? bridge.agentSessionKey : nil,
                 leaveSession: isBannerVisible ? bridge.agentSessionKey : nil,
-                isDismissable: !bridge.isSubmittingReferenceLetter,
-                intentSheet: referenceLetterSheet,
                 onPick: attach,
                 onLeave: leave
             )
         )
         // Swipe-back milik navigasi host, jadi host yang menahannya selama sheet terbuka.
         .onChange(of: sheet != nil) { onSheetChange?($0) }
-        .onChange(of: bridge.conversationID) { _ in
-            if sheet?.referenceLetterMessageID != nil { sheet = nil }
-        }
-        .onDisappear {
-            if sheet?.referenceLetterMessageID != nil { sheet = nil }
-            onSheetChange?(false)
-        }
+        // Dibatalkan otomatis saat halaman hilang; tampil lagi = init ulang dan mengejar history.
         .task { await bridge.run() }
     }
 
@@ -97,6 +96,8 @@ public struct ChatScreen<Content: View>: View {
         }
     }
 
+    /// Mengambang di tengah, tepat di atas composer, selama ujung daftar di luar layar.
+    /// TODO: Konfirmasi jarak ke composer dengan Figma; sementara perkiraan dari foto.
     @ViewBuilder
     private var latestButton: some View {
         if !isLatestVisible {
@@ -124,6 +125,8 @@ public struct ChatScreen<Content: View>: View {
         .environment(\.locale, locale)
     }
 
+    /// Hanya saat pertama dibuka; menyambung ulang tidak menutupi pesan yang sudah tampil. Gagal permanen
+    /// menghentikan loading; error ditampilkan host lewat `onConnectionFailed`/`onSessionExpired`.
     @ViewBuilder
     private var loadingIndicator: some View {
         if bridge.isLoadingHistory {
@@ -148,8 +151,6 @@ public struct ChatScreen<Content: View>: View {
 // MARK: - Helpers
 
 private extension ChatScreen {
-    var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
-
     var isBannerVisible: Bool { bridge.isAgentSessionBannerVisible }
 
     /// Lampiran hanya selama `AGENT_ACTIVE`; bar sesi agen sudah tampil sejak sapaan otomatis selama antre.
@@ -163,32 +164,19 @@ private extension ChatScreen {
     }
 
     var tableState: ChatTableState {
-        let notices = bridge.visibleLiveAgentNotices
-        return ChatTableState(
-            items: listItems(notices: notices), sentQuestionID: bridge.latestSentQuestionID,
-            incomingMessageID: bridge.incomingContentID(latestNotice: notices.last), latestJumpID: latestJumpID,
+        ChatTableState(
+            items: bridge.listItems(
+                isEnabled: isEnabled,
+                isWelcomeAvailable: welcome != nil,
+                isContentInjected: Content.self != EmptyView.self
+            ),
+            sentQuestionID: bridge.latestSentQuestionID,
+            incomingMessageID: bridge.incomingContentID(latestNotice: bridge.visibleLiveAgentNotices.last),
+            latestJumpID: latestJumpID,
             historyPhase: bridge.historyPhase,
-            rowInputs: ChatRowInputs(welcome: welcome, locale: locale, colors: colors)
+            rowInputs: ChatRowInputs(welcome: welcome, locale: locale, colors: colors),
+            referenceLetterLayouts: bridge.referenceLetterLayouts
         )
-    }
-
-    func listItems(notices: [LiveAgentNotice]) -> [ChatListItem] {
-        var items = [ChatListItem](rows: bridge.rows)
-            .inserting(notices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgent)
-            .appendingAnswerLoading(isAwaitingReply: bridge.isAwaitingReply)
-        if welcome != nil, bridge.isWelcomeVisible {
-            items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
-        }
-        if bridge.isAgentTyping {
-            items.append(.agentTyping)
-        }
-        if !bridge.followUps.isEmpty {
-            items.append(.followUps(bridge.followUps, isEnabled: isEnabled && isSendable))
-        }
-        if Content.self != EmptyView.self {
-            items.append(.content)
-        }
-        return items
     }
 }
 
@@ -200,6 +188,7 @@ private extension ChatScreen {
         onBack()
     }
 
+    /// True bila bubble pertanyaan tampil; false = ditolak dan draft tetap.
     func send(_ text: String) -> Bool {
         bridge.send(text) != nil
     }
@@ -214,10 +203,12 @@ private extension ChatScreen {
         latestJumpID = UUID()
     }
 
+    /// Saran lanjutan dikirim sebagai chat, sama seperti shortcut.
     func selectFollowUp(_ question: String) {
         bridge.send(question)
     }
 
+    /// Draft composer berisi atau kosong; diteruskan ke agen sebagai sinyal mengetik.
     func typingChanged(_ isTyping: Bool) {
         bridge.userTypingChanged(isTyping)
     }
@@ -232,16 +223,20 @@ private extension ChatScreen {
         Task { [bridge] in await bridge.leaveAgent(from: session) }
     }
 
+    /// Lampiran (PDF/gambar) hanya saat dilayani agen; nil = tombol tidak tampil. Ketuk = bottom sheet Galeri / File.
     var attachAction: (() -> Void)? {
         guard isAgentSession else { return nil }
         return { sheet = .attachment(bridge.agentSessionKey, isFormatRejected: false) }
     }
 
-    /// TODO: Upload dan preview setelah endpoint dan parameter stream tersedia pada gateway.
+    /// File pilihan nasabah. Salinannya langsung dibuang supaya tidak menumpuk di folder sementara.
+    /// TODO: Upload lewat transport dan kartu preview setelah endpoint upload dan parameter stream ada di contract
+    /// gateway; saat itu file dibuang oleh pemilik upload setelah selesai (atau bila agen sudah tidak melayani).
     func attach(_ file: URL) {
         FileManager.default.discardChatAttachment(at: file)
     }
 
+    /// Shortcut dikirim sebagai chat; bubble pertanyaan langsung tampil.
     func select(_ shortcut: WelcomeShortcut) {
         bridge.send(shortcut.prompt)
     }

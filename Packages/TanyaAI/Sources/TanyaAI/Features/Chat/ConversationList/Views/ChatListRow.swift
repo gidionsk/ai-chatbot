@@ -79,7 +79,14 @@ private extension ChatListRow {
     @ViewBuilder
     func referenceLetterCard(for message: ChatMessage) -> some View {
         if let referenceLetter, message.successID == nil || referenceLetter.receipt != nil {
-            ReferenceLetterCard(form: referenceLetter, messageID: message.id, onSheet: onSheet)
+            if referenceLetter.layout != .hidden {
+                ReferenceLetterCard(
+                    form: referenceLetter,
+                    messageID: message.id,
+                    onSheet: onSheet,
+                    onOpenLink: actions.onOpenLink
+                )
+            }
         } else {
             ReferenceLetterCard.status(
                 copy: message.successID == nil ? .referenceLetterHistory : .referenceLetterComplete,

@@ -11,36 +11,30 @@ import SwiftUI
 @MainActor
 struct ReferenceLetterCard: View {
     @Environment(\.locale) private var locale
-    @Environment(\.designColors) private var colors
     @ObservedObject var form: ReferenceLetterForm
     let messageID: String
     let onSheet: (ChatSheet) -> Void
+    let onOpenLink: (String) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
             if let receipt = form.receipt {
                 Self.status(title: receipt.title, copy: .referenceLetterComplete, locale: locale)
                     .accessibilityIdentifier(ChatElementIdentifier.referenceLetterSuccess)
-                if !receipt.message.isEmpty {
-                    Text(receipt.message)
-                        .designFont(.body)
-                        .foregroundColor(colors.colorsTextPrimaryDark)
+                if let document = form.acknowledgement {
+                    MarkdownContent(document: document, onOpenLink: onOpenLink)
                 }
-            } else if form.isCancelled {
+            } else if form.layout == .cancelled {
                 Self.status(copy: .referenceLetterCancelled, locale: locale)
-            } else if let inquiry = form.inquiry {
-                if !inquiry.introduction.isEmpty {
-                    Text(inquiry.introduction)
-                        .designFont(.body)
-                        .foregroundColor(colors.colorsTextPrimaryDark)
+                    .accessibilityIdentifier(ChatElementIdentifier.referenceLetterCancelled)
+            } else if case .form = form.layout {
+                if let document = form.introduction {
+                    MarkdownContent(document: document, onOpenLink: onOpenLink)
                 }
                 fields
-            } else if form.isInquiryFailed {
-                FilledButton(title: String(ChatCopy.referenceLetterRetry, locale: locale), variant: .outlined) {
-                    Task { await form.load() }
-                }
-            } else {
+            } else if form.layout == .loading {
                 LoadingIndicator()
+                    .accessibilityIdentifier(ChatElementIdentifier.referenceLetterLoading)
             }
         }
     }
@@ -95,77 +89,5 @@ private extension ReferenceLetterCard {
             )
         }
         return options.first?.title ?? String()
-    }
-}
-
-@MainActor
-struct ReferenceLetterSheetContent: View {
-    @Environment(\.locale) private var locale
-    @ObservedObject var form: ReferenceLetterForm
-    @State private var pin = String()
-    let sheet: ChatSheet
-    let isSubmitting: Bool
-    let onClose: () -> Void
-    let onSubmit: (String) -> Void
-
-    var body: some View {
-        switch sheet {
-        case .attachment, .leaveAgent:
-            EmptyView()
-        case .referenceLetterChoices(_, let field):
-            IntentFormOptions(
-                state: $form.draft,
-                fieldID: field,
-                title: String(field.label, locale: locale),
-                confirmLabel: String(ChatCopy.referenceLetterChoose, locale: locale),
-                onSelect: onClose
-            )
-        case .referenceLetterPIN:
-            PinEntry(
-                title: String(ChatCopy.referenceLetterPIN, locale: locale),
-                pin: $pin,
-                length: ChatWire.referenceLetterPinLength,
-                error: errorText,
-                deleteLabel: String(ChatCopy.referenceLetterDeleteDigit, locale: locale),
-                onComplete: complete
-            )
-            .disabled(isSubmitting)
-            .onChange(of: pin.isEmpty) { isEmpty in
-                if !isEmpty { form.clearSubmissionError() }
-            }
-            .onDisappear { pin = String() }
-        }
-    }
-}
-
-private extension ReferenceLetterSheetContent {
-    var errorText: String? {
-        guard form.isSubmissionFailed else { return nil }
-        return form.submissionError ?? String(ChatCopy.referenceLetterSubmitFailed, locale: locale)
-    }
-
-    func complete(_ value: String) {
-        pin = String()
-        onSubmit(value)
-    }
-}
-
-extension ChatScreen {
-    @ViewBuilder
-    func referenceLetterSheet(_ item: ChatSheet) -> some View {
-        if let messageID = item.referenceLetterMessageID, let form = bridge.referenceLetters[messageID] {
-            ReferenceLetterSheetContent(
-                form: form,
-                sheet: item,
-                isSubmitting: bridge.isSubmittingReferenceLetter,
-                onClose: { sheet = nil },
-                onSubmit: { pin in
-                    Task {
-                        let isSubmitted = await bridge.submitReferenceLetter(pin: pin, messageID: messageID)
-                        if isSubmitted, sheet == item { sheet = nil }
-                    }
-                }
-            )
-        }
     }
 }

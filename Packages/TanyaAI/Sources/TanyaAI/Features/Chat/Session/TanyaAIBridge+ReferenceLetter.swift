@@ -16,22 +16,41 @@ extension TanyaAIBridge {
             message.status == .active, message.successID == nil, referenceLetters[message.id] == nil,
             !messages.contains(where: { $0.id == message.id })
         else { return }
-        let form = ReferenceLetterForm(service: service)
+        let form = ReferenceLetterForm(service: service) { [weak self] sender, layout in
+            guard let self, self.referenceLetters[message.id] === sender else { return }
+            self.referenceLetterLayouts[.message(message.id)] = layout
+        }
         referenceLetters[message.id] = form
+        referenceLetterLayouts[.message(message.id)] = .loading
         Task { await form.load() }
     }
 
-    func submitReferenceLetter(pin: String, messageID: String) async -> Bool {
+    func resetReferenceLetters() {
+        referenceLetters.removeAll()
+        referenceLetterLayouts.removeAll()
+    }
+
+    func submitReferenceLetter(pin: String, messageID: String) async throws -> Bool {
         guard isReady, !isSubmittingReferenceLetter,
             let form = referenceLetters[messageID],
             messages.contains(where: { $0.id == messageID && $0.status == .active && $0.successID == nil })
         else { return false }
         isSubmittingReferenceLetter = true
         defer { isSubmittingReferenceLetter = false }
-        guard let receipt = await form.submit(pin: pin), referenceLetters[messageID] === form else { return false }
+        let receipt: ReferenceLetterReceipt?
+        do {
+            receipt = try await form.submit(pin: pin)
+        } catch {
+            guard referenceLetters[messageID] === form else { return false }
+            throw error
+        }
+        guard let receipt, referenceLetters[messageID] === form else { return false }
         if let successID = receipt.successID, !successID.isEmpty {
             // ACK sudah berhasil. Gagal memasang receipt gateway tidak mengulang pengajuan.
-            Task { try? await attachSuccessID(successID, toMessageID: messageID) }
+            Task {
+                guard referenceLetters[messageID] === form else { return }
+                try? await attachSuccessID(successID, toMessageID: messageID)
+            }
         }
         return true
     }

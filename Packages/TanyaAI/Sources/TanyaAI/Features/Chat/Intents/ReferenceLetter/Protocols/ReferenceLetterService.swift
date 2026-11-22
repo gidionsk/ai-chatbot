@@ -13,23 +13,13 @@ public protocol ReferenceLetterService: AnyObject {
 
     /// Host memverifikasi PIN memakai mekanisme existing, lalu memanggil ACK hanya setelah sukses.
     /// PIN diteruskan sekali dan tidak boleh disimpan atau dicatat. Gunakan onlineSessionID untuk mengenali
-    /// pengajuan yang sama bila hasil ACK belum pasti. LocalizedError boleh membawa pesan aman untuk nasabah.
+    /// pengajuan yang sama bila hasil ACK belum pasti. Petakan kegagalan ke `ReferenceLetterSubmissionError`.
     /// successID diisi hanya jika host memiliki ID transaksi yang valid untuk chat gateway.
     func submit(
         _ request: ReferenceLetterRequest,
         pin: String
     ) async throws -> ReferenceLetterReceipt
-}
 
-/// Kartu hasil ACK dan ID bukti transaksi bila disediakan host.
-public struct ReferenceLetterReceipt {
-    public let title: String
-    public let message: String
-    public let successID: String?
-
-    public init(title: String, message: String, successID: String? = nil) {
-        self.title = title
-        self.message = message
-        self.successID = successID
-    }
+    /// Dipanggil saat isi sheet PIN sudah hilang. Host menampilkan bottom sheet error-nya sendiri.
+    func presentAcknowledgementError(_ error: Error)
 }
