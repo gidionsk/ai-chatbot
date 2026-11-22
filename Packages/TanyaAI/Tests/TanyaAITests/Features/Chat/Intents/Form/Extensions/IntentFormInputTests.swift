@@ -12,10 +12,11 @@ import Testing
 struct IntentFormInputTests {
     @Test
     func typedInputsReadCurrentStateAndWriteThroughItsUpdateAPI() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text("Initial"), isRequired: true),
-            FormField(id: .toggle, initialValue: .toggle(false))
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .requiredText, initialValue: .text("Initial"), isRequired: true),
+                FormField(id: .toggle, initialValue: .toggle(false))
+            ]))
         #expect(state[text: .requiredText] == "Initial")
         #expect(!state[toggle: .toggle])
         state[text: .requiredText] = String()
@@ -34,34 +35,27 @@ struct IntentFormInputTests {
 
     @Test
     func disabledHiddenAndMismatchedInputsCannotChangeState() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .disabledText, initialValue: .text("Stored"), isEnabled: false),
-            FormField(id: .parentToggle, initialValue: .toggle(false)),
-            FormField(
-                id: .childText,
-                initialValue: .text(String()),
-                condition: FormFieldCondition(fieldID: .parentToggle, value: .toggle(true))
-            )
-        ])
-        state[text: .disabledText] = "Ignored"
-        state[text: .childText] = "Hidden"
-        state[text: .parentToggle] = "Wrong kind"
-        state[toggle: .disabledText] = true
-        #expect(state[text: .childText].isEmpty)
-        #expect(!state[toggle: .disabledText])
-        #expect(state.value(for: .disabledText) == .text("Stored"))
-        #expect(state.value(for: .childText) == nil)
-        #expect(state.value(for: .parentToggle) == .toggle(false))
+        var state = IntentFormState(rules: MockLetterFormRules.rules)
+        state[text: .email] = "Ignored"
+        state[text: .address] = "Hidden"
+        state[text: .format] = "Wrong kind"
+        state[toggle: .email] = true
+        #expect(state[text: .address].isEmpty)
+        #expect(!state[toggle: .email])
+        #expect(state.value(for: .email) == .text("stored@example.test"))
+        #expect(state.value(for: .address) == nil)
+        #expect(state.value(for: .format) == .singleSelection("softcopy"))
     }
 
     @Test
     func optionCallbacksUseTheFieldKindAndNormalizeAgainstHostChoices() {
         let options = [FormOption(code: "01", title: "First"), FormOption(code: "02", title: "Second")]
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .firstChoice, initialValue: .singleSelection(nil), options: options),
-            FormField(id: .secondChoice, initialValue: .multipleSelection([]), options: options),
-            FormField(id: .requiredText, initialValue: .text("Text"))
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .firstChoice, initialValue: .singleSelection(nil), options: options),
+                FormField(id: .secondChoice, initialValue: .multipleSelection([]), options: options),
+                FormField(id: .requiredText, initialValue: .text("Text"))
+            ]))
         state.select(["02", "01"], for: .firstChoice)
         state.select(["02", "unknown", "01", "02"], for: .secondChoice)
         state.select(["01"], for: .requiredText)

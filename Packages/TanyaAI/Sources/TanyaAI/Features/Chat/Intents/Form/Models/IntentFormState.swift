@@ -8,26 +8,30 @@
 /// State bersama per instance form, untuk disimpan pemilik sesi di luar sel table.
 /// Tidak memegang service, sheet, atau aturan validasi khusus satu intent.
 struct IntentFormState<FieldID: Hashable> {
-    let fields: [FormField<FieldID>]
+    private let rules: IntentFormRules<FieldID>
+    private(set) var visibleFields: [FormField<FieldID>] = []
     private(set) var values: [FieldID: FormFieldValue] = [:]
     private(set) var invalidFieldIDs: Set<FieldID> = []
 
-    init(fields: [FormField<FieldID>]) {
-        self.fields = fields
-        values = refreshedValues()
+    init(rules: IntentFormRules<FieldID>) {
+        self.rules = rules
+        (visibleFields, values) = resolvedForm(using: rules)
     }
-
-    var visibleFields: [FormField<FieldID>] { fields.filter { values[$0.id] != nil } }
 
     func value(for fieldID: FieldID) -> FormFieldValue? { values[fieldID] }
 
     /// Perubahan input tidak menambah error baru; hanya membersihkan error lama yang sudah teratasi.
     mutating func update(_ value: FormFieldValue, for fieldID: FieldID) {
-        guard let field = fields.first(where: { $0.id == fieldID }), field.isEnabled,
-            values[fieldID] != nil, let normalized = normalizedValue(value, for: field)
+        guard let field = visibleFields.first(where: { $0.id == fieldID }), field.isEnabled,
+            let previous = values[fieldID], let normalized = normalizedValue(value, for: field)
         else { return }
         values[fieldID] = normalized
-        values = refreshedValues()
+        if normalized != previous {
+            for descendant in resetDescendants(of: fieldID, using: rules) {
+                values.removeValue(forKey: descendant)
+            }
+        }
+        (visibleFields, values) = resolvedForm(using: rules)
         invalidFieldIDs.formIntersection(invalidRequiredFields())
     }
 
@@ -40,6 +44,6 @@ struct IntentFormState<FieldID: Hashable> {
     mutating func reset() {
         values = [:]
         invalidFieldIDs = []
-        values = refreshedValues()
+        (visibleFields, values) = resolvedForm(using: rules)
     }
 }

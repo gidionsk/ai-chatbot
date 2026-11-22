@@ -12,15 +12,13 @@ struct FormField<FieldID: Hashable> {
     let options: [FormOption]
     let isRequired: Bool
     let isEnabled: Bool
-    let condition: FormFieldCondition<FieldID>?
 
     init(
         id: FieldID,
         initialValue: FormFieldValue,
         options: [FormOption] = [],
         isRequired: Bool = false,
-        isEnabled: Bool = true,
-        condition: FormFieldCondition<FieldID>? = nil
+        isEnabled: Bool = true
     ) {
         self.id = id
         self.initialValue = initialValue
@@ -29,6 +27,5 @@ struct FormField<FieldID: Hashable> {
         self.options = options.filter { !$0.code.isEmpty && seenCodes.insert($0.code).inserted }
         self.isRequired = isRequired
         self.isEnabled = isEnabled
-        self.condition = condition
     }
 }

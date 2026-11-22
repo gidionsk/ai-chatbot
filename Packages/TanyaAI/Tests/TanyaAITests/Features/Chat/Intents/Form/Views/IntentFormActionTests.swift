@@ -14,11 +14,12 @@ import Testing
 struct IntentFormActionTests {
     @Test
     func confirmationStoresAllErrorsBeforeOpeningTheFirstInvalidChoice() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text(String()), isRequired: true),
-            FormField(id: .secondChoice, initialValue: .multipleSelection([]), isRequired: true),
-            FormField(id: .firstChoice, initialValue: .singleSelection(nil), isRequired: true)
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .requiredText, initialValue: .text(String()), isRequired: true),
+                FormField(id: .secondChoice, initialValue: .multipleSelection([]), isRequired: true),
+                FormField(id: .firstChoice, initialValue: .singleSelection(nil), isRequired: true)
+            ]))
         let binding = Binding(get: { state }, set: { state = $0 })
         var opened: [TestFormFieldID] = []
         var isConfirmed = false
@@ -37,10 +38,11 @@ struct IntentFormActionTests {
 
     @Test
     func aTextErrorDoesNotOpenAnUnrelatedChoiceOrConfirm() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text("   "), isRequired: true),
-            FormField(id: .firstChoice, initialValue: .singleSelection(nil))
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .requiredText, initialValue: .text("   "), isRequired: true),
+                FormField(id: .firstChoice, initialValue: .singleSelection(nil))
+            ]))
         let binding = Binding(get: { state }, set: { state = $0 })
         var opened: [TestFormFieldID] = []
         var isConfirmed = false
@@ -57,9 +59,10 @@ struct IntentFormActionTests {
 
     @Test
     func aValidConfirmationCallsTheOwnerOnceAfterClearingErrors() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text(String()), isRequired: true)
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .requiredText, initialValue: .text(String()), isRequired: true)
+            ]))
         let binding = Binding(get: { state }, set: { state = $0 })
         let isInitiallyValid = state.validate()
         #expect(!isInitiallyValid)
@@ -80,10 +83,11 @@ struct IntentFormActionTests {
 
     @Test
     func cancellationRestoresDefaultsAndClearsErrorsBeforeNotifyingTheOwner() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text(String()), isRequired: true),
-            FormField(id: .toggle, initialValue: .toggle(false))
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .requiredText, initialValue: .text(String()), isRequired: true),
+                FormField(id: .toggle, initialValue: .toggle(false))
+            ]))
         let binding = Binding(get: { state }, set: { state = $0 })
         state[toggle: .toggle] = true
         let isValid = state.validate()

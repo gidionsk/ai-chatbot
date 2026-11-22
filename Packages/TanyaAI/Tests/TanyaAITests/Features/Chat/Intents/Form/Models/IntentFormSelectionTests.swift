@@ -12,9 +12,10 @@ import Testing
 struct IntentFormSelectionTests {
     @Test
     func singleChoiceOnlyKeepsACodeFromItsOptions() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .firstChoice, initialValue: .singleSelection(nil), options: options)
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .firstChoice, initialValue: .singleSelection(nil), options: options)
+            ]))
         state.update(.singleSelection("b"), for: .firstChoice)
         #expect(state.value(for: .firstChoice) == .singleSelection("b"))
         state.update(.singleSelection("missing"), for: .firstChoice)
@@ -23,9 +24,10 @@ struct IntentFormSelectionTests {
 
     @Test
     func multipleChoiceRemovesUnknownAndDuplicateCodesInHostOrder() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .firstChoice, initialValue: .multipleSelection([]), options: options)
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .firstChoice, initialValue: .multipleSelection([]), options: options)
+            ]))
         state.update(.multipleSelection(["b", "missing", "b", "a"]), for: .firstChoice)
         #expect(state.value(for: .firstChoice) == .multipleSelection(["a", "b"]))
         state.update(.multipleSelection([]), for: .firstChoice)
@@ -39,17 +41,19 @@ struct IntentFormSelectionTests {
             FormOption(code: "a", title: "First"),
             FormOption(code: "a", title: "Duplicate")
         ]
-        let state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .firstChoice, initialValue: .multipleSelection(["a", ""]), options: choices)
-        ])
+        let state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .firstChoice, initialValue: .multipleSelection(["a", ""]), options: choices)
+            ]))
         #expect(state.value(for: .firstChoice) == .multipleSelection(["a"]))
     }
 
     @Test
     func inputWithTheWrongKindOrAnUnknownFieldDoesNotReplaceDraftValues() {
-        var state = IntentFormState<TestFormFieldID>(fields: [
-            FormField(id: .requiredText, initialValue: .text("Keep this"))
-        ])
+        var state = IntentFormState<TestFormFieldID>(
+            rules: .fixed([
+                FormField(id: .requiredText, initialValue: .text("Keep this"))
+            ]))
         state.update(.toggle(true), for: .requiredText)
         state.update(.text("Unknown field"), for: .childText)
         #expect(state.value(for: .requiredText) == .text("Keep this"))

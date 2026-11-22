@@ -192,9 +192,12 @@ Aturan yang berlaku untuk semua intent:
 Keputusan user 12 November 2026 untuk `request-bank-reference-letter` dan `buy-mutual-funds`; ini menggantikan
 rancangan lama (view model per intent di host, coordinator PIN existing):
 
-- Satu mesin form di TanyaAI untuk semua intent form; per intent hanya definisi field dan pemetaannya ke request
-  host. Jenis field: pilihan lewat bottom sheet (satu atau banyak), teks (termasuk nominal dan email), dan toggle.
-- Field bisa bergantung pada field lain; field yang disembunyikan di-reset. Field nonaktif bebas validasi.
+- Satu mesin form di TanyaAI untuk semua intent form. Setiap intent mendefinisikan field dan aturan form serta
+  memetakan hasil ke request host. Jenis field: pilihan lewat bottom sheet (satu atau banyak), teks (termasuk
+  nominal dan email), dan toggle.
+- Setiap intent menyediakan `IntentFormRules.fields` untuk field yang berlaku dan `fieldsToReset` untuk anak
+  langsung. Mesin menerapkan aturan tersebut, membuang nilai field tersembunyi, dan me-reset seluruh turunan
+  saat nilai induk berubah. Field nonaktif bebas validasi.
 - Validasi hanya saat Konfirmasi: teks kosong = error merah di bawahnya; pilihan kosong paling atas = sheet-nya
   langsung terbuka.
 - Daftar pilihan dan service (submit, PIN) milik host; sheet punya state loading selama host mengambil data.
@@ -229,8 +232,8 @@ TanyaAI/Bridging/
 └── TanyaAIIntentServices.swift        // struct publik: satu properti opsional per service intent
 
 TanyaAI/Features/Chat/Intents/Form/    // mesin bersama, bukan intent
-├── Models/                            // jenis field, nilai form, state per instance, status
-├── Extensions/                        // validasi saat Konfirmasi, dependensi dan reset field anak
+├── Models/                            // jenis field, nilai form, state per instance, kontrak IntentFormRules, status
+├── Extensions/                        // validasi saat Konfirmasi dan penerapan aturan form
 └── Views/                             // kartu form, isi sheet (OptionList, PinEntry), kartu selesai/batal
 
 TanyaAI/Features/Chat/Session/
@@ -250,7 +253,7 @@ TanyaAI/Features/Chat/Intents/ReferenceLetter/
 │   ├── ReferenceLetterFieldID.swift            // enum id field
 │   └── ReferenceLetterRequest.swift            // publik, nilai bertipe yang dikirim ke host
 └── Extensions/
-    ├── ReferenceLetterFieldID+Definition.swift // daftar field, jenis, default, dependensi
+    ├── ReferenceLetterFieldID+Definition.swift // IntentFormRules untuk field yang berlaku dan anak yang di-reset
     └── ReferenceLetterRequest+Values.swift     // nilai form menjadi request
 ```
 

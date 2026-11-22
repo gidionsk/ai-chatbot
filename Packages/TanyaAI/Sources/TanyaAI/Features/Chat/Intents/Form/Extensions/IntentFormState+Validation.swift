@@ -9,7 +9,7 @@ import Foundation
 
 extension IntentFormState {
     var firstInvalidChoiceID: FieldID? {
-        for field in fields where invalidFieldIDs.contains(field.id) {
+        for field in visibleFields where invalidFieldIDs.contains(field.id) {
             switch field.initialValue {
             case .singleSelection, .multipleSelection:
                 return field.id
@@ -22,7 +22,7 @@ extension IntentFormState {
 
     func invalidRequiredFields() -> Set<FieldID> {
         var invalid: Set<FieldID> = []
-        for field in fields where field.isRequired && field.isEnabled {
+        for field in visibleFields where field.isRequired && field.isEnabled {
             guard let value = values[field.id] else { continue }
             if !hasRequiredValue(value) { invalid.insert(field.id) }
         }
