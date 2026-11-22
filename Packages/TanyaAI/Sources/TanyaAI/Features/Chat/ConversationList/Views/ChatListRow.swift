@@ -35,21 +35,31 @@ struct ChatListRow<Content: View>: View {
             MessageRow(row: row, onOpenLink: actions.onOpenLink)
         case .followUps(let questions, let isEnabled):
             FollowUpsSection(questions: questions, isEnabled: isEnabled, onSelect: actions.onSelectFollowUp)
-        case .liveAgentNotice(let notice):
-            LiveAgentNoticeCard(kind: notice.kind)
-        case .leaveAgentQueue(let isEnabled):
-            FilledButton(
-                title: String(ChatCopy.leaveAgentQueue, locale: locale),
-                variant: .link,
-                onTap: actions.onLeaveAgentQueue
-            )
-            .disabled(!isEnabled)
-            .accessibilityIdentifier(ChatElementIdentifier.leaveAgentQueue)
+        case .liveAgentNotice(let notice, let isLeaveEnabled):
+            LiveAgentNoticeCard(kind: notice.kind, isLeaveEnabled: isLeaveEnabled, onLeave: actions.onLeaveAgentQueue)
         case .agentTyping:
-            AgentTypingIndicator()
+            // TODO: Desain indikator mengetik belum ada di Figma; sementara teks miring tanpa ikon.
+            StatusCaption(text: String(ChatCopy.liveAgentTyping, locale: locale), isItalic: true)
+                .accessibilityIdentifier(ChatElementIdentifier.agentTyping)
+        case .answerLoading:
+            answerLoading
         case .content:
             VStack(spacing: .zero) { content }
         }
+    }
+}
+
+// MARK: - Status
+
+private extension ChatListRow {
+    /// Titik berdenyut tanpa teks selama bot menyiapkan jawaban, supaya layar tidak terkesan diam; copy hanya untuk
+    /// VoiceOver.
+    var answerLoading: some View {
+        TypingDots()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement()
+            .accessibilityLabel(String(ChatCopy.answerLoading, locale: locale))
+            .accessibilityIdentifier(ChatElementIdentifier.answerLoading)
     }
 }
 

@@ -140,11 +140,12 @@ tersedia pada history/main.
   Utamakan reuse: pakai komponen yang ada atau perluas lewat varian/parameter. Buat komponen baru hanya bila
   tampilan/perilakunya memang beda jauh, dan tulis alasannya di PR.
   Tampilan yang dipakai di lebih dari satu tempat wajib jadi komponen DesignKit. View yang hanya dipakai sekali di
-  fitur (mis. `AgentTypingIndicator`, sapaan `WelcomeSection`) boleh tetap di TanyaAI dengan font dan warnanya
+  fitur (mis. sapaan `WelcomeSection`) boleh tetap di TanyaAI dengan font dan warnanya
   sendiri; dipindah ke DesignKit saat dipakai di tempat kedua.
   Sebelum membuat komponen, cek yang sudah ada: tombol selebar wadah = `FilledButton` (`.outlined` untuk aksi kedua
   bergaris seperti Batalkan, `.link` untuk teks kecil bergaris bawah), permukaan berisi/bergaris = `cardStyle`
-  (`fillColor` untuk latar lain), spinner = `LoadingIndicator`,
+  (`fillColor` untuk latar lain), spinner = `LoadingIndicator`, teks status kecil di bawah pesan = `StatusCaption`,
+  titik menunggu jawaban = `TypingDots`, bar gelap dengan tombol di bawah header = `ActionBanner`,
   garis pemisah = `SeparatorLine`.
   Nonaktif selalu lewat `.disabled(...)` dari pemakai; komponen membaca `@Environment(\.isEnabled)` untuk warnanya.
   Jangan menambah parameter `isEnabled` pada komponen: dua jalur untuk hal yang sama harus digabung lagi di setiap

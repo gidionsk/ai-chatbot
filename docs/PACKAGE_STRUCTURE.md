@@ -56,9 +56,15 @@ Contoh penempatan yang sudah diterapkan:
 - `Components/Inputs/PinEntry/`: isi sheet PIN (`PinEntry`): `Models/PinPadKey` susunan keypad dan aturan input,
   `Views` titik, tombol keypad, dan `PinEntry`.
 - `Components/Actions/FilledButton.swift`: tombol selebar wadah; `.regular` (Konfirmasi, Pilih), `.outlined` (aksi
-  kedua bergaris seukuran `.regular`, mis. Batalkan di form), dan `.link` (teks kecil bergaris bawah, mis. "Batalkan
-  proses ini").
+  kedua bergaris seukuran `.regular`, mis. Batalkan di form atau di kartu antre), dan `.link` (teks kecil bergaris
+  bawah).
 - `Components/Feedback/LoadingIndicator.swift`: spinner untuk semua loading.
+- `Components/Feedback/StatusCaption.swift`: teks status kecil di bawah pesan terakhir (agen mengetik).
+- `Components/Feedback/ConfirmationPrompt.swift`: isi bottom sheet konfirmasi (judul, keterangan, aksi utama dan
+  tombol batal bertumpuk sebagai footer), mis. konfirmasi End Session.
+- `Components/Feedback/ActionBanner.swift`: bar status gelap selebar layar dengan teks dan tombol kecil merah,
+  mis. bar sesi agen di bawah header.
+- `Components/Feedback/TypingDots.swift`: tiga titik berdenyut selama bot menyiapkan jawaban; diam saat Reduce Motion.
 - `Components/Lists/SeparatorLine.swift`: garis pemisah 1 pt (daftar, tabel Markdown, di atas composer).
 - `Components/Screen/BottomSheet/Models/BottomSheetMaxHeight.swift`: batas tinggi, di bawah status bar atau bagian layar.
 - `Components/Screen/BottomSheet/Models/BottomSheetLayout.swift`: batas tinggi dan letak sheet dari safe area, layar
@@ -92,7 +98,7 @@ scroll progress. Service bisnis, validasi rekening, serta flow transfer milik ho
 | `Chat/FollowUps` | Saran pertanyaan berikutnya. |
 | `Chat/Messages` | `Models` nilai pesan, `Views` bubble, `Extensions` merge pesan. |
 | `Chat/ConversationList` | `Models` item/state/action/input/hari; `Views` baris dan table adapter; `Controllers` table/scroll; `Formatting` tanggal; `Extensions` penyusunan baris. |
-| `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi (`ChatTurn`, `UserTypingSignal`). |
+| `Chat/Session` | `TanyaAIBridge`, connection/turn, kebijakan backoff, dan `Models` state sesi (`ChatTurn`, `UserTypingSignal`, `LiveAgentScope`). |
 | `Chat/Gateway` | `Models` kontrak respons/event/history, `Decoding`, `Streaming`, serta metadata protokol. HTTP tetap host. |
 | `Chat/Keys` | Key copy, image, identifier, tautan, dan `Extensions` accessor-nya. |
 | `Chat/Intents` | `Models/ChatIntent` daftar intent dari gateway. |
@@ -128,11 +134,12 @@ PR #52 di basis `startingpoint`; keduanya dipertahankan pada struktur ini.
 
 Intent pertama adalah `LiveAgent` (serah terima ke agen manusia). Flow ini digerakkan event gateway,
 bukan form host, jadi decode tetap di `Gateway`, state dan aksi `leave-agent` di `Session`
-(`TanyaAIBridge+LiveAgent`), dan hanya nilai yang dilihat nasabah di `Intents/LiveAgent`:
+(`TanyaAIBridge+LiveAgent`, `TanyaAIBridge+LeaveAgent`), dan hanya nilai yang dilihat nasabah di `Intents/LiveAgent`:
 
 ```text
 TanyaAI/Features/Chat/Intents/LiveAgent/
 ├── Models/
+│   ├── AgentSessionScan.swift
 │   ├── LiveAgentNotice.swift
 │   └── LiveAgentNoticeKind.swift
 ├── Extensions/
@@ -140,13 +147,17 @@ TanyaAI/Features/Chat/Intents/LiveAgent/
 │   ├── Array+LiveAgentNotice.swift
 │   └── LiveAgentNoticeKind+Copy.swift
 └── Views/
-    ├── AgentTypingIndicator.swift
+    ├── AgentSessionBanner.swift
     ├── LiveAgentMessageRow.swift
     └── LiveAgentNoticeCard.swift
 ```
 
-Komponen visualnya generik di DesignKit: `NoticeCard`, `SenderMessageCard`, dan `FilledButton` varian `.link`.
-Tombol lampiran adalah parameter `attachment` milik `MessageComposer`.
+Komponen visualnya generik di DesignKit: `NoticeCard` (slot aksi untuk tombol batal kartu antre), `SenderMessageCard`,
+`StatusCaption` (agen mengetik, langsung di `ChatListRow`), `ActionBanner` (bar sesi agen), `ConfirmationPrompt`
+(konfirmasi End Session, sebagai `ChatSheet.leaveAgent` di `Sheets/ViewModifiers/ChatSheetModifier.swift`), dan
+`FilledButton` varian `.outlined`.
+Tombol lampiran adalah parameter `attachment` milik `MessageComposer`; kunci field selama kartu Switching adalah
+parameter `isInputEnabled`-nya.
 
 ### Menambah intent: langkah yang sudah punya pola
 

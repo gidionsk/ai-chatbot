@@ -7,7 +7,7 @@
 
 extension Array where Element == ChatListItem {
     /// Kartu live agent di posisi `seq`-nya: tepat setelah pesan terakhir yang lebih awal, jadi tetap di hari pesan
-    /// itu. Tanpa pesan yang lebih awal, kartu di awal daftar. Tombol batal ikut tepat di bawah kartu antre.
+    /// itu. Tanpa pesan yang lebih awal, kartu di awal daftar. Tombol batal ada di dalam kartu antre.
     func inserting(_ notices: [LiveAgentNotice], isLeaveEnabled: Bool) -> [ChatListItem] {
         guard !notices.isEmpty else { return self }
         let anchors = Dictionary(grouping: notices) { anchorIndex(for: $0) }
@@ -30,10 +30,7 @@ private extension Array where Element == ChatListItem {
     }
 
     func noticeItems(_ notices: [LiveAgentNotice], isLeaveEnabled: Bool) -> [ChatListItem] {
-        notices.flatMap { notice -> [ChatListItem] in
-            let card = ChatListItem.liveAgentNotice(notice)
-            return notice.kind == .connecting ? [card, .leaveAgentQueue(isEnabled: isLeaveEnabled)] : [card]
-        }
+        notices.map { .liveAgentNotice($0, isLeaveEnabled: $0.kind == .connecting && isLeaveEnabled) }
     }
 }
 

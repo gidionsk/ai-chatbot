@@ -99,12 +99,12 @@ final class TanyaAIChatService {
         }
     }
 
-    /// Keluar antrean agen; hanya `--live-agent` yang punya antrean, selain itu selalu `left:false`.
+    /// Keluar antrean atau akhiri sesi agen; hanya `--live-agent` yang punya agen, selain itu selalu `left:false`.
     func leaveAgent(
         conversationID: String, onSuccess: @escaping (Data) -> Void, onFailed: @escaping (Error) -> Void
     ) {
         DispatchQueue.main.async { [weak self] in
-            onSuccess(self?.leaveQueue() ?? SandboxGatewayFrames.notInAgentQueue)
+            onSuccess(self?.leaveAgentResponse() ?? SandboxGatewayFrames.notInAgentQueue)
         }
     }
 

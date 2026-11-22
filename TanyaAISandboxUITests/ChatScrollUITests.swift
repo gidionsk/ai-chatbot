@@ -52,6 +52,20 @@ final class ChatScrollUITests: XCTestCase {
         assertParked("Pertanyaan baru")
     }
 
+    /// Loading tampil di bawah pertanyaan yang parkir selama bot menyiapkan jawaban, lalu hilang saat jawaban datang.
+    func testAnswerLoadingStaysBelowTheQuestionUntilTheAnswerArrives() {
+        launch(extra: ["--long-history"])
+        XCTAssertTrue(text(lastAnswer).waitForExistence(timeout: 10))
+        send("Pertanyaan baru")
+        let loading = application.descendants(matching: .any)["chat.answer.loading"]
+        XCTAssertTrue(loading.waitForExistence(timeout: 3))
+        XCTAssertGreaterThan(loading.frame.minY, text("Pertanyaan baru").frame.maxY)
+        capture("chat-answer-loading")
+        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: loading)
+        wait(for: [gone], timeout: 8)
+        XCTAssertTrue(text("Jawaban contoh").exists)
+    }
+
     /// Tanpa keyboard posisinya sudah di bawah; pertanyaan tetap parkir, bukan mengikuti ke ujung daftar.
     func testFollowUpParksTheQuestionWithoutAKeyboard() {
         launch(extra: ["--with-history", "--hold-reply"])

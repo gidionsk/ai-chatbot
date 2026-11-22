@@ -23,8 +23,8 @@ public struct ChatScreen<Content: View>: View {
     @State private var scrollProgress = CGFloat.zero
     @State private var isLatestVisible = true
     @State private var latestJumpID: UUID?
-    /// Bottom sheet pilihan Galeri / File sedang tampil.
-    @State private var isChoosingAttachment = false
+    /// Bottom sheet yang sedang tampil (lampiran atau konfirmasi End Session); nil = tertutup.
+    @State private var sheet: ChatSheet?
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
     private let onBack: (() -> Void)?
@@ -50,32 +50,49 @@ public struct ChatScreen<Content: View>: View {
         ScreenScaffold(
             title: String(ChatCopy.title, locale: locale),
             backLabel: String(ChatCopy.back, locale: locale),
-            scrollProgress: scrollProgress, onBack: close,
+            // Selama bar sesi agen tampil daftar mulai di bawah bar, jadi efek scroll header tidak dipakai.
+            scrollProgress: isBannerVisible ? .zero : scrollProgress, onBack: close,
             content: { conversation(headerHeight: $0) }, trailing: { EmptyView() },
             footer: { composer },
-            background: { backgroundImage }
+            background: { ChatBackground() }
         )
         .overlay { loadingIndicator }
         .modifier(
-            AttachmentPickerModifier(
-                isPresented: $isChoosingAttachment,
-                isAvailable: isAttachable,
-                onPick: attach
+            ChatSheetModifier(
+                sheet: $sheet,
+                attachmentSession: isAgentSession ? bridge.agentSessionKey : nil,
+                leaveSession: isBannerVisible ? bridge.agentSessionKey : nil,
+                onPick: attach,
+                onLeave: leave
             )
         )
         // Swipe-back milik navigasi host, jadi host yang menahannya selama sheet terbuka.
-        .onChange(of: isChoosingAttachment) { onSheetChange?($0) }
+        .onChange(of: sheet != nil) { onSheetChange?($0) }
         // Dibatalkan otomatis saat halaman hilang; tampil lagi = init ulang dan mengejar history.
         .task { await bridge.run() }
     }
 
+    /// Bar sesi agen menempel di bawah header, jadi daftar mulai di bawah bar tanpa inset header.
     private func conversation(headerHeight: CGFloat) -> some View {
-        ChatTable(
-            state: tableState, headerHeight: headerHeight, actions: rowActions,
-            onScrollProgress: { scrollProgress = $0 }, onLatestVisibilityChange: { isLatestVisible = $0 },
-            row: listRow
-        )
-        .overlay(alignment: .bottom) { latestButton }
+        VStack(spacing: .zero) {
+            agentSessionBanner(headerHeight: headerHeight)
+            ChatTable(
+                state: tableState, headerHeight: isBannerVisible ? .zero : headerHeight, actions: rowActions,
+                onScrollProgress: { scrollProgress = $0 }, onLatestVisibilityChange: { isLatestVisible = $0 },
+                row: listRow
+            )
+            .overlay(alignment: .bottom) { latestButton }
+        }
+    }
+
+    @ViewBuilder
+    private func agentSessionBanner(headerHeight: CGFloat) -> some View {
+        if isBannerVisible {
+            // End Session dikonfirmasi dulu di bottom sheet.
+            AgentSessionBanner(onEnd: { sheet = .leaveAgent(bridge.agentSessionKey) })
+                .disabled(!isEnabled || bridge.isLeavingAgent)
+                .padding(.top, headerHeight)
+        }
     }
 
     /// Mengambang di tengah, tepat di atas composer, selama ujung daftar di luar layar.
@@ -111,18 +128,14 @@ public struct ChatScreen<Content: View>: View {
 
     private var composer: some View {
         ComposerSection(
-            isEnabled: isEnabled && bridge.isReady, phase: bridge.turnPhase, onSend: send, onStop: stop,
-            onAttach: attachAction, onTyping: typingChanged
+            isEnabled: isEnabled && bridge.isReady,
+            isInputEnabled: !bridge.isSwitchingToAgent,
+            phase: bridge.turnPhase,
+            onSend: send,
+            onStop: stop,
+            onAttach: attachAction,
+            onTyping: typingChanged
         )
-    }
-
-    /// Menempel di atas layar selebar layar; bagian bawah yang tidak tertutup gambar memakai warna surface.
-    /// Sengaja `scaledToFit`, bukan `scaledToFill` + `clipped`: di iOS 17 kombinasi itu membuat latar dan isi scroll
-    /// hilang (putih) selama swipe back interaktif di host.
-    private var backgroundImage: some View {
-        Image(ChatImage.chatBackground).resizable()
-            .scaledToFit()
-            .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
@@ -131,13 +144,15 @@ public struct ChatScreen<Content: View>: View {
 private extension ChatScreen {
     var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
 
-    /// Lampiran hanya selama dilayani agen.
-    var isAttachable: Bool { bridge.conversationState == .agentActive }
+    var isBannerVisible: Bool { bridge.isAgentSessionBannerVisible }
+
+    /// Lampiran hanya selama `AGENT_ACTIVE`; bar sesi agen sudah tampil sejak sapaan otomatis selama antre.
+    var isAgentSession: Bool { bridge.conversationState == .agentActive }
 
     var rowActions: ChatRowActions {
         ChatRowActions(
             onOpenLink: onOpenLink, onSelectShortcut: select, onSelectFollowUp: selectFollowUp,
-            onLeaveAgentQueue: leaveAgentQueue
+            onLeaveAgentQueue: leaveAgent
         )
     }
 
@@ -153,7 +168,8 @@ private extension ChatScreen {
 
     func listItems(notices: [LiveAgentNotice]) -> [ChatListItem] {
         var items = [ChatListItem](rows: bridge.rows)
-            .inserting(notices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgentQueue)
+            .inserting(notices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgent)
+            .appendingAnswerLoading(isAwaitingReply: bridge.isAwaitingReply)
         if welcome != nil, bridge.isWelcomeVisible {
             items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
         }
@@ -203,15 +219,20 @@ private extension ChatScreen {
         bridge.userTypingChanged(isTyping)
     }
 
-    /// "Batalkan proses ini" di bawah kartu antre.
-    func leaveAgentQueue() {
-        Task { [bridge] in await bridge.leaveAgentQueue() }
+    /// "Batalkan" di dalam kartu antre: antrean yang tampil saat diketuk.
+    func leaveAgent() {
+        leave(bridge.agentSessionKey)
+    }
+
+    /// Batalkan atau Yes di konfirmasi End Session; bridge mengecek ulang `session` tepat sebelum request.
+    func leave(_ session: AgentSessionKey) {
+        Task { [bridge] in await bridge.leaveAgent(from: session) }
     }
 
     /// Lampiran (PDF/gambar) hanya saat dilayani agen; nil = tombol tidak tampil. Ketuk = bottom sheet Galeri / File.
     var attachAction: (() -> Void)? {
-        guard isAttachable else { return nil }
-        return { isChoosingAttachment = true }
+        guard isAgentSession else { return nil }
+        return { sheet = .attachment(bridge.agentSessionKey, isFormatRejected: false) }
     }
 
     /// File pilihan nasabah. Salinannya langsung dibuang supaya tidak menumpuk di folder sementara.

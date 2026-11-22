@@ -13,17 +13,24 @@
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "Pesan ini gagal terkirim";
 "chat.scrollToLatest" = "Ke pesan terbaru";
+"chat.answerLoading" = "Sedang menyiapkan jawaban...";
 "welcome.shortcutsTitle" = "Mulai dari sini:";
 "welcome.terms" = "Pelajari [Syarat & Ketentuan](terms) penggunaan TANYA AI.";
-/* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */
-"liveAgent.sender" = "Live Agent OCBC Nyala";
+/* TODO: Copy final live agent dari UI/UX; kartu antre, kartu terhubung, label pengirim dan indikator mencari mengikuti Figma, sisanya placeholder. */
+"liveAgent.sender" = "Customer Assistant Tanya OCBC";
 "liveAgent.typing" = "Agen sedang mengetik...";
-"liveAgent.leaveQueue" = "Batalkan proses ini";
+"liveAgent.leaveQueue" = "Batalkan";
+"liveAgent.session.banner" = "You're now in mode talking with CA";
+"liveAgent.session.end" = "End Session";
+"liveAgent.leaveConfirm.title" = "Are you sure to exit this mode?";
+"liveAgent.leaveConfirm.message" = "You're getting back to self service mode";
+"liveAgent.leaveConfirm.confirm" = "Yes";
+"liveAgent.leaveConfirm.cancel" = "No";
 "liveAgent.attachment" = "Lampirkan PDF atau gambar";
-"liveAgent.started.chip" = "Sesi dengan Customer Assistant Tanya OCBC dimulai";
-"liveAgent.ended.chip" = "Sesi dengan Customer Assistant Tanya OCBC berakhir";
-"liveAgent.connecting.title" = "Menghubungkan ke Agent";
-"liveAgent.connecting.message" = "Saat ini Anda berada dalam antrian.\n\nMohon kesediaannya untuk menunggu. Customer Assistant Tanya OCBC NISP akan segera melayani Anda.";
+"liveAgent.connecting.title" = "Switching to Live Chat with Human";
+"liveAgent.connecting.message" = "Menghubungkan kamu ke customer assistant kami";
+"liveAgent.connected.title" = "Connected to Customer Assistant";
+"liveAgent.connected.message" = "Supaya tetap dapat terhubung dengan kami, mohon untuk tetap berada di dalam percakapan ini dan pastikan Bapak/Ibu tidak keluar dari aplikasi OCBC mobile.";
 "liveAgent.ended.title" = "Mode dengan Customer Assistant Berakhir";
 "liveAgent.ended.message" = "Anda akan kembali ke mode self service";
 "liveAgent.canceled.title" = "Permintaan Agent Dibatalkan";
@@ -36,5 +43,5 @@
 "attachment.gallery.formats" = "HEIC, JPG, atau PNG";
 "attachment.file" = "File";
 "attachment.file.formats" = "PDF, HEIC, JPG, atau PNG";
-"attachment.close" = "Tutup";
+"sheet.close" = "Tutup";
 "attachment.unsupportedFormat" = "Format foto tidak didukung. Pilih foto HEIC, JPG, atau PNG.";

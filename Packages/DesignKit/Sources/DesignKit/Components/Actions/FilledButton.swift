@@ -8,8 +8,8 @@
 import SwiftUI
 
 /// Tombol selebar wadah. `.regular` = latar gelap untuk aksi utama (Konfirmasi, Pilih); `.outlined` = ukuran sama,
-/// hanya garis tepi, untuk aksi kedua di sampingnya (Batalkan); `.link` = teks kecil bergaris bawah, mis. "Batalkan
-/// proses ini" di bawah kartu status. Copy dan aksi dari pemakai. Nonaktif lewat `.disabled(...)` dari pemakai.
+/// hanya garis tepi, untuk aksi kedua di sampingnya atau aksi di dalam kartu (Batalkan); `.link` = teks kecil
+/// bergaris bawah untuk aksi ringan. Copy dan aksi dari pemakai. Nonaktif lewat `.disabled(...)` dari pemakai.
 /// TODO: Konfirmasi warna, ukuran teks, tinggi, dan garis `.outlined` dengan Figma; sementara dari foto.
 @MainActor
 public struct FilledButton: View {

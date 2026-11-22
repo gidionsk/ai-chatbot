@@ -14,21 +14,29 @@ struct ComposerSection: View {
     @Environment(\.locale) private var locale
     @State private var draft = String()
     private let isEnabled: Bool
+    private let isInputEnabled: Bool
     private let phase: ChatTurnPhase
     private let onSend: (String) -> Bool
     private let onStop: () -> Void
     private let onAttach: (() -> Void)?
     private let onTyping: ((Bool) -> Void)?
 
+    /// `isInputEnabled` false = field tidak bisa diketik dan draft tidak bisa dikirim (selama kartu Switching).
     /// `onSend` true = bubble pertanyaan tampil, draft langsung dikosongkan. Selama menunggu jawaban nasabah boleh
     /// mengetik pertanyaan berikutnya, tetapi harus menekan stop (atau menunggu jawaban selesai) untuk mengirimnya.
     /// `onAttach` nil = tombol lampiran tidak tampil. `onTyping` dipanggil setiap draft berubah: true = draft berisi,
     /// false = kosong atau composer hilang; draft sendiri tetap lokal.
     init(
-        isEnabled: Bool, phase: ChatTurnPhase, onSend: @escaping (String) -> Bool,
-        onStop: @escaping () -> Void, onAttach: (() -> Void)? = nil, onTyping: ((Bool) -> Void)? = nil
+        isEnabled: Bool,
+        isInputEnabled: Bool = true,
+        phase: ChatTurnPhase,
+        onSend: @escaping (String) -> Bool,
+        onStop: @escaping () -> Void,
+        onAttach: (() -> Void)? = nil,
+        onTyping: ((Bool) -> Void)? = nil
     ) {
         self.isEnabled = isEnabled
+        self.isInputEnabled = isInputEnabled
         self.phase = phase
         self.onSend = onSend
         self.onStop = onStop
@@ -40,9 +48,15 @@ struct ComposerSection: View {
         VStack(spacing: .zero) {
             divider
             MessageComposer(
-                text: $draft, placeholder: String(ChatCopy.placeholder, locale: locale),
+                text: $draft,
+                placeholder: String(ChatCopy.placeholder, locale: locale),
                 actionLabel: String(actionCopy, locale: locale),
-                isEnabled: isEnabled, action: action, attachment: attachment, onSend: submit, onStop: onStop
+                isEnabled: isEnabled,
+                isInputEnabled: isInputEnabled,
+                action: action,
+                attachment: attachment,
+                onSend: submit,
+                onStop: onStop
             )
             .padding(FigmaSize.spacingLarge.scaledToArtwork)
         }

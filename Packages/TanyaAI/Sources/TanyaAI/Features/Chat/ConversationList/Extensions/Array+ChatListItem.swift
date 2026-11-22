@@ -24,4 +24,11 @@ extension Array where Element == ChatListItem {
             }
         }
     }
+
+    /// Loading jawaban bot tepat di bawah pertanyaan yang sedang ditunggu, supaya layar tidak terkesan diam. Hilang
+    /// begitu jawaban pertama tampil di bawah pertanyaan, walau `turn_end` belum datang.
+    func appendingAnswerLoading(isAwaitingReply: Bool) -> [ChatListItem] {
+        guard isAwaitingReply, last?.isQuestion == true else { return self }
+        return self + [.answerLoading]
+    }
 }

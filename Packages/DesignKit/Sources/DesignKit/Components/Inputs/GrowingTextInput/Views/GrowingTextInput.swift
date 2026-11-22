@@ -8,9 +8,11 @@
 import SwiftUI
 import UIKit
 
-/// Jembatan ke editor UIKit: pengukuran dan seleksi di sini; draft dan font milik pemakai.
+/// Jembatan ke editor UIKit: pengukuran dan seleksi di sini; draft dan font milik pemakai. `.disabled(...)` dari
+/// pemakai membuat editor tidak bisa diketik dan menutup keyboard-nya; warna nonaktif tetap milik pemakai.
 @MainActor
 public struct GrowingTextInput: UIViewRepresentable {
+    @Environment(\.isEnabled) private var isEnabled
     @Binding private var text: String
     private let font: UIFont
     private let textColor: UIColor
@@ -37,6 +39,7 @@ public struct GrowingTextInput: UIViewRepresentable {
         editor.adjustsFontForContentSizeCategory = false
         editor.isScrollEnabled = false
         editor.text = text
+        applyEnabled(to: editor)
         editor.setContentHuggingPriority(.defaultLow, for: .horizontal)
         applyStyle(to: editor)
         editor.accessibilityLabel = accessibilityLabel
@@ -46,6 +49,7 @@ public struct GrowingTextInput: UIViewRepresentable {
     public func updateUIView(_ editor: BoundedTextView, context: Context) {
         context.coordinator.parent = self
         editor.accessibilityLabel = accessibilityLabel
+        applyEnabled(to: editor)
         let isStyleChanged = editor.font != font || editor.textColor != textColor || editor.lineSpacing != lineSpacing
         let isTextChanged = editor.text != text
         if isTextChanged { editor.text = text }
@@ -75,6 +79,14 @@ public struct GrowingTextInput: UIViewRepresentable {
 // MARK: - Helpers
 
 private extension GrowingTextInput {
+    /// Editor yang dinonaktifkan selagi fokus melepas fokusnya, jadi keyboard tidak tertinggal terbuka.
+    func applyEnabled(to editor: BoundedTextView) {
+        guard editor.isEditable != isEnabled else { return }
+        editor.isEditable = isEnabled
+        guard !isEnabled, editor.isFirstResponder else { return }
+        editor.resignFirstResponder()
+    }
+
     func applyStyle(to editor: BoundedTextView) {
         guard editor.markedTextRange == nil else { return }
         let paragraph = NSMutableParagraphStyle()
