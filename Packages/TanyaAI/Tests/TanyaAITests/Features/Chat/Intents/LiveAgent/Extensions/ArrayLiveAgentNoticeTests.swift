@@ -12,8 +12,9 @@ import Testing
 
 /// Posisi kartu live agent di daftar dan kartu selesai dari history.
 struct ArrayLiveAgentNoticeTests {
-    /// Kartu tepat setelah pesan terakhir yang lebih awal, jadi tetap di hari pesan itu; tombol batal di bawah kartu
-    /// antre. Pertanyaan lokal yang belum di-ack tetap di bawah kartu.
+    /// Kartu tepat setelah pesan terakhir yang lebih awal, jadi tetap di hari pesan itu; tombol batal hanya aktif di
+    /// kartu antre dan ada di dalam kartunya, bukan baris sendiri. Pertanyaan lokal yang belum di-ack tetap di bawah
+    /// kartu.
     @Test
     func noticesFollowTheLastEarlierMessage() {
         let firstDay = ChatDayIdentifier(date: Date(timeIntervalSince1970: .zero))
@@ -25,13 +26,14 @@ struct ArrayLiveAgentNoticeTests {
             .message(.local(pending), isSpaced: true)
         ]
         let notices = [LiveAgentNotice(kind: .canceled, seq: 4), LiveAgentNotice(kind: .connecting, seq: 7)]
-        let ids = items.inserting(notices, isLeaveEnabled: false).map(\.id)
+        let inserted = items.inserting(notices, isLeaveEnabled: true)
         #expect(
-            ids == [
+            inserted.map(\.id) == [
                 .date(firstDay), .message("m-2"), .liveAgentNotice(4), .date(secondDay), .message("m-6"),
-                .liveAgentNotice(7),
-                .leaveAgentQueue, .message("q")
+                .liveAgentNotice(7), .message("q")
             ])
+        #expect(inserted[2] == .liveAgentNotice(notices[0], isLeaveEnabled: false))
+        #expect(inserted[5] == .liveAgentNotice(notices[1], isLeaveEnabled: true))
     }
 
     @Test
@@ -41,27 +43,37 @@ struct ArrayLiveAgentNoticeTests {
         #expect(ids == [.liveAgentNotice(3), .message("m-9")])
     }
 
-    /// Sesi dimulai di pesan agen pertama setelah bot menjawab; chip tepat setelah pesan sebelumnya, atau di awal
-    /// daftar. Chip dari stream di rentang itu menggantikannya; event lain tidak.
+    /// Sesi dimulai di pesan agen pertama setelah bot menjawab: kartu "Connected" di posisi event antre sesi itu bila
+    /// ada dari stream, selain itu tepat setelah pesan sebelumnya atau di awal daftar.
     @Test
-    func agentSessionStartsAtItsFirstAgentMessage() {
+    func agentSessionIsConnectedAtItsQueueEventOrBeforeItsFirstAgentMessage() {
         let messages = [
             message(seq: 1, author: .assistant), message(seq: 4, author: .agent), message(seq: 5, author: .user),
             message(seq: 6, author: .agent), message(seq: 7, author: .assistant), message(seq: 9, author: .user),
             message(seq: 11, author: .agent)
         ]
-        let derived = [LiveAgentNotice(kind: .joined, seq: 1), LiveAgentNotice(kind: .joined, seq: 9)]
-        #expect(messages.startedAgentSessions(openedBy: []) == derived)
-        #expect(messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .ended, seq: 10)]) == derived)
-        #expect(
-            [message(seq: 2, author: .agent)].startedAgentSessions(openedBy: []) == [.init(kind: .joined, seq: .min)])
-        #expect(
-            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 10)])
-                == [LiveAgentNotice(kind: .joined, seq: 1)])
-        // Agen bergabung sebelum nasabah mengirim pesan, lalu agen membalas: chip stream tetap milik sesi itu.
-        #expect(
-            messages.startedAgentSessions(openedBy: [LiveAgentNotice(kind: .joined, seq: 8)])
-                == [LiveAgentNotice(kind: .joined, seq: 1)])
+        #expect(messages.connectedAgentSessions(streamNotices: []) == [connected(1), connected(9)])
+        #expect(messages.connectedAgentSessions(streamNotices: [opener(3), opener(8)]) == [connected(3), connected(8)])
+        // Event antre sesi pertama bukan milik sesi berikutnya.
+        #expect(messages.connectedAgentSessions(streamNotices: [opener(3)]) == [connected(3), connected(9)])
+        #expect([message(seq: 2, author: .agent)].connectedAgentSessions(streamNotices: []) == [connected(.min)])
+    }
+
+    /// Event penutup memisahkan sesi, dan event antre yang sudah ditutup tidak menjadi posisi sesi berikutnya. Agen
+    /// yang bergabung tanpa mengirim pesan tetap memulai sesi.
+    @Test
+    func closingEventsSplitSessionsAndRetireTheirQueueEvent() {
+        let bot = message(seq: 1, author: .assistant)
+        let canceled = LiveAgentNotice(kind: .canceled, seq: 4)
+        let lateGreeting = [bot, message(seq: 9, author: .agent)]
+        #expect(lateGreeting.connectedAgentSessions(streamNotices: [opener(3), canceled]) == [connected(1)])
+        let greetings = [bot, message(seq: 3, author: .agent), message(seq: 7, author: .agent)]
+        let timedOut = [opener(2), LiveAgentNotice(kind: .queueTimeout, seq: 4), opener(6)]
+        #expect(greetings.connectedAgentSessions(streamNotices: timedOut) == [connected(2), connected(6)])
+        let joined = LiveAgentNotice(kind: .joined, seq: 3)
+        let ended = LiveAgentNotice(kind: .ended, seq: 4)
+        #expect([bot].connectedAgentSessions(streamNotices: [opener(2), joined, ended]) == [connected(2)])
+        #expect([bot].connectedAgentSessions(streamNotices: [joined]) == [connected(3)])
     }
 
     /// Sesi berakhir saat bot menjawab lagi; kartu setelah pesan agen terakhir sesi itu.
@@ -108,6 +120,14 @@ struct ArrayLiveAgentNoticeTests {
 // MARK: - Helpers
 
 private extension ArrayLiveAgentNoticeTests {
+    func connected(_ seq: Int) -> LiveAgentNotice {
+        LiveAgentNotice(kind: .connected, seq: seq)
+    }
+
+    func opener(_ seq: Int) -> LiveAgentNotice {
+        LiveAgentNotice(kind: .connecting, seq: seq)
+    }
+
     func message(seq: Int, author: ChatAuthor = .assistant, intent: ChatIntent? = nil) -> ChatMessage {
         ChatMessage(id: "m-\(seq)", seq: seq, author: author, text: "pesan \(seq)", status: .active, intent: intent)
     }

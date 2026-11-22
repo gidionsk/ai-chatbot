@@ -21,8 +21,8 @@ enum ChatWire {
     static let fieldValueSpace = " "
     /// Jumlah pesan per halaman history (contract: 1...100).
     static let historyPageSize = 30
-    /// Batas tampil indikator mengetik bila `ttl_s` tidak ada (contoh contract: 10).
-    static let typingLifetime: TimeInterval = 10
+    /// Batas tampil indikator mengetik bila `ttl_s` tidak ada (default server `chat.typing_ttl`, contract v1.5.1: 5).
+    static let typingLifetime: TimeInterval = 5
     /// Jeda minimal kirim ulang `typing:true` selama nasabah terus mengetik, di bawah ttl server 10 detik
     /// (contract §7.7 meminta klien membatasi frekuensinya).
     static let typingRefresh: TimeInterval = 5

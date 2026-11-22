@@ -47,6 +47,11 @@ public enum CustomSizes {
         public static let outgoingLeadingInset: CGFloat = 48
     }
 
+    /// TODO: Cocokkan dengan Figma; belum ada desain titik menunggu jawaban.
+    public enum TypingDots {
+        public static let dot: CGFloat = 8
+    }
+
     public enum Composer {
         public static let sendButton: CGFloat = 24
     }

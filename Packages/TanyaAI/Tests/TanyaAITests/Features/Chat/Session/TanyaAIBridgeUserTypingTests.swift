@@ -14,10 +14,12 @@ import Testing
 @MainActor
 @Suite(.serialized)
 struct TanyaAIBridgeUserTypingTests {
-    /// Ketikan beruntun cukup satu `typing:true`; draft kosong mengirim satu `typing:false`.
-    @Test
-    func typingIsSentOnceUntilTheDraftIsEmpty() async {
-        let (transport, bridge) = await connectedBridge(pausing: [ChatWire.typingIdle, ChatWire.typingRefresh])
+    /// Ketikan beruntun cukup satu `typing:true`; draft kosong mengirim satu `typing:false`. Selama antre sinyal juga
+    /// dikirim, karena gateway meneruskannya ke sistem agen di kedua state (contract §7.7).
+    @Test(arguments: ["AGENT_ACTIVE", "AGENT_QUEUED"])
+    func typingIsSentOnceUntilTheDraftIsEmpty(state: String) async {
+        let pausing = [ChatWire.typingIdle, ChatWire.typingRefresh]
+        let (transport, bridge) = await connectedBridge(state: state, pausing: pausing)
         defer { bridge.connectionTask?.cancel() }
         bridge.userTypingChanged(true)
         bridge.userTypingChanged(true)
@@ -91,10 +93,10 @@ struct TanyaAIBridgeUserTypingTests {
         #expect(transport.typingCalls == ["typing:true"])
     }
 
-    /// Sinyal hanya berarti bagi agen; saat dengan bot atau masih antre tidak dikirim.
-    @Test(arguments: ["ASSISTANT_ACTIVE", "AGENT_QUEUED"])
-    func typingOutsideTheAgentSessionIsNotSent(state: String) async {
-        let (_, bridge) = await connectedBridge(state: state, pausing: [])
+    /// Sinyal hanya berarti bagi agen; saat dengan bot tidak dikirim.
+    @Test
+    func typingWithTheAssistantIsNotSent() async {
+        let (_, bridge) = await connectedBridge(state: "ASSISTANT_ACTIVE", pausing: [])
         defer { bridge.connectionTask?.cancel() }
         bridge.userTypingChanged(true)
         bridge.userTypingChanged(false)

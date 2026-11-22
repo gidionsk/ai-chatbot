@@ -14,11 +14,12 @@ enum ChatListItem: Identifiable, Equatable {
     case date(ChatDayIdentifier, isSpaced: Bool)
     case message(ChatRow, isSpaced: Bool)
     case followUps([String], isEnabled: Bool)
-    /// Kartu status live agent (antre, selesai, batal, tidak tersedia).
-    case liveAgentNotice(LiveAgentNotice)
-    /// "Batalkan proses ini" di bawah kartu antre.
-    case leaveAgentQueue(isEnabled: Bool)
+    /// Kartu status live agent (antre, selesai, batal, tidak tersedia). `isLeaveEnabled` hanya dipakai kartu antre,
+    /// yang membawa tombol batal di dalam kartunya.
+    case liveAgentNotice(LiveAgentNotice, isLeaveEnabled: Bool)
     case agentTyping
+    /// Loading di bawah pertanyaan yang belum dijawab bot.
+    case answerLoading
     /// Konten yang disisipkan pemakai `ChatScreen`.
     case content
 
@@ -32,12 +33,12 @@ enum ChatListItem: Identifiable, Equatable {
             return .message(row.id)
         case .followUps:
             return .followUps
-        case .liveAgentNotice(let notice):
+        case .liveAgentNotice(let notice, _):
             return .liveAgentNotice(notice.seq)
-        case .leaveAgentQueue:
-            return .leaveAgentQueue
         case .agentTyping:
             return .agentTyping
+        case .answerLoading:
+            return .answerLoading
         case .content:
             return .content
         }
@@ -52,10 +53,8 @@ enum ChatListItem: Identifiable, Equatable {
     /// Tanpa `default`: baris baru wajib memilih jaraknya di sini.
     var topSpacing: CGFloat {
         switch self {
-        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping:
+        case .date(_, isSpaced: true), .message(_, isSpaced: true), .liveAgentNotice, .agentTyping, .answerLoading:
             return FigmaSize.spacingLarge.scaledToArtwork
-        case .leaveAgentQueue:
-            return FigmaSize.spacingMedium.scaledToArtwork
         case .date(_, isSpaced: false), .message(_, isSpaced: false), .welcome, .followUps, .content:
             return .zero
         }

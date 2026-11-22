@@ -38,6 +38,8 @@ struct SandboxGatewayFrames {
     static let queueCanceled = "queue_canceled"
     /// Data dummy `--live-agent`.
     static let handoverReply = "Baik, kami akan menghubungkan kamu ke live agent kami."
+    /// Sapaan otomatis sistem agen selama antre, sebelum agen bergabung.
+    static let agentAutoGreeting = "Terima kasih telah menghubungi Customer Assistant Tanya OCBC, mohon ditunggu."
     static let agentGreeting = "Hi, saya Durenk, live agent yang akan membantu kamu."
     static let agentReply = "Baik, saya cek dulu ya."
     static let canceledStatus = "canceled"

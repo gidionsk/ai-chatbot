@@ -14,7 +14,7 @@ enum ChatListItemID: Hashable {
     case followUps
     /// Kartu live agent; `seq` event-nya (kartu dari history memakai seq pesan agen, yang tidak pernah sama).
     case liveAgentNotice(Int)
-    case leaveAgentQueue
     case agentTyping
+    case answerLoading
     case content
 }

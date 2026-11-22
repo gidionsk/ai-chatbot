@@ -92,11 +92,11 @@ struct TanyaAIBridgeLiveAgentTests {
     func leavingTheQueueReturnsToTheAssistant() async {
         let (transport, bridge) = await connectedBridge(state: "AGENT_QUEUED")
         defer { bridge.connectionTask?.cancel() }
-        await bridge.leaveAgentQueue()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(transport.calls.filter { $0 == "leave" }.count == 1)
         #expect(bridge.conversationState == .assistantActive)
-        #expect(!bridge.isLeavingAgentQueue)
-        await bridge.leaveAgentQueue()
+        #expect(!bridge.isLeavingAgent)
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(transport.calls.filter { $0 == "leave" }.count == 1, "sudah tidak antre")
     }
 
@@ -110,9 +110,9 @@ struct TanyaAIBridgeLiveAgentTests {
         let (transport, bridge) = await connectedBridge(state: "AGENT_QUEUED")
         defer { bridge.connectionTask?.cancel() }
         transport.leaveResult = result
-        await bridge.leaveAgentQueue()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(bridge.conversationState == .agentQueued)
-        #expect(!bridge.isLeavingAgentQueue)
+        #expect(!bridge.isLeavingAgent)
         #expect(bridge.connection == .live)
     }
 
@@ -122,7 +122,7 @@ struct TanyaAIBridgeLiveAgentTests {
         defer { bridge.connectionTask?.cancel() }
         let unauthorized = TanyaAITransportError.response(statusCode: 401, body: WireFixture.error(isRetryable: false))
         transport.leaveResult = .failure(unauthorized)
-        await bridge.leaveAgentQueue()
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(bridge.connection == .expired)
     }
 
@@ -137,21 +137,89 @@ struct TanyaAIBridgeLiveAgentTests {
         transport.initResults = [.success(WireFixture.initialize(conversationID: "lain", state: "AGENT_QUEUED"))]
         transport.leaveResult = result
         transport.isHoldingLeave = true
-        let leave = Task { await bridge.leaveAgentQueue() }
+        let leave = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
         await waitUntil { transport.isAckHeld }
         transport.drop()
         await waitUntil { bridge.conversationID == "lain" && bridge.connection == .live }
+        // Antrean percakapan baru punya state dan acuan yang sama, tetapi tombol batalnya tidak ikut terkunci.
+        #expect(!bridge.isLeavingAgent)
         transport.releaseAck()
         await leave.value
         #expect(bridge.conversationState == .agentQueued)
         #expect(bridge.connection == .live)
     }
 
-    @Test(arguments: ["ASSISTANT_ACTIVE", "AGENT_ACTIVE"])
-    func leaveOutsideTheQueueIsNotSent(state: String) async {
+    /// End Session memakai `leave-agent` yang sama: `left:true` = langsung kembali ke bot; 409 = tetap dilayani agen.
+    @Test
+    func endingTheAgentSessionReturnsToTheAssistant() async {
+        let (transport, bridge) = await connectedBridge(state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
+        #expect(transport.calls.filter { $0 == "leave" }.count == 1)
+        #expect(bridge.conversationState == .assistantActive)
+        #expect(!bridge.isLeavingAgent)
+    }
+
+    @Test
+    func rejectedEndSessionKeepsTheAgent() async {
+        let (transport, bridge) = await connectedBridge(state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        let conflict = TanyaAITransportError.response(statusCode: 409, body: WireFixture.error(isRetryable: false))
+        transport.leaveResult = .failure(conflict)
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
+        #expect(bridge.conversationState == .agentActive)
+        #expect(!bridge.isLeavingAgent)
+        #expect(bridge.connection == .live)
+    }
+
+    /// `left:true` yang terlambat milik sesi atau antrean yang sudah ditutup stream tidak mengembalikan antrean baru
+    /// ke bot; tombol Batalkan antrean baru tetap ada.
+    @Test(arguments: ["AGENT_ACTIVE", "AGENT_QUEUED"])
+    func lateLeaveDoesNotEndTheNextQueue(state: String) async {
         let (transport, bridge) = await connectedBridge(state: state)
         defer { bridge.connectionTask?.cancel() }
-        await bridge.leaveAgentQueue()
+        transport.isHoldingLeave = true
+        let leave = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
+        await waitUntil { transport.isAckHeld }
+        transport.emit(WireFixture.stateFrame(seq: 3, state: "ASSISTANT_ACTIVE", previous: state))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.eventCursor == 4 }
+        transport.releaseAck()
+        await leave.value
+        #expect(bridge.conversationState == .agentQueued)
+        #expect(bridge.visibleLiveAgentNotices.map(\.kind) == [.connecting])
+    }
+
+    /// Request sesi lama yang masih menggantung tidak mengunci Batalkan antrean baru, dan selesainya tidak melepas
+    /// status request antrean baru.
+    @Test
+    func pendingLeaveOnlyLocksItsOwnQueue() async {
+        let (transport, bridge) = await connectedBridge(state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        transport.isHoldingLeaves = true
+        let endSession = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
+        await waitUntil { transport.heldLeaveCount == 1 }
+        transport.emit(WireFixture.stateFrame(seq: 3, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.eventCursor == 4 }
+        #expect(!bridge.isLeavingAgent)
+        let cancelQueue = Task { await bridge.leaveAgent(from: bridge.agentSessionKey) }
+        await waitUntil { transport.heldLeaveCount == 2 }
+        transport.releaseLeave()
+        await endSession.value
+        #expect(bridge.isLeavingAgent, "request antrean baru masih berjalan")
+        #expect(bridge.conversationState == .agentQueued)
+        transport.releaseLeave()
+        await cancelQueue.value
+        #expect(!bridge.isLeavingAgent)
+        #expect(bridge.conversationState == .assistantActive)
+    }
+
+    @Test
+    func leaveWithoutAnAgentIsNotSent() async {
+        let (transport, bridge) = await connectedBridge(state: "ASSISTANT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(!transport.calls.contains("leave"))
     }
 }

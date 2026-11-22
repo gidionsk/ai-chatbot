@@ -7,9 +7,10 @@
 
 import XCTest
 
-/// `--live-agent`: bot menyerahkan ke agen, kartu antre dengan tombol batal, chip sesi dimulai, agen mengetik dan
-/// menjawab, lalu chip sesi berakhir dengan kartunya. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol
-/// lampiran hanya selama agen melayani.
+/// `--live-agent`: bot menyerahkan ke agen, kartu Switching dengan tombol batal di dalam kartu dan composer terkunci,
+/// sapaan otomatis mengubah kartu menjadi "Connected" dan memunculkan bar sesi agen, agen mengetik dan menjawab, lalu
+/// kartu sesi berakhir. Tidak ada chip abu. Kirim ke agen tidak mengubah tombol menjadi stop. Tombol lampiran hanya
+/// selama agen melayani. End Session dikonfirmasi dulu di bottom sheet.
 final class LiveAgentUITests: XCTestCase {
     private let application = XCUIApplication()
 
@@ -20,35 +21,77 @@ final class LiveAgentUITests: XCTestCase {
 
     func testHandoverQueuesJoinsAnswersAndEnds() {
         launchAndAskForAnAgent()
-        XCTAssertTrue(element("chat.agent.notice").waitForExistence(timeout: 5))
+        XCTAssertTrue(notice("Switching to Live Chat with Human").waitForExistence(timeout: 5))
+        let leave = application.buttons["chat.agent.leaveQueue"]
+        XCTAssertTrue(leave.exists)
+        XCTAssertTrue(notice("Switching to Live Chat with Human").frame.contains(leave.frame), "batal di dalam kartu")
         capture("live-agent-queued")
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "belum ada agen")
+        XCTAssertTrue(notice("Connected to Customer Assistant").waitForExistence(timeout: 5), "sapaan otomatis")
+        XCTAssertFalse(application.buttons["chat.agent.leaveQueue"].exists, "batal hanya sebelum sapaan otomatis")
+        XCTAssertTrue(element("chat.agent.session").exists, "bar sesi agen sejak sapaan otomatis, masih antre")
+        XCTAssertTrue(application.textViews["composer.input"].isEnabled, "composer terbuka lagi")
+        capture("live-agent-greeted")
         XCTAssertTrue(element("chat.agent.typing").waitForExistence(timeout: 8))
         capture("live-agent-typing")
-        XCTAssertTrue(element("chat.agent.message").waitForExistence(timeout: 5))
         waitUntilGone(element("chat.agent.typing"))
-        XCTAssertFalse(application.buttons["chat.agent.leaveQueue"].exists, "kartu antre hilang saat agen bergabung")
-        XCTAssertFalse(element("chat.agent.notice").exists)
-        XCTAssertTrue(application.staticTexts["Session with Tanya OCBC Customer Assistant started"].exists)
+        XCTAssertTrue(notice("Connected to Customer Assistant").exists, "kartu terhubung tetap sebagai riwayat")
+        XCTAssertFalse(application.staticTexts["Session with Tanya OCBC Customer Assistant started"].exists)
+        XCTAssertTrue(element("chat.agent.session").exists, "bar sesi agen selama dilayani")
         assertAttachmentLinesUpWithSend()
         capture("live-agent-active")
         send("Cek status kartu saya")
         XCTAssertEqual(application.buttons["composer.send"].label, "Send message", "agen tidak memakai stop")
-        let ended = element("chat.agent.notice")
-        XCTAssertTrue(ended.waitForExistence(timeout: 10))
-        XCTAssertTrue(ended.label.contains("Customer Assistant Mode Ended"))
-        XCTAssertTrue(application.staticTexts["Session with Tanya OCBC Customer Assistant ended"].exists)
+        XCTAssertTrue(notice("Customer Assistant Mode Ended").waitForExistence(timeout: 10))
+        XCTAssertFalse(application.staticTexts["Session with Tanya OCBC Customer Assistant ended"].exists)
         capture("live-agent-ended")
+        XCTAssertFalse(application.buttons["composer.attachment"].exists, "agen sudah selesai")
+        XCTAssertFalse(element("chat.agent.session").exists, "bar hilang setelah sesi berakhir")
+    }
+
+    /// End Session di bar bawah header membuka konfirmasi: No hanya menutup sheet, Yes memanggil `leave-agent` dan
+    /// sesi berakhir tanpa menunggu agen menutupnya.
+    func testEndSessionAsksForConfirmationThenLeavesTheAgent() {
+        // History panjang, supaya daftar benar-benar bisa digulir selama bar tampil.
+        launchAndAskForAnAgent(extraArguments: ["--long-history"])
+        // Tunggu agen bergabung (tombol lampiran), supaya End Session mengakhiri sesi, bukan membatalkan antrean.
+        XCTAssertTrue(application.buttons["composer.attachment"].waitForExistence(timeout: 15))
+        let banner = element("chat.agent.session")
+        XCTAssertTrue(banner.exists)
+        let title = application.staticTexts["Tanya AI"].firstMatch
+        XCTAssertGreaterThanOrEqual(banner.frame.minY, title.frame.maxY, "di bawah header")
+        capture("live-agent-session-banner")
+        // Daftar mulai di bawah bar, jadi efek scroll header (latar, bayangan, gradient) tidak menimpa bar.
+        application.tables.firstMatch.swipeUp()
+        XCTAssertTrue(element("header").exists)
+        XCTAssertFalse(element("header.scrolled").exists, "tanpa efek scroll header selama bar tampil")
+        banner.buttons["End Session"].tap()
+        let sheet = element("sheet")
+        XCTAssertTrue(sheet.waitForExistence(timeout: 3))
+        XCTAssertTrue(sheet.staticTexts["Are you sure to exit this mode?"].exists)
+        XCTAssertTrue(sheet.staticTexts["You're getting back to self service mode"].exists)
+        capture("live-agent-end-session-confirmation")
+        application.buttons["confirmation.cancel"].tap()
+        waitUntilGone(sheet)
+        XCTAssertTrue(banner.exists, "No tidak mengakhiri sesi")
+        XCTAssertFalse(notice("Customer Assistant Mode Ended").exists)
+        banner.buttons["End Session"].tap()
+        XCTAssertTrue(sheet.waitForExistence(timeout: 3))
+        application.buttons["confirmation.confirm"].tap()
+        XCTAssertTrue(notice("Customer Assistant Mode Ended").waitForExistence(timeout: 5))
+        XCTAssertFalse(sheet.exists)
+        XCTAssertFalse(banner.exists)
         XCTAssertFalse(application.buttons["composer.attachment"].exists, "agen sudah selesai")
     }
 
     /// Sheet lampiran yang masih terbuka ikut tertutup saat agen mengakhiri sesi, jadi Galeri tidak bisa diketuk lagi.
     func testAttachmentSheetClosesWhenTheAgentEndsTheSession() {
         launchAndAskForAnAgent()
-        XCTAssertTrue(element("chat.agent.message").waitForExistence(timeout: 15))
-        send("Cek status kartu saya")
+        // Sapaan otomatis sudah datang selama antre; penutupan sesi baru dijadwalkan untuk pesan saat agen bergabung,
+        // yaitu saat tombol lampiran muncul.
         let attachment = application.buttons["composer.attachment"]
-        XCTAssertTrue(attachment.waitForExistence(timeout: 5))
+        XCTAssertTrue(attachment.waitForExistence(timeout: 15))
+        send("Cek status kartu saya")
         attachment.tap()
         let sheet = element("sheet")
         XCTAssertTrue(sheet.waitForExistence(timeout: 3))
@@ -59,6 +102,23 @@ final class LiveAgentUITests: XCTestCase {
         XCTAssertTrue(element("chat.agent.notice").waitForExistence(timeout: 5))
         XCTAssertFalse(application.staticTexts["Gallery"].exists)
         XCTAssertFalse(attachment.exists, "agen sudah selesai")
+    }
+
+    /// `--hold-greeting`: sapaan tidak pernah datang, jadi fase Switching bisa diperiksa tanpa berlomba dengan jedanya.
+    /// Keyboard dari pertanyaan sebelumnya ditutup, field tidak bisa diketik, dan bar sesi agen belum tampil; batal
+    /// antre membuka composer lagi.
+    func testComposerIsLockedWhileSwitching() {
+        launchAndAskForAnAgent(extraArguments: ["--hold-greeting"])
+        let leave = application.buttons["chat.agent.leaveQueue"]
+        XCTAssertTrue(leave.waitForExistence(timeout: 5))
+        let input = application.textViews["composer.input"]
+        waitUntilGone(application.keyboards.firstMatch)
+        XCTAssertFalse(input.isEnabled)
+        XCTAssertFalse(element("chat.agent.session").exists, "bar sesi agen belum tampil selama Switching")
+        capture("live-agent-switching-locked")
+        leave.tap()
+        XCTAssertTrue(notice("Agent Request Canceled").waitForExistence(timeout: 5))
+        XCTAssertTrue(input.isEnabled, "composer terbuka lagi setelah batal antre")
     }
 
     func testLeavingTheQueueShowsTheCanceledCard() {
@@ -73,11 +133,9 @@ final class LiveAgentUITests: XCTestCase {
         wait(for: [expectation(for: isRevealed, evaluatedWith: nil)], timeout: 3)
         leave.tap()
         waitUntilGone(leave)
-        let canceled = element("chat.agent.notice")
-        XCTAssertTrue(canceled.waitForExistence(timeout: 5))
-        XCTAssertTrue(canceled.label.contains("Agent Request Canceled"))
+        XCTAssertTrue(notice("Agent Request Canceled").waitForExistence(timeout: 5))
         capture("live-agent-canceled")
-        // Agen yang dijadwalkan tidak pernah bergabung.
+        // Sapaan otomatis dan agen yang dijadwalkan tidak pernah datang.
         XCTAssertFalse(element("chat.agent.message").waitForExistence(timeout: 5))
     }
 }
@@ -85,8 +143,8 @@ final class LiveAgentUITests: XCTestCase {
 // MARK: - Helpers
 
 private extension LiveAgentUITests {
-    func launchAndAskForAnAgent() {
-        application.launchArguments = ["--language", "en", "--live-agent"]
+    func launchAndAskForAnAgent(extraArguments: [String] = []) {
+        application.launchArguments = ["--language", "en", "--live-agent"] + extraArguments
         application.launch()
         let open = application.buttons["sandbox.open"]
         XCTAssertTrue(open.waitForExistence(timeout: 10))
@@ -125,6 +183,13 @@ private extension LiveAgentUITests {
         XCTAssertTrue(application.buttons["composer.attachment"].exists, "masih di halaman chat")
         application.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
         waitUntilGone(sheet)
+    }
+
+    /// Kartu live agent dengan judul tertentu; kartu lain (mis. "Connected") bisa tampil bersamaan. Teks kartu satu
+    /// elemen di dalam kartu, jadi tombol batal tetap elemen sendiri.
+    func notice(_ title: String) -> XCUIElement {
+        application.descendants(matching: .any).matching(identifier: "chat.agent.notice")
+            .containing(NSPredicate(format: "label CONTAINS %@", title)).firstMatch
     }
 
     func element(_ identifier: String) -> XCUIElement {

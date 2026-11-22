@@ -66,7 +66,9 @@ struct SandboxOptions {
     static let lateMessageDelay: TimeInterval = 3
     /// Jeda jawaban bot tiruan setelah pertanyaan muncul di stream.
     static let replyDelay: TimeInterval = 1
-    /// `--live-agent`: jeda agen bergabung setelah antre, dan jeda agen menutup percakapan setelah menjawab.
+    /// `--live-agent`: jeda sapaan otomatis setelah antre; selama ini tombol batal masih tampil.
+    static let agentAutoGreetingDelay: TimeInterval = 2
+    /// `--live-agent`: jeda agen bergabung setelah sapaan otomatis, dan jeda agen menutup percakapan setelah menjawab.
     static let agentJoinDelay: TimeInterval = 3
     /// `--live-agent`: lama indikator agen mengetik sebelum pesannya datang.
     static let agentTypingDelay: TimeInterval = 1.5
@@ -94,6 +96,7 @@ struct SandboxOptions {
     private static let slowIconsFlag = "--slow-icons"
     private static let hideTermsFlag = "--hide-terms"
     private static let liveAgentFlag = "--live-agent"
+    private static let holdGreetingFlag = "--hold-greeting"
 
     /// Opsi dari argumen peluncuran proses ini.
     static var current: SandboxOptions {
@@ -117,6 +120,9 @@ struct SandboxOptions {
     let isHidingTerms: Bool
     /// `--live-agent`: pertanyaan pertama diserahkan ke agen tiruan (antre → bergabung → menjawab → selesai).
     let isLiveAgent: Bool
+    /// `--hold-greeting` (bersama `--live-agent`): sapaan otomatis dan agen tidak pernah datang, jadi kartu Switching
+    /// tetap tampil (untuk UI test composer terkunci tanpa berlomba dengan jeda sapaan).
+    let isHoldingGreeting: Bool
     let isHeaderDemo: Bool
     /// `--sheet-demo`: area scroll berisi tombol yang membuka bottom sheet contoh di atas halaman Tanya AI.
     let isSheetDemo: Bool
@@ -146,6 +152,7 @@ struct SandboxOptions {
         isSendingLateQuestion = arguments.contains(Self.lateQuestionFlag)
         isHidingTerms = arguments.contains(Self.hideTermsFlag)
         isLiveAgent = arguments.contains(Self.liveAgentFlag)
+        isHoldingGreeting = arguments.contains(Self.holdGreetingFlag)
         isHeaderDemo = arguments.contains(Self.headerDemoFlag)
         isSheetDemo = arguments.contains(Self.sheetDemoFlag)
         isSheetMaxSet = arguments.contains(Self.sheetMaxFlag)

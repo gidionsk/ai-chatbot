@@ -30,8 +30,14 @@ public enum CustomColors {
         public static let filledOpacity: Double = 0.7
     }
 
+    /// TODO: Konfirmasi dengan Figma; belum ada desain titik menunggu jawaban.
+    public enum TypingDots {
+        /// Opacity titik saat redup; terang = `opaque`.
+        public static let dimmedOpacity: Double = 0.3
+    }
+
     public enum Button {
-        /// Figma tombol batal di bawah kartu status.
+        /// Figma #567180, warna tombol batal di kartu status.
         public static let muted = CustomBasePaletteColor.slateBlue
     }
 

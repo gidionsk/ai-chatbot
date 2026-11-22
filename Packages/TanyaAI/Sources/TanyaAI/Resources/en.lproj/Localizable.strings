@@ -13,17 +13,24 @@
 /* TODO: Copy final hint bubble gagal dari UI/UX. */
 "chat.sendFailed" = "This message failed to send";
 "chat.scrollToLatest" = "Go to latest message";
+"chat.answerLoading" = "Preparing an answer...";
 "welcome.shortcutsTitle" = "Start here:";
 "welcome.terms" = "Learn the [Terms & Conditions](terms) for using TANYA AI.";
-/* TODO: Copy final live agent dari UI/UX; kartu antre mengikuti Figma, sisanya placeholder. */
-"liveAgent.sender" = "Live Agent OCBC Nyala";
+/* TODO: Copy final live agent dari UI/UX; kartu antre, kartu terhubung, label pengirim dan indikator mencari mengikuti Figma, sisanya placeholder. */
+"liveAgent.sender" = "Tanya OCBC Customer Assistant";
 "liveAgent.typing" = "Agent is typing...";
-"liveAgent.leaveQueue" = "Cancel this request";
+"liveAgent.leaveQueue" = "Cancel";
+"liveAgent.session.banner" = "You're now in mode talking with CA";
+"liveAgent.session.end" = "End Session";
+"liveAgent.leaveConfirm.title" = "Are you sure to exit this mode?";
+"liveAgent.leaveConfirm.message" = "You're getting back to self service mode";
+"liveAgent.leaveConfirm.confirm" = "Yes";
+"liveAgent.leaveConfirm.cancel" = "No";
 "liveAgent.attachment" = "Attach PDF or image";
-"liveAgent.started.chip" = "Session with Tanya OCBC Customer Assistant started";
-"liveAgent.ended.chip" = "Session with Tanya OCBC Customer Assistant ended";
-"liveAgent.connecting.title" = "Connecting to an Agent";
-"liveAgent.connecting.message" = "You are currently in the queue.\n\nPlease wait. A Tanya OCBC NISP Customer Assistant will serve you shortly.";
+"liveAgent.connecting.title" = "Switching to Live Chat with Human";
+"liveAgent.connecting.message" = "Connecting you to our customer assistant";
+"liveAgent.connected.title" = "Connected to Customer Assistant";
+"liveAgent.connected.message" = "To stay connected with us, please remain in this conversation and make sure you do not leave the OCBC mobile app.";
 "liveAgent.ended.title" = "Customer Assistant Mode Ended";
 "liveAgent.ended.message" = "You will return to self-service mode";
 "liveAgent.canceled.title" = "Agent Request Canceled";
@@ -36,7 +43,7 @@
 "attachment.gallery.formats" = "HEIC, JPG, or PNG";
 "attachment.file" = "File";
 "attachment.file.formats" = "PDF, HEIC, JPG, or PNG";
-"attachment.close" = "Close";
+"sheet.close" = "Close";
 "attachment.unsupportedFormat" = "This photo format isn't supported. Choose a HEIC, JPG, or PNG photo.";
 
 "referenceLetter.title" = "Order a reference letter";

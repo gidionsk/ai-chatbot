@@ -12,6 +12,6 @@ public enum FilledButtonVariant: Equatable {
     /// Aksi kedua di samping aksi utama, mis. Batalkan di form: ukuran sama dengan `.regular`, tanpa latar gelap,
     /// hanya garis tepi dan teks berwarna tombol.
     case outlined
-    /// Teks kecil bergaris bawah, mis. "Batalkan proses ini" di bawah kartu status.
+    /// Teks kecil bergaris bawah untuk aksi ringan di bawah konten.
     case link
 }

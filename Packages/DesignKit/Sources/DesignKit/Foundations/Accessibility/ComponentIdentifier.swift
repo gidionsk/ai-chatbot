@@ -30,6 +30,11 @@ enum ComponentIdentifier {
         }
     }
 
+    enum ConfirmationPrompt {
+        static let confirm = "confirmation.confirm"
+        static let cancel = "confirmation.cancel"
+    }
+
     enum Composer {
         static let root = "composer"
         static let input = "composer.input"
