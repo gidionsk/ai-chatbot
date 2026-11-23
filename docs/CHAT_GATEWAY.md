@@ -80,6 +80,13 @@ agen bergabung. `AGENT_ACTIVE` baru terjadi saat agen benar-benar bergabung (con
 history sapaan tidak bisa dibedakan dari pesan agen biasa; antre yang habis setelah sapaan tampil seperti sesi yang
 pernah dilayani (kartu "Connected" lalu kartu selesai) sampai BE memberi penanda. Asumsi ini menunggu konfirmasi BE.
 
+Akhir sesi agen: event `state` dari `AGENT_QUEUED`/`AGENT_ACTIVE` ke state lain menjadi posisi kartu selesai,
+karena `id:` berbagi urutan dengan `seq` pesan. Pesan nasabah selama sesi, termasuk yang dikirim sebelum agen manusia
+bergabung, tetap di atas kartu. Setelah `leave-agent` menjawab `left:true`, kartu sementara di ujung daftar sampai
+event itu tiba. UAT mengirim `system` `agent_left` setelah event `state` saat End Session; token ini belum ada di
+contract v1.5.3 sehingga diabaikan dan tidak menambah kartu. Tanpa event `state` (dibuka dari history dan tidak ikut
+replay), kartu selesai tetap setelah pesan agen terakhir.
+
 History hanya berisi `Message`, jadi kartu hanya ada selama halaman terbuka. Saat dibuka lagi, kartu yang
 `seq`-nya setelah pesan terakhir masih ikut replay SSE (cursor = seq pesan terakhir) selama outbox belum
 dipangkas; kartu sebelum pesan terakhir tidak kembali. Pesan agen tetap ada di history (`direction: agent`).

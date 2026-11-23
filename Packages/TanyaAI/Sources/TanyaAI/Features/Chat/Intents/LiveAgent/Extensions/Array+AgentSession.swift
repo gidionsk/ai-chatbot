@@ -25,10 +25,16 @@ extension Array where Element == ChatMessage {
         return scan.cards
     }
 
-    /// Kartu selesai untuk sesi agen di history, karena history tidak membawa event `system`. Sesi berakhir saat bot
-    /// menjawab lagi, atau di akhir daftar bila tidak sedang antre atau dilayani agen; kartunya tepat setelah pesan
-    /// agen terakhir sesi itu. Sesi yang sudah punya kartu dari stream di antara keduanya tidak diberi kartu lagi.
-    func endedAgentSessions(isOngoing: Bool, closedBy notices: [LiveAgentNotice]) -> [LiveAgentNotice] {
+    /// Kartu selesai untuk sesi agen tanpa kartu penutup dari stream, karena history tidak membawa event `system`. Sesi
+    /// berakhir saat bot menjawab lagi, atau di akhir daftar bila tidak sedang antre atau dilayani agen. Kartunya di
+    /// posisi akhir sesi dari event `state` stream (`exitSeqs`, lihat `AgentSessionExits`), jadi pesan nasabah selama
+    /// sesi tetap di atasnya; tanpa posisi itu (dibuka dari history) kartunya tepat setelah pesan agen terakhir.
+    /// Sesi yang sudah punya kartu dari stream di antara keduanya tidak diberi kartu lagi.
+    func endedAgentSessions(
+        isOngoing: Bool,
+        closedBy notices: [LiveAgentNotice],
+        exitSeqs: [Int]
+    ) -> [LiveAgentNotice] {
         var sessions: [(lastAgentSeq: Int, nextSeq: Int)] = []
         var lastAgentSeq: Int?
         for message in self {
@@ -49,7 +55,11 @@ extension Array where Element == ChatMessage {
         return
             sessions
             .filter { session in !notices.contains { $0.seq > session.lastAgentSeq && $0.seq < session.nextSeq } }
-            .map { LiveAgentNotice(kind: .ended, seq: $0.lastAgentSeq) }
+            .map { session in
+                // `<=`: sesi terakhir berakhir di `Int.max`, sama dengan posisi selama event `state` ditunggu.
+                let exitSeq = exitSeqs.first { $0 > session.lastAgentSeq && $0 <= session.nextSeq }
+                return LiveAgentNotice(kind: .ended, seq: exitSeq ?? session.lastAgentSeq)
+            }
     }
 
     /// Permintaan agen yang tidak dilanjutkan: pesan bot ber-intent `liveAgent` yang tidak diikuti pesan agen sampai

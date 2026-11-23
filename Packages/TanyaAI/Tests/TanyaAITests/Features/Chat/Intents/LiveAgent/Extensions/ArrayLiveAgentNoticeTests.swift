@@ -85,11 +85,29 @@ struct ArrayLiveAgentNoticeTests {
             message(seq: 7, author: .agent)
         ]
         #expect(
-            messages.endedAgentSessions(isOngoing: true, closedBy: [])
+            messages.endedAgentSessions(isOngoing: true, closedBy: [], exitSeqs: [])
                 == [LiveAgentNotice(kind: .ended, seq: 4)])
         #expect(
-            messages.endedAgentSessions(isOngoing: false, closedBy: [LiveAgentNotice(kind: .canceled, seq: 5)])
-                == [LiveAgentNotice(kind: .ended, seq: 7)])
+            messages.endedAgentSessions(
+                isOngoing: false,
+                closedBy: [LiveAgentNotice(kind: .canceled, seq: 5)],
+                exitSeqs: []
+            ) == [LiveAgentNotice(kind: .ended, seq: 7)])
+    }
+
+    /// Posisi akhir sesi dari event `state` menggantikan tebakan pesan agen terakhir, jadi pesan nasabah selama sesi
+    /// tetap di atas kartu. Posisi di luar rentang sesi tidak dipakai; `Int.max` hanya untuk sesi terakhir.
+    @Test
+    func endedCardUsesTheStateExitOfItsSession() {
+        let messages = [
+            message(seq: 2, author: .agent), message(seq: 3, author: .user), message(seq: 5, author: .assistant),
+            message(seq: 6, author: .agent), message(seq: 7, author: .user)
+        ]
+        let ended = { LiveAgentNotice(kind: .ended, seq: $0) }
+        #expect(messages.endedAgentSessions(isOngoing: false, closedBy: [], exitSeqs: [4, 8]) == [ended(4), ended(8)])
+        #expect(messages.endedAgentSessions(isOngoing: false, closedBy: [], exitSeqs: [8]) == [ended(2), ended(8)])
+        #expect(
+            messages.endedAgentSessions(isOngoing: false, closedBy: [], exitSeqs: [.max]) == [ended(2), ended(.max)])
     }
 
     /// Kartu dari history memakai `seq` pesan yang ditutupnya dan tampil tepat setelah pesan itu, bukan sebelumnya.

@@ -14,7 +14,7 @@ enum ChatEvent: Equatable {
     /// Satu-satunya event pembuka kunci: jawaban selesai, gagal, atau dibatalkan. `seq` dari `id:` frame.
     case turnEnd(seq: Int?)
     /// State percakapan berpindah, mis. ke antrean atau agen manusia.
-    case state(ConversationState)
+    case state(ConversationStateChange)
     /// Notifikasi live agent yang menjadi kartu status.
     case notice(LiveAgentNotice)
     /// Agen sedang mengetik; indikator hilang sendiri setelah `lifetime` detik tanpa kabar baru.
@@ -31,8 +31,7 @@ enum ChatEvent: Equatable {
         case ChatWire.Event.turnEnd:
             self = .turnEnd(seq: event.id.flatMap(Int.init))
         case ChatWire.Event.state:
-            let wire = try? JSONDecoder.wire.decode(WireStateChange.self, from: data)
-            self = wire.map { .state($0.nextState) } ?? .ignored
+            self = Self.stateChange(from: data, seq: event.id.flatMap(Int.init)) ?? .ignored
         case ChatWire.Event.system:
             self = Self.notice(from: data, seq: event.id.flatMap(Int.init)) ?? .ignored
         case ChatWire.Event.typing:
@@ -52,6 +51,11 @@ private extension ChatEvent {
             let kind = LiveAgentNoticeKind(rawValue: wire.type)
         else { return nil }
         return .notice(LiveAgentNotice(kind: kind, seq: seq))
+    }
+
+    static func stateChange(from data: Data, seq: Int?) -> ChatEvent? {
+        guard let wire = try? JSONDecoder.wire.decode(WireStateChange.self, from: data) else { return nil }
+        return .state(ConversationStateChange(previous: wire.previousState, next: wire.nextState, seq: seq))
     }
 
     static func agentTyping(from data: Data) -> ChatEvent? {

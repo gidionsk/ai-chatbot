@@ -35,7 +35,8 @@ usulan ditulis di body PR sebagai pertanyaan untuk owner. Bila berbeda, ikuti do
   Saran lanjutan = `SuggestionChip` di bawah jawaban terakhir, diketuk = terkirim seperti shortcut.
   Live agent: kartu status (frame 62/64) dari event `system`, kartu antre + tombol batal hanya selama antre, pesan
   agen dengan avatar dan label statis (frame 68), "Agen sedang mengetik..." miring. History tanpa event `system`:
-  kartu selesai diturunkan dari pesan agen; kartu batal/tidak tersedia hanya selama halaman terbuka.
+  kartu selesai diturunkan dari pesan agen; kartu batal/tidak tersedia hanya selama halaman terbuka. Kartu selesai
+  di `seq` event `state` keluar dari agen (stream/replay), jadi pesan nasabah selama sesi tetap di atasnya.
   Jawaban bot = `MarkdownContent` (parser Apple: CommonMark + GFM, tanpa HTML; gambar lewat `RemoteImage`), link ke host lewat
   `makeView(onOpenLink:)`.
   `isAwaitingReply` sejak kirim sampai `turn_end` (kartu nonaktif). Tanpa titik bergerak: tombol langsung stop

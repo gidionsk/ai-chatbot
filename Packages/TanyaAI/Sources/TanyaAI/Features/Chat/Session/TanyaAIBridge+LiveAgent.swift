@@ -23,7 +23,11 @@ extension TanyaAIBridge {
         let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
         var notices = openingNotices + closing
         notices += messages.connectedAgentSessions(streamNotices: liveAgentNotices)
-        notices += messages.endedAgentSessions(isOngoing: conversationState.isLiveAgent, closedBy: closing)
+        notices += messages.endedAgentSessions(
+            isOngoing: conversationState.isLiveAgent,
+            closedBy: closing,
+            exitSeqs: agentExits.positions
+        )
         notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
             .filter { !streamedHandoverSeqs.contains($0.seq) }
         var seenSeqs = Set<Int>()
