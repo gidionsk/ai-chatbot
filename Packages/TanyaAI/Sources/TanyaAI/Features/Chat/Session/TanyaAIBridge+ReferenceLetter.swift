@@ -30,28 +30,42 @@ extension TanyaAIBridge {
         referenceLetterLayouts.removeAll()
     }
 
+    func isSubmittingReferenceLetter(messageID: String) -> Bool {
+        guard let form = referenceLetters[messageID] else { return false }
+        return submittingReferenceLetters.contains(ObjectIdentifier(form))
+    }
+
     func submitReferenceLetter(pin: String, messageID: String) async throws -> Bool {
-        guard isReady, !isSubmittingReferenceLetter,
-            let form = referenceLetters[messageID],
-            messages.contains(where: { $0.id == messageID && $0.status == .active && $0.successID == nil })
-        else { return false }
-        isSubmittingReferenceLetter = true
-        defer { isSubmittingReferenceLetter = false }
+        guard isReady, let form = pendingReferenceLetter(messageID: messageID) else { return false }
+        let formIdentity = ObjectIdentifier(form)
+        guard !submittingReferenceLetters.contains(formIdentity) else { return false }
+        submittingReferenceLetters.insert(formIdentity)
+        defer { submittingReferenceLetters.remove(formIdentity) }
+
         let receipt: ReferenceLetterReceipt?
         do {
             receipt = try await form.submit(pin: pin)
         } catch {
-            guard referenceLetters[messageID] === form else { return false }
+            guard pendingReferenceLetter(messageID: messageID) === form else { return false }
             throw error
         }
-        guard let receipt, referenceLetters[messageID] === form else { return false }
+        guard let receipt, pendingReferenceLetter(messageID: messageID) === form else { return false }
         if let successID = receipt.successID, !successID.isEmpty {
             // ACK sudah berhasil. Gagal memasang receipt gateway tidak mengulang pengajuan.
             Task {
-                guard referenceLetters[messageID] === form else { return }
+                guard pendingReferenceLetter(messageID: messageID) === form else { return }
                 try? await attachSuccessID(successID, toMessageID: messageID)
             }
         }
         return true
+    }
+}
+
+private extension TanyaAIBridge {
+    func pendingReferenceLetter(messageID: String) -> ReferenceLetterForm? {
+        guard let form = referenceLetters[messageID],
+            messages.contains(where: { $0.id == messageID && $0.status == .active && $0.successID == nil })
+        else { return nil }
+        return form
     }
 }

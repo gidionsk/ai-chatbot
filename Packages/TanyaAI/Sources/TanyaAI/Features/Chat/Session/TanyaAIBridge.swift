@@ -69,7 +69,7 @@ public final class TanyaAIBridge: ObservableObject {
     let services: TanyaAIIntentServices
     var referenceLetters: [String: ReferenceLetterForm] = [:]
     @Published var referenceLetterLayouts: [ChatListItemID: ReferenceLetterLayout] = [:]
-    @Published var isSubmittingReferenceLetter = false
+    @Published var submittingReferenceLetters: Set<ObjectIdentifier> = []
     let onSessionExpired: (() -> Void)?
     let onConnectionFailed: ((Error) -> Void)?
     let sleep: (TimeInterval) async throws -> Void

@@ -60,6 +60,9 @@ struct ChatSheetModifier: ViewModifier {
             .onChange(of: attachmentSession) { closeStale(attachmentSession: $0, leaveSession: leaveSession) }
             .onChange(of: leaveSession) { closeStale(attachmentSession: attachmentSession, leaveSession: $0) }
             .onChange(of: bridge.conversationID) { _ in closeReferenceLetter() }
+            .onChange(of: isReferenceLetterCompleted) { isCompleted in
+                if isCompleted { closeReferenceLetter() }
+            }
             .onDisappear(perform: closeReferenceLetter)
     }
 
@@ -83,7 +86,7 @@ struct ChatSheetModifier: ViewModifier {
                     form: form,
                     activeSheet: $sheet,
                     item: sheet,
-                    isSubmitting: bridge.isSubmittingReferenceLetter,
+                    isSubmitting: bridge.isSubmittingReferenceLetter(messageID: id),
                     onSubmit: { try await bridge.submitReferenceLetter(pin: $0, messageID: id) }
                 )
             }
@@ -91,8 +94,13 @@ struct ChatSheetModifier: ViewModifier {
     }
 
     private var isDismissable: Bool {
-        guard case .referenceLetterPIN = sheet else { return true }
-        return !bridge.isSubmittingReferenceLetter
+        guard case .referenceLetterPIN(let id) = sheet else { return true }
+        return !bridge.isSubmittingReferenceLetter(messageID: id)
+    }
+
+    private var isReferenceLetterCompleted: Bool {
+        guard let sheet else { return false }
+        return sheet.afterReferenceLetterCompletion(in: bridge.messages) == nil
     }
 
     /// Sesi picker ditangkap saat callback dibuat, bukan dibaca saat hasilnya tiba.

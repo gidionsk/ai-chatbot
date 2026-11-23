@@ -43,7 +43,13 @@ final class ReferenceLetterServiceDouble: ReferenceLetterService {
                 FormOption(code: "SOFTCOPY", title: "Softcopy"),
                 FormOption(code: "HARDCOPY", title: "Hardcopy")
             ],
-            sourceAccounts: [FormOption(code: "account", title: "Account")],
+            sourceAccounts: [
+                FormOption(code: "account", title: "Account"),
+                FormOption(
+                    code: "long-account",
+                    title: "Example joint savings account with a longer display name that wraps into several lines"
+                )
+            ],
             currencies: [FormOption(code: "002", title: "USD")],
             languages: isLanguageAvailable ? [FormOption(code: "IN", title: "Indonesia")] : [],
             address: "Example address",

@@ -32,4 +32,10 @@ extension ChatSheet {
     func afterConversationChange() -> ChatSheet? {
         referenceLetterMessageID == nil ? self : nil
     }
+
+    /// Respons success-id dari stream maupun history mengakhiri pilihan dan PIN untuk pesan pemiliknya.
+    func afterReferenceLetterCompletion(in messages: [ChatMessage]) -> ChatSheet? {
+        guard let id = referenceLetterMessageID else { return self }
+        return messages.contains { $0.id == id && $0.successID != nil } ? nil : self
+    }
 }

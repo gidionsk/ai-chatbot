@@ -118,7 +118,10 @@ public struct ChatScreen<Content: View>: View {
             actions: actions,
             referenceLetter: bridge.referenceLetter(for: item),
             isReferenceLetterEnabled: bridge.services.referenceLetter != nil,
-            onSheet: { if isEnabled && bridge.isReady { sheet = $0 } }
+            onSheet: { candidate in
+                guard isEnabled, bridge.isReady else { return }
+                sheet = candidate.afterReferenceLetterCompletion(in: bridge.messages)
+            }
         )
         .id(item.id)
         .designColors(colors)

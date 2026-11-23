@@ -54,7 +54,7 @@ struct ReferenceLetterSheetContent: View {
                 deleteLabel: String(ChatCopy.referenceLetterDeleteDigit, locale: locale),
                 onComplete: complete
             )
-            .disabled(isSubmitting || form.isPINBlocked)
+            .disabled(isSubmitting)
             .onChange(of: pin.isEmpty) { isEmpty in
                 if !isEmpty { form.clearSubmissionError() }
             }

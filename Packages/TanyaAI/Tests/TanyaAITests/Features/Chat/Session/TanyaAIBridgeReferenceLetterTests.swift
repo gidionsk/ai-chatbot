@@ -81,6 +81,65 @@ struct TanyaAIBridgeReferenceLetterTests {
         #expect(!fixture.transport.calls.contains("success:fresh:ref-1"))
     }
 
+    @Test
+    func pendingSubmitDoesNotLockReplacementForm() async throws {
+        let service = ReferenceLetterServiceDouble()
+        let bridge = makeBridge(service).bridge
+        var requests: [CheckedContinuation<Void, Never>] = []
+        service.beforeSubmit = { await withCheckedContinuation { requests.append($0) } }
+        defer { requests.forEach { $0.resume() } }
+
+        ReferenceLetterServiceDouble.fill(try await openForm(in: bridge))
+        let firstSubmit = Task { try await bridge.submitReferenceLetter(pin: "123456", messageID: "fresh") }
+        await waitUntil { requests.count == 1 }
+        try #require(requests.count == 1)
+        #expect(bridge.isSubmittingReferenceLetter(messageID: "fresh"))
+
+        ReferenceLetterServiceDouble.fill(try await openForm(in: bridge, conversationID: "next"))
+        #expect(!bridge.isSubmittingReferenceLetter(messageID: "fresh"))
+        let secondSubmit = Task { try await bridge.submitReferenceLetter(pin: "123456", messageID: "fresh") }
+        await waitUntil { requests.count == 2 }
+        try #require(requests.count == 2)
+
+        requests.removeFirst().resume()
+        let firstSucceeded = try await firstSubmit.value
+        #expect(!firstSucceeded)
+        #expect(bridge.isSubmittingReferenceLetter(messageID: "fresh"))
+
+        requests.removeFirst().resume()
+        let secondSucceeded = try await secondSubmit.value
+        #expect(secondSucceeded)
+        #expect(!bridge.isSubmittingReferenceLetter(messageID: "fresh"))
+        #expect(service.submitCount == 2)
+    }
+
+    @Test(arguments: [false, true])
+    func externalCompletionClosesOnlyItsSheet(isFromHistory: Bool) async throws {
+        let service = ReferenceLetterServiceDouble()
+        let bridge = makeBridge(service).bridge
+        ReferenceLetterServiceDouble.fill(try await openForm(in: bridge))
+        let pin = ChatSheet.referenceLetterPIN(messageID: "fresh")
+        let choices = ChatSheet.referenceLetterChoices(messageID: "fresh", field: .accounts)
+        #expect(pin.afterReferenceLetterCompletion(in: bridge.messages) == pin)
+        #expect(choices.afterReferenceLetterCompletion(in: bridge.messages) == choices)
+
+        let receipt = message(id: "fresh", seq: 2).receipted(successID: "other-channel")
+        switch isFromHistory {
+        case true:
+            bridge.replaceOrMerge([receipt], conversationID: "chat")
+        case false:
+            bridge.apply(.message(receipt))
+        }
+
+        #expect(pin.afterReferenceLetterCompletion(in: bridge.messages) == nil)
+        #expect(choices.afterReferenceLetterCompletion(in: bridge.messages) == nil)
+        let other = ChatSheet.referenceLetterPIN(messageID: "other")
+        #expect(other.afterReferenceLetterCompletion(in: bridge.messages) == other)
+        let result = try await bridge.submitReferenceLetter(pin: "123456", messageID: "fresh")
+        #expect(!result)
+        #expect(service.submitCount == 0)
+    }
+
     private func makeBridge(_ service: ReferenceLetterServiceDouble) -> ReferenceLetterBridgeFixture {
         let transport = FakeChatTransport()
         let bridge = TanyaAIBridge(
@@ -90,8 +149,11 @@ struct TanyaAIBridgeReferenceLetterTests {
         return ReferenceLetterBridgeFixture(transport: transport, bridge: bridge)
     }
 
-    private func openForm(in bridge: TanyaAIBridge) async throws -> ReferenceLetterForm {
-        bridge.replaceOrMerge([], conversationID: "chat")
+    private func openForm(
+        in bridge: TanyaAIBridge,
+        conversationID: String = "chat"
+    ) async throws -> ReferenceLetterForm {
+        bridge.replaceOrMerge([], conversationID: conversationID)
         let fresh = message(id: "fresh", seq: 2)
         bridge.apply(.message(fresh))
         let form = try #require(bridge.referenceLetters[fresh.id])

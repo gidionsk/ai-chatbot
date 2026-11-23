@@ -37,11 +37,6 @@ final class ReferenceLetterForm: ObservableObject {
         self.onLayoutChange = onLayoutChange
     }
 
-    var isPINBlocked: Bool {
-        guard case .pinVerification(_, let isBlocked) = pinError else { return false }
-        return isBlocked
-    }
-
     func load() async {
         guard !isLoading, layout == .loading else { return }
         isLoading = true
@@ -65,13 +60,11 @@ final class ReferenceLetterForm: ObservableObject {
     }
 
     func clearSubmissionError() {
-        guard !isPINBlocked else { return }
         pinError = nil
     }
 
     func submit(pin: String) async throws -> ReferenceLetterReceipt? {
         guard ReferenceLetterPIN.isValid(pin),
-            !isPINBlocked,
             case .form = layout,
             let inquiry,
             draft.validate(),
@@ -101,7 +94,17 @@ final class ReferenceLetterForm: ObservableObject {
 
 private extension ReferenceLetterForm {
     var draftLayout: ReferenceLetterLayout {
-        .form(fields: draft.visibleFields.map(\.id), invalid: draft.invalidFieldIDs)
+        var selections: [ReferenceLetterFieldID: [String]] = [:]
+        for field in draft.visibleFields {
+            guard let codes = draft.value(for: field.id)?.selectedCodes, !codes.isEmpty else { continue }
+            // Daftar opsi berasal dari inquiry yang sama; kode menandai perubahan teks ringkasan.
+            selections[field.id] = codes
+        }
+        return .form(
+            fields: draft.visibleFields.map(\.id),
+            invalid: draft.invalidFieldIDs,
+            selections: selections
+        )
     }
 
     func updateLayout(_ nextLayout: ReferenceLetterLayout) {

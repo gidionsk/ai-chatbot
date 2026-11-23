@@ -9,7 +9,11 @@
 enum ReferenceLetterLayout: Equatable {
     case loading
     case hidden
-    case form(fields: [ReferenceLetterFieldID], invalid: Set<ReferenceLetterFieldID>)
+    case form(
+        fields: [ReferenceLetterFieldID],
+        invalid: Set<ReferenceLetterFieldID>,
+        selections: [ReferenceLetterFieldID: [String]]
+    )
     case submitted
     case cancelled
 }
