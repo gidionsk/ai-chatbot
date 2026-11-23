@@ -30,25 +30,29 @@ struct TanyaAIScreen: ScreenContent {
             )
             // Sandbox: wadah bottom sheet dipasang di root halaman, jadi header Tanya AI ikut tertutup latar gelap.
             .bottomSheet(
-                isPresented: $isSheetPresented,
+                isPresented: isHostSheetPresented,
                 closeLabel: String(SandboxCopy.sheetClose, locale: locale),
                 maxHeight: sheetMaxHeight,
                 isDismissable: !SandboxOptions.current.isSheetLocked
             ) {
-                SheetDemoSheetContent(selectedIDs: sheetChoiceIDs, onSelect: choose)
+                if viewModel.isReferenceLetterAckFailed {
+                    Text(String(SandboxCopy.formAckFailure, locale: locale))
+                        .designFont(.body)
+                        .padding(FigmaSize.spacingLarge.scaledToArtwork)
+                } else {
+                    SheetDemoSheetContent(selectedIDs: sheetChoiceIDs, onSelect: choose)
+                }
             }
-            // Beberapa jenis sheet, satu pemasangan: sheet tampil selama `formDemo.sheet` terisi. Terkunci selama PIN
-            // diperiksa, supaya nasabah tidak menutupnya di tengah proses.
             .bottomSheet(
                 item: $formDemo.sheet,
                 closeLabel: String(SandboxCopy.sheetClose, locale: locale),
                 isDismissable: !formDemo.isVerifying
-            ) { sheet in
-                FormDemoSheetContent(model: formDemo, sheet: sheet)
+            ) { item in
+                FormDemoSheetContent(model: formDemo, sheet: item)
             }
             // Latar gelap hanya menahan sentuhan di dalam halaman; swipe-back milik navigasi host, jadi host yang
             // menahannya selama sheet terbuka. Dibuka lagi saat halaman hilang supaya tidak tertinggal mati.
-            .onChange(of: isSheetPresented) { UINavigationController.setPopGestureEnabled(!$0) }
+            .onChange(of: isHostSheetPresented.wrappedValue) { UINavigationController.setPopGestureEnabled(!$0) }
             .onChange(of: formDemo.sheet != nil) { UINavigationController.setPopGestureEnabled(!$0) }
             .onDisappear { UINavigationController.setPopGestureEnabled() }
     }
@@ -59,7 +63,7 @@ struct TanyaAIScreen: ScreenContent {
         // Sandbox: mode --header-demo mengisi area scroll dengan konten contoh.
         if SandboxOptions.current.isHeaderDemo {
             host.makeView(onBack: onBack, onOpenLink: openLink) { HeaderDemoContent() }
-        } else if SandboxOptions.current.isFormDemo {
+        } else if SandboxOptions.current.isFormComponentsDemo {
             host.makeView(onBack: onBack, onOpenLink: openLink) { FormDemoContent(model: formDemo) }
         } else if SandboxOptions.current.isSheetDemo {
             host.makeView(onBack: onBack, onOpenLink: openLink) { SheetDemoContent(onOpen: openSheet) }
@@ -72,6 +76,18 @@ struct TanyaAIScreen: ScreenContent {
     private var sheetMaxHeight: BottomSheetMaxHeight {
         guard SandboxOptions.current.isSheetMaxSet else { return .belowStatusBar }
         return .screenFraction(SandboxOptions.sheetMaxFraction)
+    }
+
+    private var isHostSheetPresented: Binding<Bool> {
+        Binding(
+            get: { isSheetPresented || viewModel.isReferenceLetterAckFailed },
+            set: { isShown in
+                if !isShown {
+                    isSheetPresented = false
+                    viewModel.isReferenceLetterAckFailed = false
+                }
+            }
+        )
     }
 
     private var isLinkPresented: Binding<Bool> {

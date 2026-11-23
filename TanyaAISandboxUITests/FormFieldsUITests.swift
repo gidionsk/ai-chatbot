@@ -7,9 +7,7 @@
 
 import XCTest
 
-/// `--form-demo`: field pilihan membuka daftar di bottom sheet, pilihan menentukan field berikutnya, rekening boleh
-/// lebih dari satu dan daftarnya dimuat dulu, field nonaktif tidak bisa diubah, Konfirmasi menandai field kosong
-/// sambil membuka sheet pilihan kosong paling atas, dan Batalkan mengosongkan form.
+/// `--form-demo`: pesan gateway menampilkan form dari inquiry host.
 final class FormFieldsUITests: XCTestCase {
     private let application = XCUIApplication()
 
@@ -18,104 +16,162 @@ final class FormFieldsUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testAFormatChoiceSwapsTheDependentField() {
-        launchDemo()
-        let email = application.textFields["sandbox.form.email"]
-        XCTAssertTrue(email.waitForExistence(timeout: 10))
-        XCTAssertFalse(email.isEnabled, "email tersimpan tidak bisa diubah")
-        application.buttons["sandbox.form.format"].tap()
-        let sheet = sheetElement
-        XCTAssertTrue(sheet.waitForExistence(timeout: 5))
-        application.buttons["Hardcopy"].tap()
-        waitUntilGone(sheet)
-        XCTAssertEqual(application.buttons["sandbox.form.format"].value as? String, "Hardcopy")
-        XCTAssertTrue(application.textFields["sandbox.form.address"].waitForExistence(timeout: 3))
-        XCTAssertFalse(email.exists, "softcopy diganti hardcopy: email tidak tampil")
+    func testFormatChangesTheDeliveryField() {
+        application.launchReferenceLetter()
+        let email = application.textFields["Delivery email"]
+        application.revealReferenceLetter(email, isHittableRequired: false)
+        XCTAssertFalse(email.isEnabled)
+        XCTAssertEqual(email.value as? String, "lara@example.com")
+
+        application.revealReferenceLetter(application.buttons["Document format"])
+        application.buttons["Document format"].tap()
+        let hardcopy = application.buttons["Hardcopy"]
+        XCTAssertTrue(hardcopy.waitForExistence(timeout: 5))
+        hardcopy.tap()
+        let address = application.textFields["Delivery address"]
+        application.revealReferenceLetter(address, isHittableRequired: false)
+        XCTAssertFalse(address.isEnabled)
+        XCTAssertFalse(email.exists)
     }
 
-    func testAccountsLoadFirstThenAllowSeveral() {
-        launchDemo()
-        application.buttons["sandbox.form.accounts"].tap()
-        XCTAssertTrue(sheetElement.waitForExistence(timeout: 5))
-        XCTAssertTrue(sheetElement.activityIndicators.firstMatch.exists, "daftar masih dimuat")
-        let first = application.buttons["Tanda 360 - 5262 8191 2892 82"]
+    func testSeveralAccountsCanBeSelected() {
+        application.launchReferenceLetter()
+        let accounts = application.buttons["Accounts to include"]
+        application.revealReferenceLetter(accounts)
+        accounts.tap()
+
+        let first = application.buttons["Tanda 360 - 2345 5678 2386"]
         XCTAssertTrue(first.waitForExistence(timeout: 5))
+        XCTAssertEqual(first.value as? String, "IDR 1.000.000")
         first.tap()
-        application.buttons["Giro Bisnis - 7781 2003 4551 9"].tap()
-        XCTAssertTrue(sheetElement.exists, "pilihan banyak menunggu tombol Pilih")
-        application.buttons["Choose"].tap()
-        waitUntilGone(sheetElement)
-        XCTAssertEqual(application.buttons["sandbox.form.accounts"].value as? String, "2 accounts selected")
+        application.buttons["Giro Bisnis - 7781 2003 4551"].tap()
+        application.buttons["Select"].tap()
+        XCTAssertEqual(accounts.value as? String, "2 accounts selected")
     }
 
-    func testAccountOptionsExposeTitleAndBalanceForAccessibility() {
-        launchDemo()
-        application.buttons["sandbox.form.accounts"].tap()
-        let account = application.buttons["Tanda 360 - 5262 8191 2892 82"]
-        XCTAssertTrue(account.waitForExistence(timeout: 5))
-        XCTAssertEqual(account.label, "Tanda 360 - 5262 8191 2892 82")
-        XCTAssertEqual(account.value as? String, "IDR 1.000.000")
-        let plain = application.buttons["Giro Bisnis - 7781 2003 4551 9"]
-        XCTAssertTrue(plain.exists)
-        XCTAssertEqual(plain.label, "Giro Bisnis - 7781 2003 4551 9")
-        XCTAssertTrue((plain.value as? String)?.isEmpty ?? true)
-    }
-
-    func testConfirmMarksEmptyFieldsAndOpensTheTopmostEmptyChoice() {
-        launchDemo()
-        let confirm = application.buttons["sandbox.form.confirm"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10))
+    func testInvalidFormOpensFirstChoice() {
+        application.launchReferenceLetter()
+        let confirm = application.buttons["Confirm"]
+        application.revealReferenceLetter(confirm)
+        let formRow = application.tables["chat.messages"].cells
+            .containing(.any, identifier: "chat.referenceLetter.form").firstMatch
+        let heightBeforeValidation = formRow.frame.height
         confirm.tap()
-        XCTAssertTrue(sheetElement.waitForExistence(timeout: 5))
-        XCTAssertTrue(application.buttons["Hardcopy"].exists, "sheet format, field pilihan kosong paling atas")
-        application.buttons["Hardcopy"].tap()
-        waitUntilGone(sheetElement)
-        XCTAssertTrue(application.staticTexts["Please choose one"].exists, "rekening masih kosong")
-        confirm.tap()
-        let first = application.buttons["Tanda 360 - 5262 8191 2892 82"]
-        XCTAssertTrue(first.waitForExistence(timeout: 5), "sheet rekening, kini pilihan kosong paling atas")
-        first.tap()
-        application.buttons["Choose"].tap()
-        waitUntilGone(sheetElement)
-        XCTAssertTrue(application.staticTexts["Please fill this in"].exists, "alamat masih kosong")
-        let address = application.textFields["sandbox.form.address"]
-        address.tap()
-        address.typeText("Jl. Sudirman 1")
-        waitUntilGone(application.staticTexts["Please fill this in"])
+        XCTAssertTrue(application.buttons["Tanda 360 - 2345 5678 2386"].waitForExistence(timeout: 5))
+        XCTAssertFalse(application.buttons["pin.digit.1"].exists)
+        application.buttons["sheet.handle"].tap()
+
+        let inlineError = application.staticTexts["Please complete this field."].firstMatch
+        XCTAssertTrue(inlineError.waitForExistence(timeout: 5))
+        XCTAssertGreaterThan(formRow.frame.height, heightBeforeValidation)
     }
 
-    func testCancelEmptiesTheForm() {
-        launchDemo()
-        let format = application.buttons["sandbox.form.format"]
-        application.buttons["sandbox.form.confirm"].tap()
-        XCTAssertTrue(application.buttons["Hardcopy"].waitForExistence(timeout: 5))
-        application.buttons["Hardcopy"].tap()
-        waitUntilGone(sheetElement)
-        XCTAssertEqual(format.value as? String, "Hardcopy")
-        application.buttons["sandbox.form.cancel"].tap()
-        XCTAssertNotEqual(format.value as? String, "Hardcopy", "pilihan dikosongkan")
-        XCTAssertFalse(application.staticTexts["Please choose one"].exists, "tanda wajib ikut hilang")
-        XCTAssertTrue(application.textFields["sandbox.form.email"].exists, "field alamat kembali jadi email")
+    func testInquiryFailureHidesTheCard() {
+        application.launchReferenceLetter(
+            extraArguments: ["--reference-letter-inquiry-failure"],
+            isWaitingForForm: false
+        )
+        let elements = application.descendants(matching: .any)
+        let loading = elements["chat.referenceLetter.loading"]
+        XCTAssertTrue(loading.waitForExistence(timeout: 5))
+        let hidden = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: loading)
+        wait(for: [hidden], timeout: 8)
+
+        let reply = "Silakan lengkapi data pengajuan Surat Referensi."
+        XCTAssertTrue(application.staticTexts[reply].exists)
+        XCTAssertFalse(elements["chat.referenceLetter.form"].exists)
+        XCTAssertFalse(application.staticTexts["Order a reference letter"].exists)
+        XCTAssertFalse(application.buttons["Retry loading the reference letter form"].exists)
+    }
+
+    func testRowGrowsAfterInquiryLoads() {
+        application.launchReferenceLetter(extraArguments: ["--reference-letter-slow-inquiry"], isWaitingForForm: false)
+        let table = application.tables["chat.messages"]
+        let loadingRow = table.cells.containing(.any, identifier: "chat.referenceLetter.loading").firstMatch
+        XCTAssertTrue(loadingRow.waitForExistence(timeout: 5))
+        let loadingHeight = loadingRow.frame.height
+        let formRow = table.cells.containing(.any, identifier: "chat.referenceLetter.form").firstMatch
+        XCTAssertTrue(formRow.waitForExistence(timeout: 8))
+        XCTAssertGreaterThan(formRow.frame.height, loadingHeight)
+        application.revealReferenceLetter(application.buttons["Confirm"])
+    }
+
+    func testCancelShowsStatusCard() {
+        application.launchReferenceLetter()
+        let cancel = application.buttons["Cancel"]
+        application.revealReferenceLetter(cancel)
+        let table = application.tables["chat.messages"]
+        let formRow = table.cells.containing(.any, identifier: "chat.referenceLetter.form").firstMatch
+        let formHeight = formRow.frame.height
+        cancel.tap()
+        let status = table.cells.containing(.any, identifier: "chat.referenceLetter.cancelled").firstMatch
+        XCTAssertTrue(status.waitForExistence(timeout: 5))
+        XCTAssertLessThan(status.frame.height, formHeight)
+        XCTAssertFalse(application.buttons["Document format"].exists)
     }
 }
 
 // MARK: - Helpers
 
-private extension FormFieldsUITests {
-    /// Sheet membawa trait modal, jadi XCUITest melaporkannya sebagai alert, bukan elemen biasa.
-    var sheetElement: XCUIElement { application.descendants(matching: .any)["sheet"] }
-
-    func launchDemo() {
-        application.launchArguments = ["--language", "en", "--form-demo", "--with-history"]
-        application.launch()
-        let entry = application.buttons["sandbox.open"]
+extension XCUIApplication {
+    func launchReferenceLetter(extraArguments: [String] = [], isWaitingForForm: Bool = true) {
+        launchArguments = ["--language", "en", "--form-demo", "--with-history"] + extraArguments
+        launch()
+        let entry = buttons["sandbox.open"]
         XCTAssertTrue(entry.waitForExistence(timeout: 10))
         entry.tap()
-        XCTAssertTrue(application.buttons["sandbox.form.format"].waitForExistence(timeout: 10))
+        let input = textViews["composer.input"]
+        XCTAssertTrue(input.waitForExistence(timeout: 10))
+        input.tap()
+        input.typeText("Ajukan Surat Referensi")
+        buttons["composer.send"].tap()
+        if isWaitingForForm {
+            XCTAssertTrue(buttons["Document format"].waitForExistence(timeout: 10))
+        }
     }
 
-    func waitUntilGone(_ element: XCUIElement) {
-        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
-        wait(for: [gone], timeout: 5)
+    /// Geser dalam viewport chat agar keyboard dan composer tidak menahan gesture.
+    func revealReferenceLetter(
+        _ element: XCUIElement,
+        isHittableRequired: Bool = true,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let table = tables["chat.messages"]
+        XCTAssertTrue(table.waitForExistence(timeout: 5), file: file, line: line)
+        let searchSteps = 10
+        for attempt in 0..<(searchSteps * 2) {
+            let viewport = referenceLetterViewport(in: table)
+            guard !viewport.isNull, viewport.height > .zero else { break }
+
+            let target = element.exists ? element.frame : .null
+            let isInViewport = !target.isEmpty && target.midY >= viewport.minY && target.midY <= viewport.maxY
+            if isInViewport, !isHittableRequired || element.isHittable { return }
+
+            let isSearchingForward = target.isEmpty ? attempt < searchSteps : target.midY >= viewport.midY
+            dragReferenceLetter(in: viewport, isSearchingForward: isSearchingForward)
+        }
+        XCTFail("Could not reveal \(element) in chat", file: file, line: line)
+    }
+
+    private func referenceLetterViewport(in table: XCUIElement) -> CGRect {
+        let bounds = table.frame.intersection(frame)
+        guard !bounds.isNull else { return .null }
+        let back = buttons["header.back"]
+        let send = buttons["composer.send"]
+        let top = back.exists ? max(bounds.minY, back.frame.maxY) : bounds.minY
+        let bottom = send.exists ? min(bounds.maxY, send.frame.minY) : bounds.maxY
+        return CGRect(x: bounds.minX, y: top, width: bounds.width, height: max(.zero, bottom - top))
+    }
+
+    private func dragReferenceLetter(in viewport: CGRect, isSearchingForward: Bool) {
+        let origin = coordinate(withNormalizedOffset: .zero)
+        let offsetX = viewport.midX - frame.minX
+        let offsetY = viewport.minY - frame.minY
+        let upper = origin.withOffset(CGVector(dx: offsetX, dy: offsetY + viewport.height * 0.30))
+        let lower = origin.withOffset(CGVector(dx: offsetX, dy: offsetY + viewport.height * 0.70))
+        let start = isSearchingForward ? lower : upper
+        let end = isSearchingForward ? upper : lower
+        start.press(forDuration: 0.05, thenDragTo: end)
     }
 }

@@ -31,7 +31,7 @@ struct SandboxOptions {
     static let sheetMaxFraction: CGFloat = 0.6
     /// `--sheet-long`: jumlah baris contoh, lebih panjang dari layar.
     static let sheetLongOptionCount = 20
-    /// `--form-demo`: identifier field form contoh.
+    /// `--form-components-demo`: identifier field form contoh.
     static let formFormatIdentifier = "sandbox.form.format"
     static let formAccountsIdentifier = "sandbox.form.accounts"
     static let formAddressIdentifier = "sandbox.form.address"
@@ -60,6 +60,10 @@ struct SandboxOptions {
         OptionItem(id: "6930112045571", title: "Tabungan Taka - 6930 1120 4557 1"),
         OptionItem(id: "7781200345519", title: "Giro Bisnis - 7781 2003 4551 9")
     ]
+    /// Jeda tiruan untuk mengecek interaksi sheet saat PIN diverifikasi.
+    static let formVerifyNanoseconds: UInt64 = 1_500_000_000
+    /// Jeda agar UI test sempat mengukur baris ketika inquiry masih dimuat.
+    static let formInquiryNanoseconds: UInt64 = 3_000_000_000
     /// Jeda pertanyaan nasabah muncul di stream setelah ack; selama ini bubble lokal yang tampil.
     static let echoDelay: TimeInterval = 0.6
     /// Jeda pesan bot yang datang sendiri setelah stream tersambung (`--late-message`).
@@ -90,7 +94,12 @@ struct SandboxOptions {
     private static let sheetMultiFlag = "--sheet-multi"
     private static let sheetLockedFlag = "--sheet-locked"
     private static let sheetInputFlag = "--sheet-input"
+    private static let formComponentsDemoFlag = "--form-components-demo"
     private static let formDemoFlag = "--form-demo"
+    private static let formPinBlockedFlag = "--reference-letter-pin-blocked"
+    private static let formInquiryFailureFlag = "--reference-letter-inquiry-failure"
+    private static let formAckFailureFlag = "--reference-letter-ack-failure"
+    private static let formSlowInquiryFlag = "--reference-letter-slow-inquiry"
     private static let offlineFlag = "--offline"
     private static let brokenIconsFlag = "--broken-icons"
     private static let slowIconsFlag = "--slow-icons"
@@ -136,8 +145,14 @@ struct SandboxOptions {
     let isSheetLocked: Bool
     /// `--sheet-input` (bersama `--sheet-demo`): field teks di atas daftar, untuk mencoba sheet bersama keyboard.
     let isSheetInput: Bool
-    /// `--form-demo`: area scroll berisi form contoh (pilihan, field bergantung, field nonaktif, toggle, validasi).
+    /// `--form-components-demo`: contoh field dan bottom sheet tanpa intent gateway.
+    let isFormComponentsDemo: Bool
+    /// `--form-demo`: chat tiruan mengirim intent Surat Referensi dan memakai service inquiry serta submit dummy.
     let isFormDemo: Bool
+    let isFormPINBlocked: Bool
+    let isFormInquiryFailing: Bool
+    let isFormAckFailing: Bool
+    let isFormInquirySlow: Bool
     let isOffline: Bool
     /// Pengganti semua `iconUrl` shortcut: `--broken-icons` (gagal, cek fallback) atau
     /// `--slow-icons` (tidak menjawab, cek loading). Nil = URL dari fixture.
@@ -160,7 +175,12 @@ struct SandboxOptions {
         isSheetMulti = arguments.contains(Self.sheetMultiFlag)
         isSheetLocked = arguments.contains(Self.sheetLockedFlag)
         isSheetInput = arguments.contains(Self.sheetInputFlag)
-        isFormDemo = arguments.contains(Self.formDemoFlag)
+        isFormComponentsDemo = arguments.contains(Self.formComponentsDemoFlag)
+        isFormDemo = !isFormComponentsDemo && arguments.contains(Self.formDemoFlag)
+        isFormPINBlocked = arguments.contains(Self.formPinBlockedFlag)
+        isFormInquiryFailing = arguments.contains(Self.formInquiryFailureFlag)
+        isFormAckFailing = arguments.contains(Self.formAckFailureFlag)
+        isFormInquirySlow = arguments.contains(Self.formSlowInquiryFlag)
         isOffline = arguments.contains(Self.offlineFlag)
         if arguments.contains(Self.brokenIconsFlag) {
             iconOverrideURL = Self.brokenIconURL

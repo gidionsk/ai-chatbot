@@ -9,7 +9,7 @@ import Combine
 import DesignKit
 import Foundation
 
-/// Sandbox saja: state form contoh `--form-demo`, untuk mencoba komponen field DesignKit. Validasi hanya saat
+/// State `--form-components-demo` untuk mencoba komponen field DesignKit. Validasi hanya saat
 /// Konfirmasi: semua field kosong ditandai, dan pilihan kosong paling atas langsung membuka sheet-nya. Form yang valid
 /// membuka sheet PIN; "service host" tiruan menerima `SandboxOptions.formPin` saja. PIN hanya ada di memori selama
 /// diketik dan dikosongkan setelah diperiksa atau saat sheet ditutup; tidak pernah di-log. Mesin form yang sebenarnya

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import TanyaAI
 
 /// Body dan baris SSE berbentuk contract chat-gateway 1.5.0 untuk gateway tiruan sandbox.
 /// Menyimpan `seq` percakapan; setiap frame memakai nomor berikutnya.
@@ -42,6 +43,9 @@ struct SandboxGatewayFrames {
     static let agentAutoGreeting = "Terima kasih telah menghubungi Customer Assistant Tanya OCBC, mohon ditunggu."
     static let agentGreeting = "Hi, saya Durenk, live agent yang akan membantu kamu."
     static let agentReply = "Baik, saya cek dulu ya."
+    static let referenceLetterIntent = "request-bank-reference-letter"
+    static let referenceLetterReply = "Silakan lengkapi data pengajuan Surat Referensi."
+    static let referenceLetterACKMessage = "**Surat referensi akan diproses dalam 3 hari kerja.**"
     static let canceledStatus = "canceled"
     static let completedStatus = "completed"
     /// Data dummy: jawaban bot mengulang pertanyaan.
@@ -83,6 +87,35 @@ struct SandboxGatewayFrames {
 
     mutating func ack() -> Data {
         Data(#"{"success":true,"data":{"message_id":"ack","seq":"\#(seq + 1)"}}"#.utf8)
+    }
+
+    static var referenceLetterInquiry: ReferenceLetterInquiry {
+        ReferenceLetterInquiry(
+            introduction: "Hi Lara, untuk melanjutkan proses silakan isi form di bawah ini.",
+            purposes: [
+                FormOption(code: "001", title: "Pengajuan VISA"),
+                FormOption(code: "002", title: "Keperluan pendidikan")
+            ],
+            documentFormats: [
+                FormOption(code: "SOFTCOPY", title: "Softcopy"),
+                FormOption(code: "HARDCOPY", title: "Hardcopy")
+            ],
+            sourceAccounts: [
+                FormOption(code: "account-1", title: "Tanda 360 - 2345 5678 2386", subtitle: "IDR 1.000.000"),
+                FormOption(code: "account-2", title: "Giro Bisnis - 7781 2003 4551")
+            ],
+            currencies: [FormOption(code: "001", title: "IDR"), FormOption(code: "002", title: "USD")],
+            address: "Jl. Contoh No. 10, Tangerang Selatan",
+            decryptedEmail: "lara@example.com",
+            encryptedEmail: "sandbox-encrypted-email",
+            onlineSessionID: UUID().uuidString
+        )
+    }
+
+    mutating func referenceLetterMessage() -> [String] {
+        var reply = newMessage(direction: SandboxWireMessage.assistant, text: Self.referenceLetterReply)
+        reply.intent = Self.referenceLetterIntent
+        return frame(reply)
     }
 
     /// Pesan baru dengan seq berikutnya; dikirim lewat `frame(_:)`.

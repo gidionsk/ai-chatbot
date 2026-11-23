@@ -22,7 +22,7 @@ terbawa, dan fokus isi baru digulir ke layar.
 ```swift
 page
     .bottomSheet(item: $model.sheet, closeLabel: closeLabel) { sheet in
-        FormDemoSheetContent(model: model, sheet: sheet)   // switch sheet { case .format: ... case .accounts: ... }
+        FormDemoSheetContent(model: model, sheet: sheet)   // --form-components-demo
     }
 ```
 
@@ -46,9 +46,10 @@ VStack(spacing: .zero) { rows }
     }
 ```
 
-Contoh lengkap: `TanyaAISandboxApp/TanyaAI/TanyaAIScreen.swift`, `SheetDemoSheetContent.swift`, dan `FormDemo/`
-(`--form-demo`; `--sheet-demo` dengan `--sheet-long`, `--sheet-max`, `--sheet-multi`, `--sheet-locked`,
-`--sheet-input`).
+Contoh komponen ada di sandbox `--form-components-demo` (`FormDemo/FormDemoSheetContent.swift`).
+Alur Surat Referensi di `--form-demo` memakai `ChatSheetModifier` dan `ReferenceLetterSheetContent`.
+`SheetDemoSheetContent.swift` tersedia melalui `--sheet-demo` dengan `--sheet-long`, `--sheet-max`,
+`--sheet-multi`, `--sheet-locked`, dan `--sheet-input`.
 
 Aturan pemasangan:
 

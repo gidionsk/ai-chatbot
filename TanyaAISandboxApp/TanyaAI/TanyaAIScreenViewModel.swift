@@ -11,11 +11,13 @@ import UIKit
 /// View model halaman Tanya AI di host: membaca `repository` UseCase dan menyusun konfigurasi package.
 /// Urutan init → history → SSE, retry, pesan, dan status menunggu jawaban milik TanyaAI (`TanyaAIBridge`).
 final class TanyaAIScreenViewModel: ScreenContentViewModel {
+    @Published var isReferenceLetterAckFailed = false
     let useCase: TanyaAIUseCase
     /// Dibuat sekali bersama view model (milik `@StateObject` destination); UseCase menjadi transport chat.
     @MainActor
     private(set) lazy var bridge = TanyaAIBridge(
         transport: useCase,
+        services: TanyaAIIntentServices(referenceLetter: referenceLetterService),
         onSessionExpired: { [weak self] in self?.didReceiveError(URLError(.userAuthenticationRequired)) },
         onConnectionFailed: { [weak self] error in self?.didReceiveError(error) }
     )
@@ -29,6 +31,14 @@ final class TanyaAIScreenViewModel: ScreenContentViewModel {
         // Sama dengan sheet milik host: swipe-back ditahan selama sheet Tanya AI terbuka.
         onSheetChange: { UINavigationController.setPopGestureEnabled(!$0) }
     )
+
+    @MainActor
+    private var referenceLetterService: SandboxReferenceLetterService? {
+        guard SandboxOptions.current.isFormDemo else { return nil }
+        return SandboxReferenceLetterService(locale: SandboxOptions.current.locale ?? .current) { [weak self] _ in
+            self?.isReferenceLetterAckFailed = true
+        }
+    }
 
     init(useCase: TanyaAIUseCase) {
         self.useCase = useCase

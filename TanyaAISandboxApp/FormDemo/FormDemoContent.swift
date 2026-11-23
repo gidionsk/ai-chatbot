@@ -8,7 +8,8 @@
 import DesignKit
 import SwiftUI
 
-/// Sandbox saja: form contoh `--form-demo` di ujung daftar chat. Format menentukan field berikutnya: hardcopy =
+/// Sandbox saja: contoh `--form-components-demo` di ujung daftar chat.
+/// Format menentukan field berikutnya: hardcopy =
 /// alamat, softcopy = email tersimpan yang tidak bisa diubah.
 struct FormDemoContent: View {
     @Environment(\.locale) private var locale

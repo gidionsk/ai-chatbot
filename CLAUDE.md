@@ -43,17 +43,22 @@ usulan ditulis di body PR sebagai pertanyaan untuk owner. Bila berbeda, ikuti do
   `DesignColorIcon` `send-on`/`send-off`/`send-pause` (dummy, nama aset Byon); stopping = redup `.plain` bawaan.
   Gambar URL lewat `RemoteImage` (cache memori bersama).
 - Field form DesignKit: `SelectField`, `TextInputField`, `ToggleRow`, `FilledButton`, dan isi sheet `OptionList`
-  (satu atau banyak pilihan, loading; pilihan sebelumnya tercentang dan langsung terlihat di daftar panjang). Contoh di sandbox `--form-demo`; mesin form intent menyusul di TanyaAI.
+  (satu atau banyak pilihan, loading; pilihan sebelumnya tercentang dan langsung terlihat di daftar panjang).
+  `--form-components-demo` membuka contoh komponen. Di `--form-demo`, kirim pertanyaan chat untuk membuka form
+  Surat Referensi dari intent gateway tiruan.
 - Isi sheet PIN DesignKit: `PinEntry` (titik per digit, error, keypad angka tanpa keyboard sistem). PIN lewat binding
   pemakai, `onComplete` sekali saat penuh; tidak disimpan/di-log. Pemeriksaan PIN milik host; selama memeriksa
-  pemakai memasang `.disabled` dan `isDismissable: false`. Contoh: Konfirmasi di `--form-demo`.
+  pemakai memasang `.disabled` dan `isDismissable: false`. Jika host melaporkan PIN diblokir, error tampil di
+  bawah dots, keypad kembali aktif, dan PIN berikutnya diteruskan ke host. Contoh: Konfirmasi di `--form-demo`.
 - Bottom sheet: `.bottomSheet(isPresented:closeLabel:maxHeight:content:)` DesignKit di root halaman, atau
   `.bottomSheet(item:...)` untuk beberapa jenis sheet (`docs/BOTTOM_SHEET.md`); wadah saja (latar
   gelap, grabber, tutup lewat ketuk di luar atau geser ke bawah). Tinggi mengikuti isi sampai batas (bawaan di bawah
   status bar, atau `.screenFraction(x)`); isi yang lebih panjang di-scroll. Isi membawa judul dan padding sendiri.
   `isDismissable: false` = terkunci (PIN diperiksa host); `.bottomSheetFooter { }` pada isi = tombol menempel di
   bawah; field teks di isi boleh, sheet naik ke atas keyboard; layar tanpa notch diberi jarak atas 16 pt.
-  Belum ada pemicu di chat; contoh ada di sandbox `--sheet-demo`. Service untuk isi seperti PIN tetap di host.
+  Chat memakai satu presenter untuk lampiran, End Session, opsi form, dan PIN. Inquiry serta alur PIN dan ACK Surat
+  Referensi memakai `ReferenceLetterService` dari host. PIN gagal tampil di sheet PIN. ACK gagal diteruskan ke
+  host setelah sheet PIN hilang. Lihat [struktur intent form](docs/PACKAGE_STRUCTURE.md#intent-berbentuk-form).
   Swipe-back ditahan host selama sheet terbuka (milik navigasi host, bukan package).
 - Ukuran welcome/kartu/bubble masih estimasi screenshot (TODO di `CustomSizes`);
   aset `chatBackground`/`welcomeOrb` placeholder (`ChatImage`), ganti file, nama tetap.

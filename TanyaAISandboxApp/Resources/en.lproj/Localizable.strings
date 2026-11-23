@@ -48,3 +48,4 @@
 "sandbox.form.submitted" = "Request sent";
 "sandbox.form.requiredText" = "Please fill this in";
 "sandbox.form.requiredChoice" = "Please choose one";
+"sandbox.form.ackFailure" = "The host could not submit your reference letter.";
