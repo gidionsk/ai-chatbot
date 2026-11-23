@@ -11,16 +11,25 @@ import TanyaAI
 /// Service dummy untuk menjalankan alur chat yang sama tanpa jaringan Byon.
 @MainActor
 final class SandboxReferenceLetterService: ReferenceLetterService {
+    private let options: SandboxOptions
     private let locale: Locale
-    private let onAcknowledgementError: (Error) -> Void
+    private let onHostSheetRequested: (String) -> Void
 
-    init(locale: Locale, onAcknowledgementError: @escaping (Error) -> Void) {
-        self.locale = locale
-        self.onAcknowledgementError = onAcknowledgementError
+    private init(options: SandboxOptions, onHostSheetRequested: @escaping (String) -> Void) {
+        self.options = options
+        locale = options.locale ?? .current
+        self.onHostSheetRequested = onHostSheetRequested
+    }
+
+    static func make(
+        options: SandboxOptions,
+        onHostSheetRequested: @escaping (String) -> Void
+    ) -> SandboxReferenceLetterService? {
+        guard options.isFormDemo else { return nil }
+        return SandboxReferenceLetterService(options: options, onHostSheetRequested: onHostSheetRequested)
     }
 
     func inquiry() async throws -> ReferenceLetterInquiry {
-        let options = SandboxOptions.current
         if options.isFormInquirySlow || options.isFormInquiryFailing {
             try await Task.sleep(nanoseconds: SandboxOptions.formInquiryNanoseconds)
         }
@@ -32,7 +41,7 @@ final class SandboxReferenceLetterService: ReferenceLetterService {
 
     func submit(_ request: ReferenceLetterRequest, pin: String) async throws -> ReferenceLetterReceipt {
         try await Task.sleep(nanoseconds: SandboxOptions.formVerifyNanoseconds)
-        if SandboxOptions.current.isFormPINBlocked {
+        if options.isFormPINBlocked {
             throw ReferenceLetterSubmissionError.pinVerification(message: nil, isBlocked: true)
         }
         guard pin == SandboxOptions.formPin else {
@@ -41,7 +50,7 @@ final class SandboxReferenceLetterService: ReferenceLetterService {
                 isBlocked: false
             )
         }
-        if SandboxOptions.current.isFormAckFailing {
+        if options.isFormAckFailing {
             throw ReferenceLetterSubmissionError.acknowledgement(URLError(.badServerResponse))
         }
         return ReferenceLetterReceipt(
@@ -52,6 +61,6 @@ final class SandboxReferenceLetterService: ReferenceLetterService {
     }
 
     func presentAcknowledgementError(_ error: Error) {
-        onAcknowledgementError(error)
+        onHostSheetRequested(String(SandboxCopy.formAckFailure, locale: locale))
     }
 }
