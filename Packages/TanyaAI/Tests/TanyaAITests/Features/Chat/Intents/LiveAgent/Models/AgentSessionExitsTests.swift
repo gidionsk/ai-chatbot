@@ -28,14 +28,14 @@ struct AgentSessionExitsTests {
     func pendingExitEndsWithTheStateEventOrANewSession() {
         var exits = AgentSessionExits()
         exits.leave(.agentActive, afterSeq: 5)
-        #expect(exits.marks == [.exit(seq: 5, isServed: true)])
+        #expect(exits.marks == [.leaving(seq: 5, isServed: true)])
         exits.record(change(.assistantActive, .assistantActive, seq: 5))
-        #expect(exits.pending == .exit(seq: 5, isServed: true))
+        #expect(exits.pending == .leaving(seq: 5, isServed: true))
         exits.record(change(.agentActive, .assistantActive, seq: 6))
         #expect(exits.marks == [.exit(seq: 6, isServed: true)])
 
         exits.leave(.agentQueued, afterSeq: 7)
-        #expect(exits.pending == .exit(seq: 7, isServed: false))
+        #expect(exits.pending == .leaving(seq: 7, isServed: false))
         exits.record(change(.assistantActive, .agentQueued, seq: 8))
         #expect(exits.pending == nil)
         exits.leave(.agentActive, afterSeq: nil)

@@ -16,6 +16,9 @@ struct AgentSessionEndScan {
     /// `seq` pesan agen atau `agent_joined` terakhir sesi yang sedang dibaca; nil = tidak ada sesi.
     private var lastSessionSeq: Int?
     private var exitSeq: Int?
+    /// `exitSeq` dari `leave-agent` yang event `state`-nya belum diterima: pesan agen sesudahnya masih sesi ini, jadi
+    /// kartu bergeser ke bawah pesan agen terakhir, bukan membuka sesi kedua.
+    private var isExitPending = false
     /// Akhir hal terakhir di luar sesi (jawaban bot, kartu selesai, awal antrean): awal sesi yang pembukanya tidak
     /// diterima, supaya kartu penutup sesi sebelumnya tidak dihitung milik sesi itu.
     private var floorSeq = Int.min
@@ -43,7 +46,9 @@ struct AgentSessionEndScan {
         case .queued(let seq):
             queue(at: seq)
         case .exit(let seq, let isServed):
-            leave(at: seq, isServed: isServed)
+            leave(at: seq, isServed: isServed, isPending: false)
+        case .leaving(let seq, let isServed):
+            leave(at: seq, isServed: isServed, isPending: true)
         }
     }
 
@@ -58,7 +63,7 @@ struct AgentSessionEndScan {
 private extension AgentSessionEndScan {
     /// Pesan agen atau `agent_joined` setelah event keluar memulai sesi baru tanpa harus menunggu jawaban bot.
     mutating func open(at seq: Int) {
-        if exitSeq != nil {
+        if exitSeq != nil, !isExitPending {
             close(before: seq)
         }
         lastSessionSeq = seq
@@ -73,7 +78,7 @@ private extension AgentSessionEndScan {
 
     /// Keluar kedua menutup sesi sebelumnya lebih dulu. Keluar dari `AGENT_ACTIVE` tanpa sesi yang terbaca tetap
     /// sesi dengan agen, dimulai setelah `floorSeq`.
-    mutating func leave(at seq: Int, isServed: Bool) {
+    mutating func leave(at seq: Int, isServed: Bool, isPending: Bool) {
         if exitSeq != nil {
             close(before: seq)
         }
@@ -82,13 +87,15 @@ private extension AgentSessionEndScan {
         }
         guard lastSessionSeq != nil else { return }
         exitSeq = seq
+        isExitPending = isPending
     }
 
     mutating func close(before boundary: Int) {
         guard let lastSeq = lastSessionSeq else { return }
-        let position = exitSeq ?? lastSeq
+        let position = exitSeq.map { isExitPending ? Swift.max($0, lastSeq) : $0 } ?? lastSeq
         lastSessionSeq = nil
         exitSeq = nil
+        isExitPending = false
         floorSeq = Swift.max(floorSeq, position)
         guard !closingNotices.contains(where: { $0.seq > lastSeq && $0.seq < boundary }) else { return }
         cards.append(LiveAgentNotice(kind: .ended, seq: position))

@@ -6,16 +6,19 @@
 //
 
 /// Batas sesi agen dari stream selain pesan: `agent_joined` membuka sesi, `agent_connecting` memulai antrean baru,
-/// dan event `state` keluar dari antre atau agen menutup sesi. `isServed` = keluar dari `AGENT_ACTIVE`, jadi ada sesi
-/// dengan agen walau pesan agen dan `agent_joined`-nya tidak diterima (mis. dibuka lagi saat sesi berjalan).
+/// dan event `state` keluar dari antre atau agen menutup sesi. `leaving` = `leave-agent` menjawab `left:true` tetapi
+/// event `state`-nya belum diterima: hanya posisi kartu sementara, bukan batas sesi, karena pesan agen yang dikirim
+/// sebelum gateway menutup sesi bisa tiba sesudahnya. `isServed` = keluar dari `AGENT_ACTIVE`, jadi ada sesi dengan
+/// agen walau pesan agen dan `agent_joined`-nya tidak diterima (mis. dibuka lagi saat sesi berjalan).
 enum AgentSessionMark: Hashable, Comparable {
     case joined(seq: Int)
     case queued(seq: Int)
     case exit(seq: Int, isServed: Bool)
+    case leaving(seq: Int, isServed: Bool)
 
     var seq: Int {
         switch self {
-        case .joined(let seq), .queued(let seq), .exit(let seq, _):
+        case .joined(let seq), .queued(let seq), .exit(let seq, _), .leaving(let seq, _):
             return seq
         }
     }
@@ -30,7 +33,11 @@ enum AgentSessionMark: Hashable, Comparable {
 
 private extension AgentSessionMark {
     var isExit: Bool {
-        guard case .exit = self else { return false }
-        return true
+        switch self {
+        case .exit, .leaving:
+            return true
+        case .joined, .queued:
+            return false
+        }
     }
 }

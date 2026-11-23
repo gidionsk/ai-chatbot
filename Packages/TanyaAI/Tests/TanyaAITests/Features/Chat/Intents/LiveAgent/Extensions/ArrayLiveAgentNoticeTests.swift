@@ -153,6 +153,20 @@ struct ArrayLiveAgentNoticeTests {
         #expect(ended(in: messages, isOngoing: false, marks: [.exit(seq: 5, isServed: false)]).isEmpty)
     }
 
+    /// Posisi tunggu `leave-agent` bukan batas sesi: pesan agen sesudahnya (mis. dari history setelah reconnect yang
+    /// melewatkan event `state`) memindahkan kartu ke bawahnya, tetap satu kartu.
+    @Test
+    func leavingPositionDoesNotSplitTheSession() {
+        let messages = [
+            message(seq: 4, author: .agent), message(seq: 6, author: .agent), message(seq: 8, author: .user),
+            message(seq: 9, author: .assistant)
+        ]
+        let leaving = AgentSessionMark.leaving(seq: 5, isServed: true)
+        let card = { LiveAgentNotice(kind: .ended, seq: $0) }
+        #expect(ended(in: messages, isOngoing: false, marks: [leaving]) == [card(6)])
+        #expect(ended(in: Array(messages.prefix(1)), isOngoing: false, marks: [leaving]) == [card(5)])
+    }
+
     /// Kartu dari history memakai `seq` pesan yang ditutupnya dan tampil tepat setelah pesan itu, bukan sebelumnya.
     @Test
     func historyNoticeFollowsTheMessageItCloses() {

@@ -11,7 +11,8 @@ struct AgentSessionExits: Equatable {
     /// Event `state` yang keluar dari antre atau agen.
     private(set) var recorded: Set<AgentSessionMark> = []
     /// `leave-agent` sudah menjawab `left:true` tetapi event `state`-nya belum tiba: posisi di `seq` terakhir yang
-    /// diketahui saat itu. Pertanyaan ke bot yang dikirim sesudahnya tetap di bawah kartu selesai.
+    /// diketahui saat itu (`AgentSessionMark.leaving`). Pertanyaan ke bot yang dikirim sesudahnya tetap di bawah kartu
+    /// selesai.
     private(set) var pending: AgentSessionMark?
 
     /// Penanda keluar yang dipakai kartu selesai, urut naik.
@@ -30,6 +31,6 @@ struct AgentSessionExits: Equatable {
 
     /// `left:true` dari `leave-agent` selagi `state` antre atau dilayani agen; nil `seq` = belum ada apa pun.
     mutating func leave(_ state: ConversationState, afterSeq seq: Int?) {
-        pending = seq.map { .exit(seq: $0, isServed: state == .agentActive) }
+        pending = seq.map { .leaving(seq: $0, isServed: state == .agentActive) }
     }
 }

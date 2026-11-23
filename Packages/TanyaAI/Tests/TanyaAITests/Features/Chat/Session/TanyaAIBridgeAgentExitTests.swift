@@ -104,6 +104,35 @@ struct TanyaAIBridgeAgentExitTests {
         #expect(itemIDs(bridge).suffix(2) == [.message("m-10"), .liveAgentNotice(11)])
     }
 
+    /// Serah terima yang sesinya terbukti dilayani agen (keluar dari `AGENT_ACTIVE`) hanya mendapat kartu selesai,
+    /// bukan juga kartu "tidak dilanjutkan".
+    @Test
+    func servedExitReplacesTheUnfinishedHandover() async {
+        let transport = FakeChatTransport()
+        let handover = WireFixture.message(seq: 9, direction: "assistant", intent: "handover-to-agent")
+        let history = [WireFixture.message(seq: 10, direction: "user"), handover]
+        let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE", history: history)
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.stateFrame(seq: 11, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        await waitUntil { bridge.eventCursor == 11 }
+        #expect(bridge.visibleLiveAgentNotices == [LiveAgentNotice(kind: .ended, seq: 11)])
+    }
+
+    /// Pesan agen yang tiba setelah `left:true` tetapi sebelum event `state` masih milik sesi itu: kartu sementara
+    /// bergeser ke bawahnya, bukan membuka sesi kedua dengan kartu selesai sendiri.
+    @Test
+    func agentMessageAfterLeavingStaysInTheSameSession() async {
+        let transport = FakeChatTransport()
+        let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.messageFrame(seq: 5, direction: "agent"))
+        await waitUntil { bridge.messages.count == 3 }
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
+        transport.emit(WireFixture.messageFrame(seq: 6, direction: "agent"))
+        await waitUntil { bridge.messages.count == 4 }
+        #expect(itemIDs(bridge).suffix(3) == [.message("m-5"), .message("m-6"), .liveAgentNotice(6)])
+    }
+
     /// Pesan ke agen yang sudah di-ack tetapi salinannya belum tiba saat End Session tetap di atas kartu sementara.
     @Test
     func acknowledgedQuestionStaysAboveThePendingCard() async {

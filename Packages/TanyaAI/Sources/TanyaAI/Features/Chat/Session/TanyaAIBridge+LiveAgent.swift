@@ -23,12 +23,14 @@ extension TanyaAIBridge {
         let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
         var notices = openingNotices + closing
         notices += messages.connectedAgentSessions(streamNotices: liveAgentNotices)
-        notices += messages.endedAgentSessions(
+        let ended = messages.endedAgentSessions(
             isOngoing: conversationState.isLiveAgent,
             closedBy: closing,
             marks: agentSessionMarks
         )
-        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
+        notices += ended
+        // Sesi yang terbukti dilayani agen (kartu selesai) juga menutup serah terimanya.
+        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices + ended)
             .filter { !streamedHandoverSeqs.contains($0.seq) }
         var seenSeqs = Set<Int>()
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
