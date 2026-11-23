@@ -26,13 +26,28 @@ extension TanyaAIBridge {
         notices += messages.endedAgentSessions(
             isOngoing: conversationState.isLiveAgent,
             closedBy: closing,
-            joinedSeqs: liveAgentNotices.filter { $0.kind == .joined }.map(\.seq),
-            exitSeqs: agentExits.positions
+            marks: agentSessionMarks
         )
         notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
             .filter { !streamedHandoverSeqs.contains($0.seq) }
         var seenSeqs = Set<Int>()
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
+    }
+
+    /// Batas sesi dari stream untuk kartu selesai: `agent_joined`, `agent_connecting` (awal antrean), dan keluar dari
+    /// antre atau agen.
+    private var agentSessionMarks: [AgentSessionMark] {
+        let streamMarks = liveAgentNotices.compactMap { notice -> AgentSessionMark? in
+            switch notice.kind {
+            case .joined:
+                return .joined(seq: notice.seq)
+            case .connecting:
+                return .queued(seq: notice.seq)
+            default:
+                return nil
+            }
+        }
+        return streamMarks + agentExits.marks
     }
 
     /// Kartu Switching (dengan tombol batal) sedang tampil: antre dan belum ada sapaan otomatis, `agent_joined`, atau

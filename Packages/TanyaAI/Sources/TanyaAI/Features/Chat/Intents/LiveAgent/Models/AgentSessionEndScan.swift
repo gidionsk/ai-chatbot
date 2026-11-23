@@ -6,15 +6,19 @@
 //
 
 /// Pembaca berurutan untuk kartu selesai sesi agen (lihat `endedAgentSessions`). Sesi dibuka pesan agen atau
-/// `agent_joined`, lalu ditutup event `state` keluar dari agen, jawaban bot berikutnya, atau akhir daftar. Kartunya di
-/// posisi event keluar bila ada; tanpa event itu (history) tepat setelah pesan agen terakhir. Sesi yang punya kartu
-/// penutup dari stream (mis. `queue_canceled`, `agent_ended`) tidak diberi kartu lagi.
+/// `agent_joined`, lalu ditutup event `state` keluar dari agen, jawaban bot berikutnya, antrean baru setelah event
+/// keluar, atau akhir daftar. Kartunya di posisi event keluar bila ada; tanpa event itu (history) tepat setelah pesan
+/// agen terakhir. Sesi yang punya kartu penutup dari stream (mis. `queue_canceled`, `agent_ended`) tidak diberi kartu
+/// lagi.
 struct AgentSessionEndScan {
     let closingNotices: [LiveAgentNotice]
     private(set) var cards: [LiveAgentNotice] = []
     /// `seq` pesan agen atau `agent_joined` terakhir sesi yang sedang dibaca; nil = tidak ada sesi.
     private var lastSessionSeq: Int?
     private var exitSeq: Int?
+    /// Akhir hal terakhir di luar sesi (jawaban bot, kartu selesai, awal antrean): awal sesi yang pembukanya tidak
+    /// diterima, supaya kartu penutup sesi sebelumnya tidak dihitung milik sesi itu.
+    private var floorSeq = Int.min
 
     init(closingNotices: [LiveAgentNotice]) {
         self.closingNotices = closingNotices
@@ -26,6 +30,7 @@ struct AgentSessionEndScan {
             open(at: message.seq)
         case .assistant:
             close(before: message.seq)
+            floorSeq = message.seq
         case .user, .unknown:
             break
         }
@@ -35,9 +40,10 @@ struct AgentSessionEndScan {
         switch mark {
         case .joined(let seq):
             open(at: seq)
-        case .exit(let seq):
-            guard lastSessionSeq != nil, exitSeq == nil else { return }
-            exitSeq = seq
+        case .queued(let seq):
+            queue(at: seq)
+        case .exit(let seq, let isServed):
+            leave(at: seq, isServed: isServed)
         }
     }
 
@@ -58,11 +64,32 @@ private extension AgentSessionEndScan {
         lastSessionSeq = seq
     }
 
+    /// Antrean baru setelah sesi keluar: kartu penutup sesudahnya milik antrean itu, bukan sesi sebelumnya.
+    mutating func queue(at seq: Int) {
+        guard exitSeq != nil else { return }
+        close(before: seq)
+        floorSeq = seq
+    }
+
+    /// Keluar kedua menutup sesi sebelumnya lebih dulu. Keluar dari `AGENT_ACTIVE` tanpa sesi yang terbaca tetap
+    /// sesi dengan agen, dimulai setelah `floorSeq`.
+    mutating func leave(at seq: Int, isServed: Bool) {
+        if exitSeq != nil {
+            close(before: seq)
+        }
+        if lastSessionSeq == nil, isServed {
+            lastSessionSeq = floorSeq
+        }
+        guard lastSessionSeq != nil else { return }
+        exitSeq = seq
+    }
+
     mutating func close(before boundary: Int) {
         guard let lastSeq = lastSessionSeq else { return }
         let position = exitSeq ?? lastSeq
         lastSessionSeq = nil
         exitSeq = nil
+        floorSeq = Swift.max(floorSeq, position)
         guard !closingNotices.contains(where: { $0.seq > lastSeq && $0.seq < boundary }) else { return }
         cards.append(LiveAgentNotice(kind: .ended, seq: position))
     }

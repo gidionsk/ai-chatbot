@@ -26,18 +26,16 @@ extension Array where Element == ChatMessage {
     }
 
     /// Kartu selesai untuk sesi agen tanpa kartu penutup dari stream, karena history tidak membawa event `system`.
-    /// Batas sesi dari stream (`joinedSeqs` = `agent_joined`, `exitSeqs` = event `state` keluar dari agen, lihat
-    /// `AgentSessionExits`) dibaca bersama pesan menurut `seq`; lihat `AgentSessionEndScan`. Pesan nasabah selama sesi
-    /// tetap di atas kartu. Event ber-`seq` sama dengan pesan dibaca setelah pesannya.
+    /// Batas sesi dari stream (`marks`: `agent_joined`, `agent_connecting`, dan event `state` keluar dari antre atau
+    /// agen, lihat `AgentSessionExits`) dibaca bersama pesan menurut `seq`; lihat `AgentSessionEndScan`. Pesan nasabah
+    /// selama sesi tetap di atas kartu. Penanda ber-`seq` sama dengan pesan dibaca setelah pesannya.
     func endedAgentSessions(
         isOngoing: Bool,
         closedBy notices: [LiveAgentNotice],
-        joinedSeqs: [Int],
-        exitSeqs: [Int]
+        marks: [AgentSessionMark]
     ) -> [LiveAgentNotice] {
         var scan = AgentSessionEndScan(closingNotices: notices)
-        let marks = (joinedSeqs.map(AgentSessionMark.joined) + exitSeqs.map(AgentSessionMark.exit)).sorted()
-        var pending = marks[...]
+        var pending = marks.sorted()[...]
         for message in self {
             while let mark = pending.first, mark.seq < message.seq {
                 scan.read(mark)

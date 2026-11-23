@@ -51,7 +51,7 @@ struct TanyaAIBridgeAgentExitTests {
 
         transport.emit(WireFixture.stateFrame(seq: 7, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
         await waitUntil { bridge.eventCursor == 7 }
-        #expect(bridge.agentExits.pendingSeq == nil)
+        #expect(bridge.agentExits.pending == nil)
         #expect(contentIDs(bridge).suffix(3) == [.message("m-6"), .liveAgentNotice(7), question])
     }
 
@@ -73,6 +73,52 @@ struct TanyaAIBridgeAgentExitTests {
         #expect(itemIDs(bridge).suffix(3) == [.message("m-10"), .message("m-11"), .liveAgentNotice(12)])
     }
 
+    /// Antrean baru yang dibatalkan tanpa jawaban bot setelah sesi sebelumnya selesai: kartu batal hanya menutup
+    /// antrean itu, kartu selesai sesi sebelumnya tetap tampil.
+    @Test
+    func canceledNextQueueKeepsThePreviousEndedCard() async {
+        let transport = FakeChatTransport()
+        let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.messageFrame(seq: 5, direction: "agent"))
+        transport.emit(WireFixture.stateFrame(seq: 6, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        transport.emit(WireFixture.systemFrame(seq: 7, type: "agent_connecting"))
+        transport.emit(WireFixture.stateFrame(seq: 8, state: "AGENT_QUEUED"))
+        transport.emit(WireFixture.systemFrame(seq: 9, type: "queue_canceled"))
+        transport.emit(WireFixture.stateFrame(seq: 10, state: "ASSISTANT_ACTIVE", previous: "AGENT_QUEUED"))
+        await waitUntil { bridge.eventCursor == 10 }
+        let cards = bridge.visibleLiveAgentNotices.filter { $0.kind != .connected }
+        #expect(cards == [LiveAgentNotice(kind: .ended, seq: 6), LiveAgentNotice(kind: .canceled, seq: 9)])
+    }
+
+    /// Dibuka lagi saat `AGENT_ACTIVE` tanpa pesan agen dan tanpa `agent_joined` di replay: event keluar dari agen
+    /// sendiri cukup untuk kartu selesai.
+    @Test
+    func servedSessionWithoutItsOpenerStillEnds() async {
+        let transport = FakeChatTransport()
+        let history = [WireFixture.message(seq: 10, direction: "user"), WireFixture.message(seq: 9)]
+        let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE", history: history)
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.stateFrame(seq: 11, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        await waitUntil { bridge.eventCursor == 11 }
+        #expect(itemIDs(bridge).suffix(2) == [.message("m-10"), .liveAgentNotice(11)])
+    }
+
+    /// Pesan ke agen yang sudah di-ack tetapi salinannya belum tiba saat End Session tetap di atas kartu sementara.
+    @Test
+    func acknowledgedQuestionStaysAboveThePendingCard() async {
+        let transport = FakeChatTransport()
+        transport.sendResult = .success(WireFixture.ack(seq: 6))
+        let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.messageFrame(seq: 5, direction: "agent"))
+        await waitUntil { bridge.messages.count == 3 }
+        await bridge.send("Halo")?.value
+        let question = ChatListItemID.message(bridge.localQuestions.first?.id ?? "")
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
+        #expect(contentIDs(bridge).suffix(3) == [.message("m-5"), question, .liveAgentNotice(6)])
+    }
+
     /// Percakapan lain dari init membuang posisi akhir sesi percakapan lama.
     @Test
     func anotherConversationForgetsTheExits() async {
@@ -81,9 +127,9 @@ struct TanyaAIBridgeAgentExitTests {
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.stateFrame(seq: 7, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
         await waitUntil { bridge.eventCursor == 7 }
-        #expect(bridge.agentExits.positions == [7])
+        #expect(bridge.agentExits.marks == [.exit(seq: 7, isServed: true)])
         bridge.replaceOrMerge([], conversationID: "other")
-        #expect(bridge.agentExits.positions.isEmpty)
+        #expect(bridge.agentExits.marks.isEmpty)
     }
 }
 

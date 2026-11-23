@@ -173,7 +173,8 @@ struct TanyaAIBridgeLiveAgentTests {
     }
 
     /// `left:true` yang terlambat milik sesi atau antrean yang sudah ditutup stream tidak mengembalikan antrean baru
-    /// ke bot; tombol Batalkan antrean baru tetap ada.
+    /// ke bot; tombol Batalkan antrean baru tetap ada. Sesi dengan agen sebelumnya tetap mendapat kartu selesai dari
+    /// event keluarnya, antrean saja tidak.
     @Test(arguments: ["AGENT_ACTIVE", "AGENT_QUEUED"])
     func lateLeaveDoesNotEndTheNextQueue(state: String) async {
         let (transport, bridge) = await connectedBridge(state: state)
@@ -187,7 +188,8 @@ struct TanyaAIBridgeLiveAgentTests {
         transport.releaseAck()
         await leave.value
         #expect(bridge.conversationState == .agentQueued)
-        #expect(bridge.visibleLiveAgentNotices.map(\.kind) == [.connecting])
+        let ended: [LiveAgentNoticeKind] = state == "AGENT_ACTIVE" ? [.ended] : []
+        #expect(bridge.visibleLiveAgentNotices.map(\.kind) == ended + [.connecting])
     }
 
     /// Request sesi lama yang masih menggantung tidak mengunci Batalkan antrean baru, dan selesainya tidak melepas

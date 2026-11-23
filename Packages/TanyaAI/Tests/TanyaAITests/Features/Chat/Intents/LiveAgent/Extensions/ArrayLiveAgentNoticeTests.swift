@@ -128,6 +128,31 @@ struct ArrayLiveAgentNoticeTests {
         #expect(ended(in: messages, isOngoing: false, closedBy: [canceled], exitSeqs: [4]).isEmpty)
     }
 
+    /// Antrean baru setelah event keluar menutup sesi sebelumnya, jadi kartu batal antrean itu tidak menghapus kartu
+    /// selesai sesi sebelumnya.
+    @Test
+    func nextQueueClosesThePreviousSession() {
+        let messages = [message(seq: 2, author: .agent), message(seq: 3, author: .user)]
+        let canceled = LiveAgentNotice(kind: .canceled, seq: 6)
+        let queue: [AgentSessionMark] = [.queued(seq: 5), .exit(seq: 7, isServed: false)]
+        #expect(
+            ended(in: messages, isOngoing: false, closedBy: [canceled], exitSeqs: [4], marks: queue)
+                == [LiveAgentNotice(kind: .ended, seq: 4)])
+    }
+
+    /// Keluar dari `AGENT_ACTIVE` tanpa pesan agen atau `agent_joined` tetap sesi dengan agen; keluar dari antre saja
+    /// bukan. Kartu penutup sebelum jawaban bot terakhir milik sesi lain.
+    @Test
+    func servedExitWithoutAnOpenerStillEnds() {
+        let messages = [message(seq: 2, author: .assistant), message(seq: 3, author: .user)]
+        let card = LiveAgentNotice(kind: .ended, seq: 5)
+        let olderClosing = LiveAgentNotice(kind: .ended, seq: 1)
+        let ownClosing = LiveAgentNotice(kind: .ended, seq: 4)
+        #expect(ended(in: messages, isOngoing: false, closedBy: [olderClosing], exitSeqs: [5]) == [card])
+        #expect(ended(in: messages, isOngoing: false, closedBy: [ownClosing], exitSeqs: [5]).isEmpty)
+        #expect(ended(in: messages, isOngoing: false, marks: [.exit(seq: 5, isServed: false)]).isEmpty)
+    }
+
     /// Kartu dari history memakai `seq` pesan yang ditutupnya dan tampil tepat setelah pesan itu, bukan sebelumnya.
     @Test
     func historyNoticeFollowsTheMessageItCloses() {
@@ -161,14 +186,12 @@ private extension ArrayLiveAgentNoticeTests {
         isOngoing: Bool,
         closedBy notices: [LiveAgentNotice] = [],
         joinedSeqs: [Int] = [],
-        exitSeqs: [Int] = []
+        exitSeqs: [Int] = [],
+        marks: [AgentSessionMark] = []
     ) -> [LiveAgentNotice] {
-        messages.endedAgentSessions(
-            isOngoing: isOngoing,
-            closedBy: notices,
-            joinedSeqs: joinedSeqs,
-            exitSeqs: exitSeqs
-        )
+        let joined = joinedSeqs.map(AgentSessionMark.joined)
+        let served = exitSeqs.map { AgentSessionMark.exit(seq: $0, isServed: true) }
+        return messages.endedAgentSessions(isOngoing: isOngoing, closedBy: notices, marks: joined + served + marks)
     }
 
     func connected(_ seq: Int) -> LiveAgentNotice {

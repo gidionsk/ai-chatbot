@@ -83,8 +83,12 @@ pernah dilayani (kartu "Connected" lalu kartu selesai) sampai BE memberi penanda
 Akhir sesi agen: event `state` dari `AGENT_QUEUED`/`AGENT_ACTIVE` ke state lain menjadi posisi kartu selesai,
 karena `id:` berbagi urutan dengan `seq` pesan. Pesan nasabah selama sesi, termasuk yang dikirim sebelum agen manusia
 bergabung, tetap di atas kartu. `agent_joined` juga membuka sesi, dan event keluar menjadi batas sesi walau sesi
-berikutnya dimulai tanpa jawaban bot. Setelah `leave-agent` menjawab `left:true`, kartu sementara di `seq` terakhir yang
-sudah diterima sampai event itu tiba, jadi pertanyaan ke bot sesudahnya tetap di bawah kartu. UAT mengirim `system` `agent_left` setelah event `state` saat End Session; token ini belum ada di
+berikutnya dimulai tanpa jawaban bot. `agent_connecting` setelah event keluar memulai antrean baru, jadi kartu penutup
+antrean itu (mis. `queue_canceled`) tidak menghapus kartu selesai sesi sebelumnya. Keluar dari `AGENT_ACTIVE` tetap
+mendapat kartu walau pesan agen dan `agent_joined`-nya tidak diterima (dibuka lagi saat sesi berjalan); keluar dari
+antre saja tidak. Setelah `leave-agent` menjawab `left:true`, kartu sementara di `seq` terakhir yang sudah diterima,
+termasuk ack kirim yang salinannya belum tiba, sampai event itu tiba, jadi pertanyaan ke bot sesudahnya tetap di bawah
+kartu. UAT mengirim `system` `agent_left` setelah event `state` saat End Session; token ini belum ada di
 contract v1.5.3 sehingga diabaikan dan tidak menambah kartu. Tanpa event `state` (dibuka dari history dan tidak ikut
 replay), kartu selesai tetap setelah pesan agen terakhir.
 

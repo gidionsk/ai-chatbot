@@ -11,7 +11,7 @@ import Testing
 
 /// Posisi akhir sesi agen dari event `state` dan penanda tunggu setelah `leave-agent`.
 struct AgentSessionExitsTests {
-    /// Hanya perpindahan keluar dari antre atau agen yang dicatat; posisi urut naik.
+    /// Hanya perpindahan keluar dari antre atau agen yang dicatat, beserta apakah sesi itu dilayani agen; urut naik.
     @Test
     func onlyLeavingTheAgentIsRecorded() {
         var exits = AgentSessionExits()
@@ -20,24 +20,26 @@ struct AgentSessionExitsTests {
         exits.record(change(.agentActive, .assistantActive, seq: 9))
         exits.record(change(.agentQueued, .assistantActive, seq: 6))
         exits.record(change(.agentActive, .assistantActive, seq: nil))
-        #expect(exits.positions == [6, 9])
+        #expect(exits.marks == [.exit(seq: 6, isServed: false), .exit(seq: 9, isServed: true)])
     }
 
     /// Posisi tunggu dari `leave-agent` berlaku sampai event `state` keluar tiba, atau sesi baru dimulai.
     @Test
     func pendingExitEndsWithTheStateEventOrANewSession() {
         var exits = AgentSessionExits()
-        exits.pendingSeq = 5
-        #expect(exits.positions == [5])
+        exits.leave(.agentActive, afterSeq: 5)
+        #expect(exits.marks == [.exit(seq: 5, isServed: true)])
         exits.record(change(.assistantActive, .assistantActive, seq: 5))
-        #expect(exits.pendingSeq == 5)
+        #expect(exits.pending == .exit(seq: 5, isServed: true))
         exits.record(change(.agentActive, .assistantActive, seq: 6))
-        #expect(exits.positions == [6])
+        #expect(exits.marks == [.exit(seq: 6, isServed: true)])
 
-        exits.pendingSeq = 7
+        exits.leave(.agentQueued, afterSeq: 7)
+        #expect(exits.pending == .exit(seq: 7, isServed: false))
         exits.record(change(.assistantActive, .agentQueued, seq: 8))
-        #expect(exits.pendingSeq == nil)
-        #expect(exits.positions == [6])
+        #expect(exits.pending == nil)
+        exits.leave(.agentActive, afterSeq: nil)
+        #expect(exits.marks == [.exit(seq: 6, isServed: true)])
     }
 
     private func change(
