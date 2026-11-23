@@ -66,9 +66,7 @@ public final class TanyaAIBridge: ObservableObject {
     /// Loop sambungan yang sedang berjalan; dibatalkan saat sesi habis agar stream yang terbuka ikut ditutup.
     var connectionTask: Task<Void, Never>?
     let transport: TanyaAIChatTransport
-    private let configuredServices: TanyaAIIntentServices?
-    private(set) lazy var services =
-        configuredServices ?? (transport as? TanyaAIHostIntents)?.intentServices ?? TanyaAIIntentServices()
+    let hostServices: TanyaAIHostServices?
     var referenceLetters: [String: ReferenceLetterForm] = [:]
     @Published var referenceLetterLayouts: [ChatListItemID: ReferenceLetterLayout] = [:]
     @Published var submittingReferenceLetters: Set<ObjectIdentifier> = []
@@ -80,32 +78,32 @@ public final class TanyaAIBridge: ObservableObject {
     /// `onConnectionFailed` dipanggil sekali saat error yang tidak bisa di-retry (`retryable:false`) menghentikan
     /// sambungan; host menampilkan error sesuai polanya. Error berupa `TanyaAITransportError` dari transport, atau
     /// `DecodingError` bila respons init/history tidak terbaca.
-    /// `services` memakai konfigurasi dari `TanyaAIHostIntents` pada transport bila nil.
+    /// `hostServices` disediakan host yang mendukung intent form.
     public convenience init(
         transport: TanyaAIChatTransport,
-        services: TanyaAIIntentServices? = nil,
+        hostServices: TanyaAIHostServices? = nil,
         onSessionExpired: (() -> Void)? = nil,
         onConnectionFailed: ((Error) -> Void)? = nil
     ) {
         self.init(
             transport: transport,
+            hostServices: hostServices,
             onSessionExpired: onSessionExpired,
             onConnectionFailed: onConnectionFailed,
-            sleep: ChatBackoff.sleep(seconds:),
-            services: services
+            sleep: ChatBackoff.sleep(seconds:)
         )
     }
 
     /// `sleep` disuntikkan test agar jeda reconnect instan.
     init(
         transport: TanyaAIChatTransport,
+        hostServices: TanyaAIHostServices? = nil,
         onSessionExpired: (() -> Void)?,
         onConnectionFailed: ((Error) -> Void)? = nil,
-        sleep: @escaping (TimeInterval) async throws -> Void,
-        services: TanyaAIIntentServices? = nil
+        sleep: @escaping (TimeInterval) async throws -> Void
     ) {
         self.transport = transport
-        configuredServices = services
+        self.hostServices = hostServices
         self.onSessionExpired = onSessionExpired
         self.onConnectionFailed = onConnectionFailed
         self.sleep = sleep

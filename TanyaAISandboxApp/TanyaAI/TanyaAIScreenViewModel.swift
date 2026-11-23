@@ -17,7 +17,9 @@ final class TanyaAIScreenViewModel: ScreenContentViewModel {
     @MainActor
     private(set) lazy var bridge = TanyaAIBridge(
         transport: useCase,
-        services: TanyaAIIntentServices(referenceLetter: referenceLetterService),
+        hostServices: SandboxHostServices { [weak self] _ in
+            self?.isReferenceLetterAckFailed = true
+        },
         onSessionExpired: { [weak self] in self?.didReceiveError(URLError(.userAuthenticationRequired)) },
         onConnectionFailed: { [weak self] error in self?.didReceiveError(error) }
     )
@@ -31,14 +33,6 @@ final class TanyaAIScreenViewModel: ScreenContentViewModel {
         // Sama dengan sheet milik host: swipe-back ditahan selama sheet Tanya AI terbuka.
         onSheetChange: { UINavigationController.setPopGestureEnabled(!$0) }
     )
-
-    @MainActor
-    private var referenceLetterService: SandboxReferenceLetterService? {
-        guard SandboxOptions.current.isFormDemo else { return nil }
-        return SandboxReferenceLetterService(locale: SandboxOptions.current.locale ?? .current) { [weak self] _ in
-            self?.isReferenceLetterAckFailed = true
-        }
-    }
 
     init(useCase: TanyaAIUseCase) {
         self.useCase = useCase

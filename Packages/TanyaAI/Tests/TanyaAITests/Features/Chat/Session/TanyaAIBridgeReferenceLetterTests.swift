@@ -14,30 +14,32 @@ import Testing
 @Suite(.serialized)
 struct TanyaAIBridgeReferenceLetterTests {
     @Test
-    func loadsIntentServicesFromTransportOnlyWhenNeeded() async throws {
+    func readsHostServiceOnlyForReferenceLetterMessages() async throws {
         let service = ReferenceLetterServiceDouble()
-        let transport = HostIntentTransport(service: service)
-        let bridge = TanyaAIBridge(transport: transport)
+        let hostServices = HostServicesDouble(service: service)
+        let bridge = TanyaAIBridge(transport: FakeChatTransport(), hostServices: hostServices)
         let ordinary = ChatMessage(id: "ordinary", seq: 1, author: .assistant, text: "Hello", status: .active)
         bridge.apply(.message(ordinary))
         #expect(!bridge.isReferenceLetterEnabled(for: .message(.message(ordinary), isSpaced: false)))
-        #expect(transport.intentServicesReadCount == 0)
+        #expect(hostServices.referenceLetterReadCount == 0)
 
         _ = try await openForm(in: bridge)
         #expect(service.inquiryCount == 1)
-        #expect(transport.intentServicesReadCount == 1)
+        #expect(hostServices.referenceLetterReadCount == 1)
         _ = try await openForm(in: bridge, conversationID: "next")
         #expect(service.inquiryCount == 2)
-        #expect(transport.intentServicesReadCount == 1)
+        #expect(hostServices.referenceLetterReadCount == 2)
     }
 
     @Test
-    func explicitServicesTakePrecedenceOverTransport() {
-        let transport = HostIntentTransport(service: ReferenceLetterServiceDouble())
-        let bridge = TanyaAIBridge(transport: transport, services: TanyaAIIntentServices())
-        bridge.apply(.message(message(id: "fresh", seq: 1)))
-        #expect(transport.intentServicesReadCount == 0)
+    func bridgeWithoutHostServicesDoesNotOpenAForm() {
+        let bridge = TanyaAIBridge(transport: FakeChatTransport())
+        let fresh = message(id: "fresh", seq: 1)
+        bridge.apply(.message(fresh))
+
+        #expect(bridge.messages == [fresh])
         #expect(bridge.referenceLetters.isEmpty)
+        #expect(!bridge.isReferenceLetterEnabled(for: .message(.message(fresh), isSpaced: false)))
     }
 
     @Test
@@ -181,7 +183,7 @@ struct TanyaAIBridgeReferenceLetterTests {
         let transport = FakeChatTransport()
         let bridge = TanyaAIBridge(
             transport: transport,
-            services: TanyaAIIntentServices(referenceLetter: service)
+            hostServices: HostServicesDouble(service: service)
         )
         return ReferenceLetterBridgeFixture(transport: transport, bridge: bridge)
     }
@@ -205,16 +207,16 @@ struct TanyaAIBridgeReferenceLetterTests {
 }
 
 @MainActor
-private final class HostIntentTransport: FakeChatTransport, TanyaAIHostIntents {
+private final class HostServicesDouble: TanyaAIHostServices {
     private let service: ReferenceLetterServiceDouble
-    private(set) var intentServicesReadCount = 0
+    private(set) var referenceLetterReadCount = 0
 
     init(service: ReferenceLetterServiceDouble) {
         self.service = service
     }
 
-    var intentServices: TanyaAIIntentServices {
-        intentServicesReadCount += 1
-        return TanyaAIIntentServices(referenceLetter: service)
+    var referenceLetter: ReferenceLetterService? {
+        referenceLetterReadCount += 1
+        return service
     }
 }

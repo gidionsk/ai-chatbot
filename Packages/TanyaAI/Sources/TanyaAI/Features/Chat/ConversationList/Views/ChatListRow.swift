@@ -37,9 +37,7 @@ struct ChatListRow<Content: View>: View {
         case .message(let row, _):
             VStack(alignment: .leading, spacing: FigmaSize.spacingLarge.scaledToArtwork) {
                 MessageRow(row: row, onOpenLink: actions.onOpenLink)
-                if isReferenceLetterEnabled, case .message(let message) = row,
-                    message.intent == .referenceLetter, message.author == .assistant, message.status == .active
-                {
+                if isReferenceLetterEnabled, case .message(let message) = row {
                     referenceLetterCard(for: message)
                 }
             }

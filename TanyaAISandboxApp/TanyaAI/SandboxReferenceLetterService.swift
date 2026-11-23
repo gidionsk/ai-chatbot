@@ -8,9 +8,27 @@
 import Foundation
 import TanyaAI
 
+@MainActor
+final class SandboxHostServices: TanyaAIHostServices {
+    private let onAcknowledgementError: (Error) -> Void
+
+    private(set) lazy var referenceLetter: ReferenceLetterService? = {
+        let options = SandboxOptions.current
+        guard options.isFormDemo else { return nil }
+        return SandboxReferenceLetterService(
+            locale: options.locale ?? .current,
+            onAcknowledgementError: onAcknowledgementError
+        )
+    }()
+
+    init(onAcknowledgementError: @escaping (Error) -> Void) {
+        self.onAcknowledgementError = onAcknowledgementError
+    }
+}
+
 /// Service dummy untuk menjalankan alur chat yang sama tanpa jaringan Byon.
 @MainActor
-final class SandboxReferenceLetterService: ReferenceLetterService {
+private final class SandboxReferenceLetterService: ReferenceLetterService {
     private let locale: Locale
     private let onAcknowledgementError: (Error) -> Void
 

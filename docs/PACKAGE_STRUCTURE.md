@@ -170,7 +170,7 @@ tanpa `default`, jadi case baru yang belum ditangani gagal di-build, bukan diam-
 | 2 | Folder intent, nama sama dengan case | `Intents/<Nama>/{Models,Extensions,Views}` | `Intents/LiveAgent` |
 | 3 | Bentuk data dari gateway (bila ada event atau field baru) | `Gateway/Models` + case di `ChatEvent` | `WireSystemNotice`, `ChatEvent.notice` |
 | 4 | State dan aksi sesi | Satu file `Session/TanyaAIBridge+<Nama>.swift`; state-nya satu value type | `TanyaAIBridge+LiveAgent`, `UserTypingSignal` |
-| 5 | Endpoint chat-gateway baru (bila ada) | Method di `TanyaAIChatTransport`; service milik host tidak di sini (lihat intent form di bawah) | `leaveAgent`, `sendTyping` |
+| 5 | Endpoint chat-gateway baru (bila ada) | Method di `TanyaAIChatTransport`. Service intent disediakan lewat `TanyaAIHostServices`. | `leaveAgent`, `sendTyping` |
 | 6 | Baris di daftar chat | Case di `ChatListItem` dan `ChatListItemID`, jarak di `topSpacing`, tampilan di `ChatListRow` | `liveAgentNotice`, `leaveAgentQueue`, `agentTyping` |
 | 7 | Posisi baris di antara pesan | Extension di `Intents/<Nama>/Extensions`, dipanggil dari `ChatScreen.listItems` | `Array+LiveAgentNotice` |
 | 8 | Aksi dari baris | Closure di `ChatRowActions`, penerusnya di `ChatTableController.forwardingActions`, isinya di `ChatScreen.rowActions` | `onLeaveAgentQueue` |
@@ -212,8 +212,9 @@ Komponen DesignKit yang dipakai mencakup `SelectField`, `TextInputField`, `Toggl
 
 - Intent `request-bank-reference-letter` dari pesan baru di stream membuat satu draft per ID pesan. History
   menampilkan statusnya. `TanyaAIBridge` menyimpan draft dan membersihkannya saat percakapan berganti.
-- Host memasang `TanyaAIIntentServices(referenceLetter: ...)` pada bridge. Service Byon hanya dipanggil melalui
-  `ReferenceLetterService`. `TanyaAIChatTransport` tetap menangani gateway dan `success-id` opsional.
+- Host memberikan objek yang conform ke `TanyaAIHostServices` lewat parameter `hostServices:` pada bridge.
+  Objek yang sama boleh conform ke `TanyaAIChatTransport` untuk gateway dan `success-id` opsional.
+  Bridge memakai `ReferenceLetterService` untuk menjalankan inquiry dan submit Surat Referensi.
 - Host melakukan inquiry serta dekripsi email. Jika gagal, kartu tidak tampil dan host menangani pesan atau
   deeplink pembaruan profil. Introduction dan pesan ACK dirender sebagai Markdown, dengan link diteruskan ke host.
 - `submit(_:pin:)` memverifikasi PIN lalu mengirim ACK. `ReferenceLetterSubmissionError.pinVerification`
@@ -230,13 +231,14 @@ Komponen DesignKit yang dipakai mencakup `SelectField`, `TextInputField`, `Toggl
 
 - Service host berada di luar `TanyaAIChatTransport`. Transport tersebut menangani chat-gateway.
 - Setiap intent mendefinisikan protocol bertipe di folder intent-nya. Host memetakan model backend ke tipe itu.
-- `TanyaAIIntentServices` mengelompokkan service opsional yang dipasang host ke `TanyaAIBridge`.
+- `TanyaAIHostServices` mewajibkan satu properti per intent. Host mengembalikan `nil` untuk service yang
+  tidak tersedia. Host tanpa service intent boleh mengosongkan parameter `hostServices:`.
 - Package meneruskan PIN sekali per input lengkap. PIN tidak disimpan atau di-log.
 
 ```text
 TanyaAI/
 ├── Bridging/
-│   └── TanyaAIIntentServices.swift
+│   └── TanyaAIHostServices.swift
 └── Features/Chat/
     ├── Intents/ReferenceLetter/
     │   ├── Models/

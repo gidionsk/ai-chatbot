@@ -15,13 +15,13 @@ extension TanyaAIBridge {
         guard case .message(.message(let message), _) = item, message.intent == .referenceLetter,
             message.author == .assistant, message.status == .active
         else { return false }
-        return services.referenceLetter != nil
+        return hostServices?.referenceLetter != nil
     }
 
     func prepareReferenceLetter(for message: ChatMessage) {
         guard message.intent == .referenceLetter, message.author == .assistant,
             message.status == .active, message.successID == nil, referenceLetters[message.id] == nil,
-            !messages.contains(where: { $0.id == message.id }), let service = services.referenceLetter
+            !messages.contains(where: { $0.id == message.id }), let service = hostServices?.referenceLetter
         else { return }
         let form = ReferenceLetterForm(service: service) { [weak self] sender, layout in
             guard let self, self.referenceLetters[message.id] === sender else { return }
