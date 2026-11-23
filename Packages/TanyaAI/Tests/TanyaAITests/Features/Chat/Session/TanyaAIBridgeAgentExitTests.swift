@@ -133,6 +133,23 @@ struct TanyaAIBridgeAgentExitTests {
         #expect(itemIDs(bridge).suffix(3) == [.message("m-5"), .message("m-6"), .liveAgentNotice(6)])
     }
 
+    /// Event keluar resmi terlewat (replay setelah reconnect dimulai sesudahnya) lalu antrean baru dimulai: posisi
+    /// tunggu tetap menjadi akhir sesi lama, baik saat agen sudah menulis maupun belum.
+    @Test(arguments: [true, false])
+    func nextQueueKeepsThePendingEndOfTheSession(isAgentWriting: Bool) async {
+        let transport = FakeChatTransport()
+        let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE")
+        defer { bridge.connectionTask?.cancel() }
+        let agentFrames = isAgentWriting ? [WireFixture.messageFrame(seq: 5, direction: "agent")] : []
+        (agentFrames + [WireFixture.messageFrame(seq: 6, direction: "user")]).forEach(transport.emit)
+        await waitUntil { bridge.eventCursor == 6 }
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
+        transport.emit(WireFixture.stateFrame(seq: 8, state: "AGENT_QUEUED"))
+        await waitUntil { bridge.eventCursor == 8 }
+        let cards = bridge.visibleLiveAgentNotices.filter { $0.kind != .connected && $0.kind != .connecting }
+        #expect(cards == [LiveAgentNotice(kind: .ended, seq: 6)])
+    }
+
     /// Pesan ke agen yang sudah di-ack tetapi salinannya belum tiba saat End Session tetap di atas kartu sementara.
     @Test
     func acknowledgedQuestionStaysAboveThePendingCard() async {

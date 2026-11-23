@@ -23,7 +23,8 @@ struct AgentSessionExitsTests {
         #expect(exits.marks == [.exit(seq: 6, isServed: false), .exit(seq: 9, isServed: true)])
     }
 
-    /// Posisi tunggu dari `leave-agent` berlaku sampai event `state` keluar tiba, atau sesi baru dimulai.
+    /// Posisi tunggu dari `leave-agent` digantikan event `state` keluar. Bila antrean baru dimulai lebih dulu (event
+    /// keluar terlewat), posisi itu disimpan sebagai akhir sesi lama bersama awal antrean baru.
     @Test
     func pendingExitEndsWithTheStateEventOrANewSession() {
         var exits = AgentSessionExits()
@@ -38,8 +39,12 @@ struct AgentSessionExitsTests {
         #expect(exits.pending == .leaving(seq: 7, isServed: false))
         exits.record(change(.assistantActive, .agentQueued, seq: 8))
         #expect(exits.pending == nil)
+        let kept: [AgentSessionMark] = [
+            .exit(seq: 6, isServed: true), .leaving(seq: 7, isServed: false), .queued(seq: 8)
+        ]
+        #expect(exits.marks == kept)
         exits.leave(.agentActive, afterSeq: nil)
-        #expect(exits.marks == [.exit(seq: 6, isServed: true)])
+        #expect(exits.marks == kept)
     }
 
     private func change(
