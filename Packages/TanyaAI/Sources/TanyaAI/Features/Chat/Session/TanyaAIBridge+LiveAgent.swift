@@ -26,6 +26,7 @@ extension TanyaAIBridge {
         notices += messages.endedAgentSessions(
             isOngoing: conversationState.isLiveAgent,
             closedBy: closing,
+            joinedSeqs: liveAgentNotices.filter { $0.kind == .joined }.map(\.seq),
             exitSeqs: agentExits.positions
         )
         notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)

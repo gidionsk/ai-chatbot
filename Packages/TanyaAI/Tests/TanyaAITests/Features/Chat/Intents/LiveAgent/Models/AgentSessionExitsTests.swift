@@ -23,20 +23,20 @@ struct AgentSessionExitsTests {
         #expect(exits.positions == [6, 9])
     }
 
-    /// Penanda tunggu = ujung daftar sampai event `state` keluar tiba, atau sesi baru dimulai.
+    /// Posisi tunggu dari `leave-agent` berlaku sampai event `state` keluar tiba, atau sesi baru dimulai.
     @Test
     func pendingExitEndsWithTheStateEventOrANewSession() {
         var exits = AgentSessionExits()
-        exits.isPending = true
-        #expect(exits.positions == [.max])
+        exits.pendingSeq = 5
+        #expect(exits.positions == [5])
         exits.record(change(.assistantActive, .assistantActive, seq: 5))
-        #expect(exits.isPending)
+        #expect(exits.pendingSeq == 5)
         exits.record(change(.agentActive, .assistantActive, seq: 6))
         #expect(exits.positions == [6])
 
-        exits.isPending = true
+        exits.pendingSeq = 7
         exits.record(change(.assistantActive, .agentQueued, seq: 8))
-        #expect(!exits.isPending)
+        #expect(exits.pendingSeq == nil)
         #expect(exits.positions == [6])
     }
 

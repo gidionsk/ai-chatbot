@@ -30,11 +30,12 @@ struct TanyaAIBridgeAgentExitTests {
         #expect(itemIDs(bridge).suffix(3) == [.message("m-5"), .message("m-6"), .liveAgentNotice(7)])
     }
 
-    /// `left:true` tiba sebelum event `state`: kartu sementara di ujung daftar, lalu pindah ke `seq` event itu tanpa
-    /// berganti tempat terhadap pesan.
+    /// `left:true` tiba sebelum event `state`: kartu sementara setelah pesan terakhir yang diterima, jadi pertanyaan ke
+    /// bot yang dikirim sebelum event itu tetap di bawah kartu. Event `state` memindahkan kartu ke `seq` resminya.
     @Test
-    func leavingKeepsTheEndedCardBelowTheSessionMessages() async {
+    func leavingKeepsTheEndedCardBetweenTheSessionAndTheNextQuestion() async {
         let transport = FakeChatTransport()
+        transport.sendResult = .success(WireFixture.ack(seq: 8))
         let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE")
         defer { bridge.connectionTask?.cancel() }
         transport.emit(WireFixture.messageFrame(seq: 5, direction: "agent"))
@@ -42,12 +43,16 @@ struct TanyaAIBridgeAgentExitTests {
         await waitUntil { bridge.messages.count == 4 }
         await bridge.leaveAgent(from: bridge.agentSessionKey)
         #expect(bridge.conversationState == .assistantActive)
-        #expect(itemIDs(bridge).suffix(2) == [.message("m-6"), .liveAgentNotice(.max)])
+        #expect(itemIDs(bridge).suffix(2) == [.message("m-6"), .liveAgentNotice(6)])
+
+        await bridge.send("Halo")?.value
+        let question = ChatListItemID.message(bridge.localQuestions.first?.id ?? "")
+        #expect(contentIDs(bridge).suffix(3) == [.message("m-6"), .liveAgentNotice(6), question])
 
         transport.emit(WireFixture.stateFrame(seq: 7, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
         await waitUntil { bridge.eventCursor == 7 }
-        #expect(!bridge.agentExits.isPending)
-        #expect(itemIDs(bridge).suffix(2) == [.message("m-6"), .liveAgentNotice(7)])
+        #expect(bridge.agentExits.pendingSeq == nil)
+        #expect(contentIDs(bridge).suffix(3) == [.message("m-6"), .liveAgentNotice(7), question])
     }
 
     /// History tidak membawa event `state`: kartu menebak dari pesan agen terakhir, lalu dipetakan ulang begitu event
@@ -101,5 +106,13 @@ private extension TanyaAIBridgeAgentExitTests {
 
     func itemIDs(_ bridge: TanyaAIBridge) -> [ChatListItemID] {
         [ChatListItem](rows: bridge.rows).inserting(bridge.visibleLiveAgentNotices, isLeaveEnabled: true).map(\.id)
+    }
+
+    /// Tanpa chip tanggal: pertanyaan baru memakai waktu perangkat, jadi bisa di hari lain dari fixture.
+    func contentIDs(_ bridge: TanyaAIBridge) -> [ChatListItemID] {
+        itemIDs(bridge).filter { id in
+            guard case .date = id else { return true }
+            return false
+        }
     }
 }
