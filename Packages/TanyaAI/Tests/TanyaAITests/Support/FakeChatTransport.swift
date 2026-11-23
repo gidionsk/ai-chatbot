@@ -11,7 +11,7 @@ import Foundation
 
 /// Gateway tiruan. Init dan history diambil dari antrean (elemen terakhir dipakai ulang); setiap `events`
 /// membuka stream baru yang diisi test lewat `emit`/`drop`, atau langsung dari `scriptedStreams`.
-final class FakeChatTransport: TanyaAIChatTransport {
+class FakeChatTransport: TanyaAIChatTransport {
     var initResults: [Result<Data, Error>] = [.success(WireFixture.initialize())]
     var historyPages: [Data] = [WireFixture.history([])]
     /// Baris yang dikirim lalu stream ditutup dengan error koneksi; kosong = stream dibiarkan terbuka.

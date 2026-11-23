@@ -117,7 +117,7 @@ public struct ChatScreen<Content: View>: View {
             content: content,
             actions: actions,
             referenceLetter: bridge.referenceLetter(for: item),
-            isReferenceLetterEnabled: bridge.services.referenceLetter != nil,
+            isReferenceLetterEnabled: bridge.isReferenceLetterEnabled(for: item),
             onSheet: { candidate in
                 guard isEnabled, bridge.isReady else { return }
                 sheet = candidate.afterReferenceLetterCompletion(in: bridge.messages)

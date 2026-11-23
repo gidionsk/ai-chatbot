@@ -66,7 +66,9 @@ public final class TanyaAIBridge: ObservableObject {
     /// Loop sambungan yang sedang berjalan; dibatalkan saat sesi habis agar stream yang terbuka ikut ditutup.
     var connectionTask: Task<Void, Never>?
     let transport: TanyaAIChatTransport
-    let services: TanyaAIIntentServices
+    private let configuredServices: TanyaAIIntentServices?
+    private(set) lazy var services =
+        configuredServices ?? (transport as? TanyaAIHostIntents)?.intentServices ?? TanyaAIIntentServices()
     var referenceLetters: [String: ReferenceLetterForm] = [:]
     @Published var referenceLetterLayouts: [ChatListItemID: ReferenceLetterLayout] = [:]
     @Published var submittingReferenceLetters: Set<ObjectIdentifier> = []
@@ -78,9 +80,10 @@ public final class TanyaAIBridge: ObservableObject {
     /// `onConnectionFailed` dipanggil sekali saat error yang tidak bisa di-retry (`retryable:false`) menghentikan
     /// sambungan; host menampilkan error sesuai polanya. Error berupa `TanyaAITransportError` dari transport, atau
     /// `DecodingError` bila respons init/history tidak terbaca.
+    /// `services` memakai konfigurasi dari `TanyaAIHostIntents` pada transport bila nil.
     public convenience init(
         transport: TanyaAIChatTransport,
-        services: TanyaAIIntentServices = TanyaAIIntentServices(),
+        services: TanyaAIIntentServices? = nil,
         onSessionExpired: (() -> Void)? = nil,
         onConnectionFailed: ((Error) -> Void)? = nil
     ) {
@@ -99,10 +102,10 @@ public final class TanyaAIBridge: ObservableObject {
         onSessionExpired: (() -> Void)?,
         onConnectionFailed: ((Error) -> Void)? = nil,
         sleep: @escaping (TimeInterval) async throws -> Void,
-        services: TanyaAIIntentServices = TanyaAIIntentServices()
+        services: TanyaAIIntentServices? = nil
     ) {
         self.transport = transport
-        self.services = services
+        configuredServices = services
         self.onSessionExpired = onSessionExpired
         self.onConnectionFailed = onConnectionFailed
         self.sleep = sleep

@@ -14,6 +14,33 @@ import Testing
 @Suite(.serialized)
 struct TanyaAIBridgeReferenceLetterTests {
     @Test
+    func loadsIntentServicesFromTransportOnlyWhenNeeded() async throws {
+        let service = ReferenceLetterServiceDouble()
+        let transport = HostIntentTransport(service: service)
+        let bridge = TanyaAIBridge(transport: transport)
+        let ordinary = ChatMessage(id: "ordinary", seq: 1, author: .assistant, text: "Hello", status: .active)
+        bridge.apply(.message(ordinary))
+        #expect(!bridge.isReferenceLetterEnabled(for: .message(.message(ordinary), isSpaced: false)))
+        #expect(transport.intentServicesReadCount == 0)
+
+        _ = try await openForm(in: bridge)
+        #expect(service.inquiryCount == 1)
+        #expect(transport.intentServicesReadCount == 1)
+        _ = try await openForm(in: bridge, conversationID: "next")
+        #expect(service.inquiryCount == 2)
+        #expect(transport.intentServicesReadCount == 1)
+    }
+
+    @Test
+    func explicitServicesTakePrecedenceOverTransport() {
+        let transport = HostIntentTransport(service: ReferenceLetterServiceDouble())
+        let bridge = TanyaAIBridge(transport: transport, services: TanyaAIIntentServices())
+        bridge.apply(.message(message(id: "fresh", seq: 1)))
+        #expect(transport.intentServicesReadCount == 0)
+        #expect(bridge.referenceLetters.isEmpty)
+    }
+
+    @Test
     func onlyNewStreamMessagesOpenForms() async throws {
         let service = ReferenceLetterServiceDouble()
         let fixture = makeBridge(service)
@@ -174,5 +201,20 @@ struct TanyaAIBridgeReferenceLetterTests {
     private func message(id: String, seq: Int) -> ChatMessage {
         ChatMessage(
             id: id, seq: seq, author: .assistant, text: "Reference letter", status: .active, intent: .referenceLetter)
+    }
+}
+
+@MainActor
+private final class HostIntentTransport: FakeChatTransport, TanyaAIHostIntents {
+    private let service: ReferenceLetterServiceDouble
+    private(set) var intentServicesReadCount = 0
+
+    init(service: ReferenceLetterServiceDouble) {
+        self.service = service
+    }
+
+    var intentServices: TanyaAIIntentServices {
+        intentServicesReadCount += 1
+        return TanyaAIIntentServices(referenceLetter: service)
     }
 }
