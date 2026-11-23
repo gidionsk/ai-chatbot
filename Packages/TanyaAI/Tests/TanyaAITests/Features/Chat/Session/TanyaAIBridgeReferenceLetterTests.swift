@@ -113,8 +113,23 @@ struct TanyaAIBridgeReferenceLetterTests {
         #expect(service.submitCount == 2)
     }
 
-    @Test(arguments: [false, true])
-    func externalCompletionClosesOnlyItsSheet(isFromHistory: Bool) async throws {
+    @Test
+    func streamCompletionClosesOnlyItsSheet() async throws {
+        try await assertCompletionClosesOnlyItsSheet { bridge, receipt in
+            bridge.apply(.message(receipt))
+        }
+    }
+
+    @Test
+    func historyCompletionClosesOnlyItsSheet() async throws {
+        try await assertCompletionClosesOnlyItsSheet { bridge, receipt in
+            bridge.replaceOrMerge([receipt], conversationID: "chat")
+        }
+    }
+
+    private func assertCompletionClosesOnlyItsSheet(
+        deliverReceipt: (TanyaAIBridge, ChatMessage) -> Void
+    ) async throws {
         let service = ReferenceLetterServiceDouble()
         let bridge = makeBridge(service).bridge
         ReferenceLetterServiceDouble.fill(try await openForm(in: bridge))
@@ -124,12 +139,7 @@ struct TanyaAIBridgeReferenceLetterTests {
         #expect(choices.afterReferenceLetterCompletion(in: bridge.messages) == choices)
 
         let receipt = message(id: "fresh", seq: 2).receipted(successID: "other-channel")
-        switch isFromHistory {
-        case true:
-            bridge.replaceOrMerge([receipt], conversationID: "chat")
-        case false:
-            bridge.apply(.message(receipt))
-        }
+        deliverReceipt(bridge, receipt)
 
         #expect(pin.afterReferenceLetterCompletion(in: bridge.messages) == nil)
         #expect(choices.afterReferenceLetterCompletion(in: bridge.messages) == nil)
