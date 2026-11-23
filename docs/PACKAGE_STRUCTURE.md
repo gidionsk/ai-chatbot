@@ -217,13 +217,49 @@ Komponen DesignKit yang dipakai mencakup `SelectField`, `TextInputField`, `Toggl
 - Host melakukan inquiry serta dekripsi email. Jika gagal, kartu tidak tampil dan host menangani pesan atau
   deeplink pembaruan profil. Introduction dan pesan ACK dirender sebagai Markdown, dengan link diteruskan ke host.
 - `submit(_:pin:)` memverifikasi PIN lalu mengirim ACK. `ReferenceLetterSubmissionError.pinVerification`
-  menahan sheet PIN dengan pesan inline dan input kosong. Jika backend menandai PIN diblokir, keypad nonaktif.
+  menahan sheet PIN dengan pesan inline dan input kosong. Setelah host membalas PIN diblokir, keypad aktif lagi.
+  Host menerima PIN berikutnya serta mengelola batas percobaan dan status blokir.
   `ReferenceLetterSubmissionError.acknowledgement` menutup sheet PIN dan memanggil
   `presentAcknowledgementError(_:)` pada host setelah sheet hilang. Host menampilkan sheet error miliknya.
-- Fase kartu, daftar field, dan error validasi ada di data table per ID baris. Table mengukur ulang baris yang
-  berubah, termasuk saat loading menjadi form atau kartu sukses/batal.
+- Status submit terikat ke instance form. Jika gateway menyatakan surat selesai lewat stream atau history,
+  sheet pilihan atau PIN untuk pesan tersebut ditutup.
+- Fase kartu, daftar field, pilihan, dan error validasi ada di data table per ID baris. Table mengukur ulang
+  baris yang berubah, termasuk saat ringkasan pilihan membungkus atau form menjadi kartu sukses/batal.
 
-Sandbox memakai service tiruan dan stream gateway melalui `--form-demo`. UI test memakai
+#### Alasan bentuknya
+
+- Service host berada di luar `TanyaAIChatTransport`. Transport tersebut menangani chat-gateway.
+- Setiap intent mendefinisikan protocol bertipe di folder intent-nya. Host memetakan model backend ke tipe itu.
+- `TanyaAIIntentServices` mengelompokkan service opsional yang dipasang host ke `TanyaAIBridge`.
+- Package meneruskan PIN sekali per input lengkap. PIN tidak disimpan atau di-log.
+
+```text
+TanyaAI/
+├── Bridging/
+│   └── TanyaAIIntentServices.swift
+└── Features/Chat/
+    ├── Intents/ReferenceLetter/
+    │   ├── Models/
+    │   │   ├── ReferenceLetterDocumentFormat.swift
+    │   │   ├── ReferenceLetterFieldID.swift
+    │   │   ├── ReferenceLetterForm.swift
+    │   │   ├── ReferenceLetterInquiry.swift
+    │   │   ├── ReferenceLetterLayout.swift
+    │   │   ├── ReferenceLetterPIN.swift
+    │   │   ├── ReferenceLetterReceipt.swift
+    │   │   ├── ReferenceLetterRequest.swift
+    │   │   └── ReferenceLetterSubmissionError.swift
+    │   ├── Protocols/
+    │   │   └── ReferenceLetterService.swift
+    │   └── Views/
+    │       ├── ReferenceLetterCard.swift
+    │       └── ReferenceLetterSheetContent.swift
+    └── Session/
+        └── TanyaAIBridge+ReferenceLetter.swift
+```
+
+Sandbox memakai service tiruan dan stream gateway melalui `--form-demo`. Contoh komponen FormDemo tersedia
+melalui `--form-components-demo`. UI test alur Surat Referensi memakai
 `--reference-letter-pin-blocked`, `--reference-letter-ack-failure`, dan `--reference-letter-inquiry-failure`
 untuk menguji ketiga kegagalan. `--reference-letter-slow-inquiry` menunda inquiry agar perubahan tinggi baris
 bisa diukur saat hasilnya datang.

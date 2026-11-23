@@ -42,15 +42,20 @@ final class PinEntryUITests: XCTestCase {
         waitUntilGone(error)
     }
 
-    func testBlockedPINDisablesTheKeypad() {
+    func testBlockedPINCanBeEnteredAgain() {
         let sheet = openPinSheet(extraArguments: ["--reference-letter-pin-blocked"])
         enter("123456")
         let error = application.staticTexts["Your transaction PIN is blocked."]
         XCTAssertTrue(error.waitForExistence(timeout: 5))
         XCTAssertTrue(sheet.exists)
         XCTAssertEqual(dots.value as? String, "0")
-        XCTAssertFalse(application.buttons["pin.digit.1"].isEnabled)
-        XCTAssertFalse(application.buttons["pin.digit.0"].isEnabled)
+        XCTAssertTrue(application.buttons["pin.digit.1"].isEnabled)
+
+        enter("1")
+        waitUntilGone(error)
+        enter("23456")
+        XCTAssertTrue(error.waitForExistence(timeout: 5))
+        XCTAssertEqual(dots.value as? String, "0")
         XCTAssertFalse(application.staticTexts["The host could not submit your reference letter."].exists)
     }
 

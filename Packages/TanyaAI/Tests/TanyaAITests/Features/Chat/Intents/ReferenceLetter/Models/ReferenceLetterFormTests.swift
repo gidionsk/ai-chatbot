@@ -21,7 +21,9 @@ struct ReferenceLetterFormTests {
         await form.load()
         #expect(form.introduction != nil)
         #expect(form.inquiry != nil)
-        #expect(layouts == [.form(fields: form.draft.visibleFields.map(\.id), invalid: [])])
+        let fields = form.draft.visibleFields.map(\.id)
+        #expect(
+            layouts == [.form(fields: fields, invalid: [], selections: [.purpose: ["visa"], .format: ["SOFTCOPY"]])])
         await form.load()
         #expect(service.inquiryCount == 1)
 
@@ -31,11 +33,41 @@ struct ReferenceLetterFormTests {
         let isValid = form.draft.validate()
         #expect(!isValid)
         #expect(layouts.count == 3)
-        #expect(layouts.last == .form(fields: form.draft.visibleFields.map(\.id), invalid: [.accounts, .currency]))
+        #expect(
+            layouts.last
+                == .form(
+                    fields: form.draft.visibleFields.map(\.id),
+                    invalid: [.accounts, .currency],
+                    selections: [.purpose: ["visa"], .format: ["HARDCOPY"]]
+                ))
         form.cancel()
         #expect(layouts.last == .cancelled)
         #expect(form.inquiry == nil)
         #expect(form.draft.visibleFields.isEmpty)
+    }
+
+    @Test
+    func changingOnlyAnOptionPublishesRowLayout() async {
+        let service = ReferenceLetterServiceDouble()
+        var layouts: [ReferenceLetterLayout] = []
+        let form = ReferenceLetterForm(service: service) { _, layout in layouts.append(layout) }
+        await form.load()
+        form.draft.select(["account"], for: .accounts)
+        let shortLayout = form.layout
+        let fields = form.draft.visibleFields.map(\.id)
+        form.draft.select(["long-account"], for: .accounts)
+        #expect(form.draft.visibleFields.map(\.id) == fields)
+        #expect(form.draft.invalidFieldIDs.isEmpty)
+        #expect(form.layout != shortLayout)
+        #expect(
+            layouts.last
+                == .form(
+                    fields: fields,
+                    invalid: [],
+                    selections: [.purpose: ["visa"], .format: ["SOFTCOPY"], .accounts: ["long-account"]]
+                ))
+        form.draft[text: .embassy] = "Updated recipient"
+        #expect(layouts.count == 3)
     }
 
     @Test
@@ -91,16 +123,20 @@ struct ReferenceLetterFormTests {
             ))
         let result = try await form.submit(pin: "123456")
         #expect(result == nil)
-        #expect(form.pinError != nil)
-        #expect(form.isPINBlocked == isBlocked)
-        #expect(service.displayedErrors.isEmpty)
-        form.clearSubmissionError()
-        #expect((form.pinError != nil) == isBlocked)
-        if isBlocked {
-            let blocked = try await form.submit(pin: "123456")
-            #expect(blocked == nil)
-            #expect(service.submitCount == 1)
+        guard case .pinVerification(let message, let blocked) = form.pinError else {
+            Issue.record("Expected a PIN verification error")
+            return
         }
+        #expect(message == "Safe PIN error")
+        #expect(blocked == isBlocked)
+        #expect(service.displayedErrors.isEmpty)
+
+        form.clearSubmissionError()
+        #expect(form.pinError == nil)
+        let retry = try await form.submit(pin: "654321")
+        #expect(retry == nil)
+        #expect(form.pinError != nil)
+        #expect(service.submitCount == 2)
     }
 
     @Test

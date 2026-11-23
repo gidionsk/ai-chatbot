@@ -19,7 +19,7 @@ final class FormFieldsUITests: XCTestCase {
     func testFormatChangesTheDeliveryField() {
         application.launchReferenceLetter()
         let email = application.textFields["Delivery email"]
-        application.revealReferenceLetter(email)
+        application.revealReferenceLetter(email, isHittableRequired: false)
         XCTAssertFalse(email.isEnabled)
         XCTAssertEqual(email.value as? String, "lara@example.com")
 
@@ -29,7 +29,7 @@ final class FormFieldsUITests: XCTestCase {
         XCTAssertTrue(hardcopy.waitForExistence(timeout: 5))
         hardcopy.tap()
         let address = application.textFields["Delivery address"]
-        application.revealReferenceLetter(address)
+        application.revealReferenceLetter(address, isHittableRequired: false)
         XCTAssertFalse(address.isEnabled)
         XCTAssertFalse(email.exists)
     }
@@ -130,11 +130,48 @@ extension XCUIApplication {
         }
     }
 
-    /// Field awal dan tombol di akhir kartu tidak selalu terlihat dalam viewport yang sama.
-    func revealReferenceLetter(_ element: XCUIElement) {
+    /// Geser dalam viewport chat agar keyboard dan composer tidak menahan gesture.
+    func revealReferenceLetter(
+        _ element: XCUIElement,
+        isHittableRequired: Bool = true,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
         let table = tables["chat.messages"]
-        for _ in 0..<3 where !element.isHittable { table.swipeUp() }
-        for _ in 0..<3 where !element.isHittable { table.swipeDown() }
-        XCTAssertTrue(element.isHittable)
+        XCTAssertTrue(table.waitForExistence(timeout: 5), file: file, line: line)
+        let searchSteps = 10
+        for attempt in 0..<(searchSteps * 2) {
+            let viewport = referenceLetterViewport(in: table)
+            guard !viewport.isNull, viewport.height > .zero else { break }
+
+            let target = element.exists ? element.frame : .null
+            let isInViewport = !target.isEmpty && target.midY >= viewport.minY && target.midY <= viewport.maxY
+            if isInViewport, !isHittableRequired || element.isHittable { return }
+
+            let isSearchingForward = target.isEmpty ? attempt < searchSteps : target.midY >= viewport.midY
+            dragReferenceLetter(in: viewport, isSearchingForward: isSearchingForward)
+        }
+        XCTFail("Could not reveal \(element) in chat", file: file, line: line)
+    }
+
+    private func referenceLetterViewport(in table: XCUIElement) -> CGRect {
+        let bounds = table.frame.intersection(frame)
+        guard !bounds.isNull else { return .null }
+        let back = buttons["header.back"]
+        let send = buttons["composer.send"]
+        let top = back.exists ? max(bounds.minY, back.frame.maxY) : bounds.minY
+        let bottom = send.exists ? min(bounds.maxY, send.frame.minY) : bounds.maxY
+        return CGRect(x: bounds.minX, y: top, width: bounds.width, height: max(.zero, bottom - top))
+    }
+
+    private func dragReferenceLetter(in viewport: CGRect, isSearchingForward: Bool) {
+        let origin = coordinate(withNormalizedOffset: .zero)
+        let offsetX = viewport.midX - frame.minX
+        let offsetY = viewport.minY - frame.minY
+        let upper = origin.withOffset(CGVector(dx: offsetX, dy: offsetY + viewport.height * 0.30))
+        let lower = origin.withOffset(CGVector(dx: offsetX, dy: offsetY + viewport.height * 0.70))
+        let start = isSearchingForward ? lower : upper
+        let end = isSearchingForward ? upper : lower
+        start.press(forDuration: 0.05, thenDragTo: end)
     }
 }

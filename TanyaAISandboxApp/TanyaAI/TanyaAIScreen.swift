@@ -18,6 +18,7 @@ struct TanyaAIScreen: ScreenContent {
     @State private var isSheetPresented = false
     /// Pilihan terakhir di sheet contoh; dibuka lagi = sudah tercentang dan terlihat walau daftarnya panjang.
     @State private var sheetChoiceIDs: [String] = []
+    @StateObject private var formDemo = FormDemoModel()
     let onBack: () -> Void
 
     var body: some View {
@@ -42,9 +43,17 @@ struct TanyaAIScreen: ScreenContent {
                     SheetDemoSheetContent(selectedIDs: sheetChoiceIDs, onSelect: choose)
                 }
             }
+            .bottomSheet(
+                item: $formDemo.sheet,
+                closeLabel: String(SandboxCopy.sheetClose, locale: locale),
+                isDismissable: !formDemo.isVerifying
+            ) { item in
+                FormDemoSheetContent(model: formDemo, sheet: item)
+            }
             // Latar gelap hanya menahan sentuhan di dalam halaman; swipe-back milik navigasi host, jadi host yang
             // menahannya selama sheet terbuka. Dibuka lagi saat halaman hilang supaya tidak tertinggal mati.
             .onChange(of: isHostSheetPresented.wrappedValue) { UINavigationController.setPopGestureEnabled(!$0) }
+            .onChange(of: formDemo.sheet != nil) { UINavigationController.setPopGestureEnabled(!$0) }
             .onDisappear { UINavigationController.setPopGestureEnabled() }
     }
 
@@ -54,6 +63,8 @@ struct TanyaAIScreen: ScreenContent {
         // Sandbox: mode --header-demo mengisi area scroll dengan konten contoh.
         if SandboxOptions.current.isHeaderDemo {
             host.makeView(onBack: onBack, onOpenLink: openLink) { HeaderDemoContent() }
+        } else if SandboxOptions.current.isFormComponentsDemo {
+            host.makeView(onBack: onBack, onOpenLink: openLink) { FormDemoContent(model: formDemo) }
         } else if SandboxOptions.current.isSheetDemo {
             host.makeView(onBack: onBack, onOpenLink: openLink) { SheetDemoContent(onOpen: openSheet) }
         } else {

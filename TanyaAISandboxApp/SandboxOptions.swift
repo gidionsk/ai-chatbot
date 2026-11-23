@@ -5,6 +5,7 @@
 //  Created by Wendra on 15/10/26.
 //
 
+import DesignKit
 import Foundation
 
 /// Developer-only launch metadata. Gateway tiruan (`SandboxChatTransport`) menjawab tanpa backend.
@@ -30,8 +31,35 @@ struct SandboxOptions {
     static let sheetMaxFraction: CGFloat = 0.6
     /// `--sheet-long`: jumlah baris contoh, lebih panjang dari layar.
     static let sheetLongOptionCount = 20
-    /// PIN contoh yang hanya diterima oleh service sandbox.
+    /// `--form-components-demo`: identifier field form contoh.
+    static let formFormatIdentifier = "sandbox.form.format"
+    static let formAccountsIdentifier = "sandbox.form.accounts"
+    static let formAddressIdentifier = "sandbox.form.address"
+    static let formEmailIdentifier = "sandbox.form.email"
+    static let formBalanceIdentifier = "sandbox.form.balance"
+    static let formConfirmIdentifier = "sandbox.form.confirm"
+    static let formCancelIdentifier = "sandbox.form.cancel"
+    static let formSoftcopyID = "softcopy"
+    static let formHardcopyID = "hardcopy"
+    /// Data dummy: email tersimpan nasabah, tampil di field yang dinonaktifkan.
+    static let formEmail = "samara@mail.com"
+    /// Jeda seolah daftar rekening diambil dari service host, supaya state loading di sheet terlihat (juga oleh UI
+    /// test, yang baru membaca layar setelah animasi sheet selesai).
+    static let formLoadDelay: TimeInterval = 3
+    /// PIN tiruan yang diterima "service host" sandbox; bukan PIN nasabah. PIN lain ditolak.
     static let formPin = "123456"
+    /// Panjang PIN transaksi, aturan host.
+    static let formPinLength = 6
+    /// Jeda seolah PIN diperiksa service host; selama itu keypad nonaktif dan sheet terkunci.
+    static let formVerifyDelay: TimeInterval = 1.5
+    static let formSubmittedIdentifier = "sandbox.form.submitted"
+    /// Data dummy rekening nasabah.
+    static let formAccounts = [
+        // Saldo dummy untuk contoh subtitle rekening, bukan respons service BE.
+        OptionItem(id: "5262819128982", title: "Tanda 360 - 5262 8191 2892 82", subtitle: "IDR 1.000.000"),
+        OptionItem(id: "6930112045571", title: "Tabungan Taka - 6930 1120 4557 1"),
+        OptionItem(id: "7781200345519", title: "Giro Bisnis - 7781 2003 4551 9")
+    ]
     /// Jeda tiruan untuk mengecek interaksi sheet saat PIN diverifikasi.
     static let formVerifyNanoseconds: UInt64 = 1_500_000_000
     /// Jeda agar UI test sempat mengukur baris ketika inquiry masih dimuat.
@@ -66,6 +94,7 @@ struct SandboxOptions {
     private static let sheetMultiFlag = "--sheet-multi"
     private static let sheetLockedFlag = "--sheet-locked"
     private static let sheetInputFlag = "--sheet-input"
+    private static let formComponentsDemoFlag = "--form-components-demo"
     private static let formDemoFlag = "--form-demo"
     private static let formPinBlockedFlag = "--reference-letter-pin-blocked"
     private static let formInquiryFailureFlag = "--reference-letter-inquiry-failure"
@@ -116,6 +145,8 @@ struct SandboxOptions {
     let isSheetLocked: Bool
     /// `--sheet-input` (bersama `--sheet-demo`): field teks di atas daftar, untuk mencoba sheet bersama keyboard.
     let isSheetInput: Bool
+    /// `--form-components-demo`: contoh field dan bottom sheet tanpa intent gateway.
+    let isFormComponentsDemo: Bool
     /// `--form-demo`: chat tiruan mengirim intent Surat Referensi dan memakai service inquiry serta submit dummy.
     let isFormDemo: Bool
     let isFormPINBlocked: Bool
@@ -144,7 +175,8 @@ struct SandboxOptions {
         isSheetMulti = arguments.contains(Self.sheetMultiFlag)
         isSheetLocked = arguments.contains(Self.sheetLockedFlag)
         isSheetInput = arguments.contains(Self.sheetInputFlag)
-        isFormDemo = arguments.contains(Self.formDemoFlag)
+        isFormComponentsDemo = arguments.contains(Self.formComponentsDemoFlag)
+        isFormDemo = !isFormComponentsDemo && arguments.contains(Self.formDemoFlag)
         isFormPINBlocked = arguments.contains(Self.formPinBlockedFlag)
         isFormInquiryFailing = arguments.contains(Self.formInquiryFailureFlag)
         isFormAckFailing = arguments.contains(Self.formAckFailureFlag)
