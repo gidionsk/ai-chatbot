@@ -205,18 +205,3 @@ struct TanyaAIBridgeReferenceLetterTests {
             id: id, seq: seq, author: .assistant, text: "Reference letter", status: .active, intent: .referenceLetter)
     }
 }
-
-@MainActor
-private final class HostServicesDouble: TanyaAIHostServices {
-    private let service: ReferenceLetterServiceDouble
-    private(set) var referenceLetterReadCount = 0
-
-    init(service: ReferenceLetterServiceDouble) {
-        self.service = service
-    }
-
-    var referenceLetter: ReferenceLetterService? {
-        referenceLetterReadCount += 1
-        return service
-    }
-}

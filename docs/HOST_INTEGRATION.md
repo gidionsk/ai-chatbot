@@ -99,7 +99,7 @@ extension TanyaAIUseCase: TanyaAIHostServices {
 ```
 
 Kembalikan `nil` dari properti itu untuk menonaktifkan Surat Referensi. Host juga bisa memakai
-objek khusus service intent, seperti [sandbox](../TanyaAISandboxApp/TanyaAI/SandboxReferenceLetterService.swift).
+objek khusus service intent, seperti [sandbox](../TanyaAISandboxApp/TanyaAI/SandboxHostServices.swift).
 Untuk halaman yang tidak mendukung intent form, panggil `TanyaAIBridge(transport: useCase)`.
 
 Input, Output, dan Repository memakai `struct`: `private(set) var repository` benar-benar mencegah view
