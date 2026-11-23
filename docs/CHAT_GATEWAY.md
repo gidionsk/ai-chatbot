@@ -90,7 +90,8 @@ antre saja tidak. Setelah `leave-agent` menjawab `left:true`, kartu sementara di
 termasuk ack kirim yang salinannya belum tiba, sampai event itu tiba, jadi pertanyaan ke bot sesudahnya tetap di bawah
 kartu. Posisi itu bukan batas sesi: pesan agen yang tiba sesudahnya memindahkan kartu ke bawahnya. Bila antrean baru dimulai
 sebelum event keluar resmi diterima (terlewat karena replay setelah reconnect), posisi itu tetap menjadi akhir sesi lama
-dan event masuk antrean menjadi batasnya. Serah terima yang
+dan event masuk antrean menjadi batasnya. Event keluar resmi sesi yang sama menggantikan posisi itu, tetapi sesi yang
+sudah ditutup jawaban bot tetap memakainya. Antre ke dilayani agen (`AGENT_QUEUED` → `AGENT_ACTIVE`) bukan antrean baru. Serah terima yang
 sesinya mendapat kartu selesai tidak lagi diberi kartu "tidak dilanjutkan". UAT mengirim `system` `agent_left` setelah event `state` saat End Session; token ini belum ada di
 contract v1.5.3 sehingga diabaikan dan tidak menambah kartu. Tanpa event `state` (dibuka dari history dan tidak ikut
 replay), kartu selesai tetap setelah pesan agen terakhir.

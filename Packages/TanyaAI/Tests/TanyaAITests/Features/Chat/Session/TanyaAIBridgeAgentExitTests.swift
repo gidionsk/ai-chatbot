@@ -51,7 +51,7 @@ struct TanyaAIBridgeAgentExitTests {
 
         transport.emit(WireFixture.stateFrame(seq: 7, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
         await waitUntil { bridge.eventCursor == 7 }
-        #expect(bridge.agentExits.pending == nil)
+        #expect(bridge.agentExits.marks == [.leaving(seq: 6, isServed: true), .exit(seq: 7, isServed: true)])
         #expect(contentIDs(bridge).suffix(3) == [.message("m-6"), .liveAgentNotice(7), question])
     }
 
@@ -148,6 +148,43 @@ struct TanyaAIBridgeAgentExitTests {
         await waitUntil { bridge.eventCursor == 8 }
         let cards = bridge.visibleLiveAgentNotices.filter { $0.kind != .connected && $0.kind != .connecting }
         #expect(cards == [LiveAgentNotice(kind: .ended, seq: 6)])
+    }
+
+    /// `left:true` saat antre tiba sebelum event agen bergabung: antre ke dilayani agen masih sesi yang sama, jadi
+    /// event keluar resmi sesudahnya menggantikan posisi tunggu, tetap satu kartu.
+    @Test
+    func agentJoiningAfterLeavingKeepsOneSession() async {
+        let transport = FakeChatTransport()
+        let bridge = await connectedBridge(transport, state: "AGENT_QUEUED")
+        defer { bridge.connectionTask?.cancel() }
+        transport.emit(WireFixture.messageFrame(seq: 5, direction: "agent"))
+        transport.emit(WireFixture.messageFrame(seq: 6, direction: "user"))
+        await waitUntil { bridge.eventCursor == 6 }
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
+        transport.emit(WireFixture.stateFrame(seq: 8, state: "AGENT_ACTIVE", previous: "AGENT_QUEUED"))
+        transport.emit(WireFixture.stateFrame(seq: 9, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        await waitUntil { bridge.eventCursor == 9 }
+        #expect(bridge.visibleLiveAgentNotices.filter { $0.kind == .ended } == [LiveAgentNotice(kind: .ended, seq: 9)])
+    }
+
+    /// Setelah `left:true`, sesi B dibuka tanpa event masuk antrean (terlewat replay) dan event keluar B tiba: kartu
+    /// selesai sesi A tetap di posisi tunggunya, bukan menjadi "tidak dilanjutkan".
+    @Test
+    func nextSessionExitKeepsTheLeavingPositionOfThePreviousSession() async {
+        let transport = FakeChatTransport()
+        let history = [
+            WireFixture.message(seq: 3, direction: "user"),
+            WireFixture.message(seq: 2, direction: "assistant", intent: "handover-to-agent")
+        ]
+        let bridge = await connectedBridge(transport, state: "AGENT_ACTIVE", history: history)
+        defer { bridge.connectionTask?.cancel() }
+        await bridge.leaveAgent(from: bridge.agentSessionKey)
+        transport.emit(WireFixture.messageFrame(seq: 8, direction: "assistant"))
+        transport.emit(WireFixture.messageFrame(seq: 10, direction: "agent"))
+        transport.emit(WireFixture.stateFrame(seq: 12, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE"))
+        await waitUntil { bridge.eventCursor == 12 }
+        let ended = { LiveAgentNotice(kind: .ended, seq: $0) }
+        #expect(bridge.visibleLiveAgentNotices.filter { $0.kind != .connected } == [ended(3), ended(12)])
     }
 
     /// Pesan ke agen yang sudah di-ack tetapi salinannya belum tiba saat End Session tetap di atas kartu sementara.

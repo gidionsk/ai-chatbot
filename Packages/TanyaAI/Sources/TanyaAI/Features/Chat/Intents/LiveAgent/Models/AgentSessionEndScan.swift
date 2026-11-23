@@ -76,10 +76,11 @@ private extension AgentSessionEndScan {
         floorSeq = seq
     }
 
-    /// Keluar kedua menutup sesi sebelumnya lebih dulu. Keluar dari `AGENT_ACTIVE` tanpa sesi yang terbaca tetap
-    /// sesi dengan agen, dimulai setelah `floorSeq`.
+    /// Keluar setelah posisi tunggu `leave-agent` di sesi yang sama menggantikan posisi itu. Keluar kedua lainnya
+    /// menutup sesi sebelumnya lebih dulu. Keluar dari `AGENT_ACTIVE` tanpa sesi yang terbaca tetap sesi dengan agen,
+    /// dimulai setelah `floorSeq`.
     mutating func leave(at seq: Int, isServed: Bool, isPending: Bool) {
-        if exitSeq != nil {
+        if exitSeq != nil, !isExitPending {
             close(before: seq)
         }
         if lastSessionSeq == nil, isServed {

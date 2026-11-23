@@ -154,7 +154,8 @@ struct ArrayLiveAgentNoticeTests {
     }
 
     /// Posisi tunggu `leave-agent` bukan batas sesi: pesan agen sesudahnya (mis. dari history setelah reconnect yang
-    /// melewatkan event `state`) memindahkan kartu ke bawahnya, tetap satu kartu.
+    /// melewatkan event `state`) memindahkan kartu ke bawahnya, tetap satu kartu. Event keluar sesi yang sama
+    /// menggantikannya; event keluar setelah jawaban bot milik sesi berikutnya.
     @Test
     func leavingPositionDoesNotSplitTheSession() {
         let messages = [
@@ -165,6 +166,12 @@ struct ArrayLiveAgentNoticeTests {
         let card = { LiveAgentNotice(kind: .ended, seq: $0) }
         #expect(ended(in: messages, isOngoing: false, marks: [leaving]) == [card(6)])
         #expect(ended(in: Array(messages.prefix(1)), isOngoing: false, marks: [leaving]) == [card(5)])
+        let exit = AgentSessionMark.exit(seq: 7, isServed: true)
+        #expect(ended(in: Array(messages.prefix(2)), isOngoing: false, marks: [leaving, exit]) == [card(7)])
+        #expect(
+            ended(in: messages, isOngoing: false, marks: [leaving, .exit(seq: 12, isServed: true)]) == [
+                card(6), card(12)
+            ])
     }
 
     /// Kartu dari history memakai `seq` pesan yang ditutupnya dan tampil tepat setelah pesan itu, bukan sebelumnya.

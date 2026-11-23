@@ -9,42 +9,35 @@ import Testing
 
 @testable import TanyaAI
 
-/// Posisi akhir sesi agen dari event `state` dan penanda tunggu setelah `leave-agent`.
+/// Batas sesi agen dari event `state` dan `leave-agent`.
 struct AgentSessionExitsTests {
-    /// Hanya perpindahan keluar dari antre atau agen yang dicatat, beserta apakah sesi itu dilayani agen; urut naik.
+    /// Keluar dari antre atau agen dicatat beserta apakah sesi itu dilayani agen. Masuk ke antre dari state yang
+    /// diketahui di luar antre menjadi awal antrean; antre ke dilayani agen dan state asal tak dikenal tidak.
     @Test
-    func onlyLeavingTheAgentIsRecorded() {
+    func stateChangesBecomeSessionBounds() {
         var exits = AgentSessionExits()
         exits.record(change(.assistantActive, .agentQueued, seq: 3))
         exits.record(change(.agentQueued, .agentActive, seq: 4))
         exits.record(change(.agentActive, .assistantActive, seq: 9))
         exits.record(change(.agentQueued, .assistantActive, seq: 6))
+        exits.record(change(.unknown, .agentActive, seq: 10))
         exits.record(change(.agentActive, .assistantActive, seq: nil))
-        #expect(exits.marks == [.exit(seq: 6, isServed: false), .exit(seq: 9, isServed: true)])
+        let expected: [AgentSessionMark] = [
+            .queued(seq: 3), .exit(seq: 6, isServed: false), .exit(seq: 9, isServed: true)
+        ]
+        #expect(exits.marks == expected)
     }
 
-    /// Posisi tunggu dari `leave-agent` digantikan event `state` keluar. Bila antrean baru dimulai lebih dulu (event
-    /// keluar terlewat), posisi itu disimpan sebagai akhir sesi lama bersama awal antrean baru.
+    /// Posisi tunggu `leave-agent` disimpan dan tidak dibuang oleh event keluar resmi; scan yang menentukan
+    /// sesinya. Tanpa `seq` tidak ada yang dicatat.
     @Test
-    func pendingExitEndsWithTheStateEventOrANewSession() {
+    func leavingPositionIsKeptWithTheStateEvents() {
         var exits = AgentSessionExits()
-        exits.leave(.agentActive, afterSeq: 5)
-        #expect(exits.marks == [.leaving(seq: 5, isServed: true)])
-        exits.record(change(.assistantActive, .assistantActive, seq: 5))
-        #expect(exits.pending == .leaving(seq: 5, isServed: true))
-        exits.record(change(.agentActive, .assistantActive, seq: 6))
-        #expect(exits.marks == [.exit(seq: 6, isServed: true)])
-
-        exits.leave(.agentQueued, afterSeq: 7)
-        #expect(exits.pending == .leaving(seq: 7, isServed: false))
-        exits.record(change(.assistantActive, .agentQueued, seq: 8))
-        #expect(exits.pending == nil)
-        let kept: [AgentSessionMark] = [
-            .exit(seq: 6, isServed: true), .leaving(seq: 7, isServed: false), .queued(seq: 8)
-        ]
-        #expect(exits.marks == kept)
         exits.leave(.agentActive, afterSeq: nil)
-        #expect(exits.marks == kept)
+        #expect(exits.marks.isEmpty)
+        exits.leave(.agentQueued, afterSeq: 5)
+        exits.record(change(.agentActive, .assistantActive, seq: 7))
+        #expect(exits.marks == [.leaving(seq: 5, isServed: false), .exit(seq: 7, isServed: true)])
     }
 
     private func change(
