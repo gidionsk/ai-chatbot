@@ -35,8 +35,8 @@ struct TanyaAIScreen: ScreenContent {
                 maxHeight: sheetMaxHeight,
                 isDismissable: !SandboxOptions.current.isSheetLocked
             ) {
-                if let message = viewModel.hostSheetMessage {
-                    Text(message)
+                if viewModel.isReferenceLetterAckFailed {
+                    Text(String(SandboxCopy.formAckFailure, locale: locale))
                         .designFont(.body)
                         .padding(FigmaSize.spacingLarge.scaledToArtwork)
                 } else {
@@ -80,11 +80,11 @@ struct TanyaAIScreen: ScreenContent {
 
     private var isHostSheetPresented: Binding<Bool> {
         Binding(
-            get: { isSheetPresented || viewModel.hostSheetMessage != nil },
+            get: { isSheetPresented || viewModel.isReferenceLetterAckFailed },
             set: { isShown in
                 if !isShown {
                     isSheetPresented = false
-                    viewModel.hostSheetMessage = nil
+                    viewModel.isReferenceLetterAckFailed = false
                 }
             }
         )

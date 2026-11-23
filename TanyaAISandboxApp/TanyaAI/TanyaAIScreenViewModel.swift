@@ -11,14 +11,13 @@ import UIKit
 /// View model halaman Tanya AI di host: membaca `repository` UseCase dan menyusun konfigurasi package.
 /// Urutan init → history → SSE, retry, pesan, dan status menunggu jawaban milik TanyaAI (`TanyaAIBridge`).
 final class TanyaAIScreenViewModel: ScreenContentViewModel {
-    @Published var hostSheetMessage: String?
+    @Published var isReferenceLetterAckFailed = false
     let useCase: TanyaAIUseCase
-    private let intentServices: TanyaAIIntentServices
     /// Dibuat sekali bersama view model (milik `@StateObject` destination); UseCase menjadi transport chat.
     @MainActor
     private(set) lazy var bridge = TanyaAIBridge(
         transport: useCase,
-        services: intentServices,
+        services: TanyaAIIntentServices(referenceLetter: referenceLetterService),
         onSessionExpired: { [weak self] in self?.didReceiveError(URLError(.userAuthenticationRequired)) },
         onConnectionFailed: { [weak self] error in self?.didReceiveError(error) }
     )
@@ -33,12 +32,18 @@ final class TanyaAIScreenViewModel: ScreenContentViewModel {
         onSheetChange: { UINavigationController.setPopGestureEnabled(!$0) }
     )
 
-    init(useCase: TanyaAIUseCase, intentServices: TanyaAIIntentServices) {
+    @MainActor
+    private var referenceLetterService: SandboxReferenceLetterService? {
+        guard SandboxOptions.current.isFormDemo else { return nil }
+        return SandboxReferenceLetterService(locale: SandboxOptions.current.locale ?? .current) { [weak self] _ in
+            self?.isReferenceLetterAckFailed = true
+        }
+    }
+
+    init(useCase: TanyaAIUseCase) {
         self.useCase = useCase
-        self.intentServices = intentServices
         super.init()
         useCase.callback.onSubmissionFailed = { [weak self] error in self?.didReceiveError(error) }
-        useCase.callback.onHostSheetRequested = { [weak self] message in self?.hostSheetMessage = message }
         useCase.loadWelcome()
     }
 }

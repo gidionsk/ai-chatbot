@@ -47,10 +47,7 @@ extension HostWindowTests {
         @Test
         func offlineSendShowsTheHostBlocker() async {
             let options = SandboxOptions(arguments: ["--offline"])
-            let offline = TanyaAIScreenViewModel(
-                useCase: TanyaAIUseCase(options: options),
-                intentServices: .init()
-            )
+            let offline = TanyaAIScreenViewModel(useCase: TanyaAIUseCase(options: options))
             _ = try? await offline.useCase.sendMessage(conversationID: "c", clientMessageID: "c-1", text: "Halo")
             #expect(offline.isNetworkUnavailable)
             offline.retry()

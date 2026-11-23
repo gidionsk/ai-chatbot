@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import TanyaAI
 
 /// Pemilik view model halaman Tanya AI. Autoclosure `@StateObject` dijalankan sekali saat halaman di-push:
 /// UseCase dibuat, input ditulis, lalu view model dibuat. Render ulang coordinator tidak membuat ulang keduanya.
@@ -18,19 +17,10 @@ struct TanyaAIDestination: View {
     init(greeting: TanyaAIInitGreeting, shortcuts: [TanyaAIInitShortcut], onBack: @escaping () -> Void) {
         _viewModel = StateObject(
             wrappedValue: {
-                let options = SandboxOptions.current
-                let useCase = TanyaAIUseCase(options: options)
+                let useCase = TanyaAIUseCase()
                 useCase.input.greeting = greeting
                 useCase.input.shortcuts = shortcuts
-
-                let callback = useCase.callback
-                let referenceLetter = SandboxReferenceLetterService.make(options: options) { message in
-                    callback.onHostSheetRequested(message)
-                }
-                return TanyaAIScreenViewModel(
-                    useCase: useCase,
-                    intentServices: TanyaAIIntentServices(referenceLetter: referenceLetter)
-                )
+                return TanyaAIScreenViewModel(useCase: useCase)
             }())
         self.onBack = onBack
     }
