@@ -133,8 +133,8 @@ struct TanyaAIBridgeAgentExitTests {
         #expect(itemIDs(bridge).suffix(3) == [.message("m-5"), .message("m-6"), .liveAgentNotice(6)])
     }
 
-    /// Event keluar resmi terlewat (replay setelah reconnect dimulai sesudahnya) lalu antrean baru dimulai: posisi
-    /// tunggu tetap menjadi akhir sesi lama, baik saat agen sudah menulis maupun belum.
+    /// Event keluar resmi terlewat (replay setelah reconnect dimulai sesudahnya) lalu antrean baru dimulai lewat pesan
+    /// serah terima bot: posisi tunggu tetap menjadi akhir sesi lama, baik saat agen sudah menulis maupun belum.
     @Test(arguments: [true, false])
     func nextQueueKeepsThePendingEndOfTheSession(isAgentWriting: Bool) async {
         let transport = FakeChatTransport()
@@ -144,6 +144,7 @@ struct TanyaAIBridgeAgentExitTests {
         (agentFrames + [WireFixture.messageFrame(seq: 6, direction: "user")]).forEach(transport.emit)
         await waitUntil { bridge.eventCursor == 6 }
         await bridge.leaveAgent(from: bridge.agentSessionKey)
+        transport.emit(WireFixture.messageFrame(seq: 7, direction: "assistant"))
         transport.emit(WireFixture.stateFrame(seq: 8, state: "AGENT_QUEUED"))
         await waitUntil { bridge.eventCursor == 8 }
         let cards = bridge.visibleLiveAgentNotices.filter { $0.kind != .connected && $0.kind != .connecting }

@@ -174,6 +174,19 @@ struct ArrayLiveAgentNoticeTests {
             ])
     }
 
+    /// Event antre dan bergabung yang tiba setelah posisi tunggu (replay pembuka sesi yang aktif saat init) masih sesi
+    /// yang sama; antrean baru setelah jawaban bot tidak.
+    @Test
+    func replayedOpenerAfterLeavingStaysInTheSession() {
+        let card = { LiveAgentNotice(kind: .ended, seq: $0) }
+        let leaving = AgentSessionMark.leaving(seq: 2, isServed: true)
+        let replay: [AgentSessionMark] = [leaving, .queued(seq: 3), .joined(seq: 4), .exit(seq: 7, isServed: true)]
+        #expect(ended(in: [message(seq: 2, author: .user)], isOngoing: false, marks: replay) == [card(7)])
+        let nextQueue = [message(seq: 2, author: .user), message(seq: 3)]
+        let queued: [AgentSessionMark] = [leaving, .queued(seq: 4)]
+        #expect(ended(in: nextQueue, isOngoing: true, marks: queued) == [card(2)])
+    }
+
     /// Kartu dari history memakai `seq` pesan yang ditutupnya dan tampil tepat setelah pesan itu, bukan sebelumnya.
     @Test
     func historyNoticeFollowsTheMessageItCloses() {

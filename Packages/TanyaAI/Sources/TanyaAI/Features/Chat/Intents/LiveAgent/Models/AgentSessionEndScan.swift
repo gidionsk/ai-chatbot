@@ -69,9 +69,11 @@ private extension AgentSessionEndScan {
         lastSessionSeq = seq
     }
 
-    /// Antrean baru setelah sesi keluar: kartu penutup sesudahnya milik antrean itu, bukan sesi sebelumnya.
+    /// Antrean baru setelah event keluar resmi: kartu penutup sesudahnya milik antrean itu, bukan sesi sebelumnya.
+    /// Posisi tunggu `leave-agent` tidak ditutup di sini: event antre sesudahnya bisa replay pembuka sesi yang sama
+    /// (tiba setelah `left:true`), sedangkan antrean baru di aplikasi didahului jawaban bot yang sudah menutup sesi.
     mutating func queue(at seq: Int) {
-        guard exitSeq != nil else { return }
+        guard exitSeq != nil, !isExitPending else { return }
         close(before: seq)
         floorSeq = seq
     }
