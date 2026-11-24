@@ -80,6 +80,29 @@ agen bergabung. `AGENT_ACTIVE` baru terjadi saat agen benar-benar bergabung (con
 history sapaan tidak bisa dibedakan dari pesan agen biasa; antre yang habis setelah sapaan tampil seperti sesi yang
 pernah dilayani (kartu "Connected" lalu kartu selesai) sampai BE memberi penanda. Asumsi ini menunggu konfirmasi BE.
 
+Akhir sesi agen (kartu "Mode dengan Customer Assistant Berakhir"), karena `id:` berbagi urutan dengan `seq` pesan:
+
+- Posisi kartu = `seq` event `state` dari `AGENT_QUEUED`/`AGENT_ACTIVE` ke state lain. Pesan nasabah selama sesi,
+  termasuk yang dikirim sebelum agen manusia bergabung, tetap di atas kartu.
+- Sesi dibuka pesan agen atau `agent_joined`. Keluar dari `AGENT_ACTIVE` tetap mendapat kartu walau pembukanya tidak
+  diterima (dibuka lagi saat sesi berjalan); keluar dari antre saja tidak.
+- Event keluar resmi menjadi batas sesi walau sesi berikutnya dimulai tanpa jawaban bot. `agent_connecting` atau event
+  masuk antre setelah event keluar resmi memulai antrean baru, jadi kartu penutup antrean itu (mis. `queue_canceled`)
+  tidak menghapus kartu sesi sebelumnya. `AGENT_QUEUED` → `AGENT_ACTIVE` bukan antrean baru.
+- Setelah `leave-agent` menjawab `left:true` dan sebelum event keluar resmi tiba, kartu sementara di `seq` terakhir
+  yang sudah diterima, termasuk ack kirim yang salinannya belum tiba, jadi pertanyaan ke bot sesudahnya tetap di bawah
+  kartu. Posisi tunggu ini bukan batas sesi:
+  - pesan agen yang tiba sesudahnya memindahkan kartu ke bawahnya;
+  - event antre sesudahnya tidak menutup sesi, karena bisa replay pembuka sesi yang aktif saat init;
+  - event keluar resmi sesi yang sama menggantikan posisinya;
+  - jawaban bot berikutnya menutup sesi di posisi itu, termasuk saat event keluar resmi terlewat replay setelah
+    reconnect. Antrean baru di aplikasi selalu didahului jawaban bot (pesan serah terima), jadi sesi lama sudah
+    tertutup sebelum event antrean barunya. Antre lewat init `mode:"agent"` tanpa jawaban bot tidak dibedakan.
+- Serah terima yang sesinya mendapat kartu selesai tidak lagi diberi kartu "tidak dilanjutkan".
+- UAT mengirim `system` `agent_left` setelah event `state` saat End Session; token ini belum ada di contract v1.5.3
+  sehingga diabaikan dan tidak menambah kartu.
+- Tanpa event `state` (dibuka dari history dan tidak ikut replay), kartu selesai tetap setelah pesan agen terakhir.
+
 History hanya berisi `Message`, jadi kartu hanya ada selama halaman terbuka. Saat dibuka lagi, kartu yang
 `seq`-nya setelah pesan terakhir masih ikut replay SSE (cursor = seq pesan terakhir) selama outbox belum
 dipangkas; kartu sebelum pesan terakhir tidak kembali. Pesan agen tetap ada di history (`direction: agent`).

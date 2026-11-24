@@ -44,6 +44,8 @@ public final class TanyaAIBridge: ObservableObject {
     /// `seq` pesan serah terima yang datang lewat stream sejak sinkronisasi history terakhir. Penutupnya datang dari
     /// event stream, jadi pesan ini tidak diberi kartu "tidak dilanjutkan" selama event antre masih tertunda.
     private(set) var streamedHandoverSeqs: Set<Int> = []
+    /// Posisi akhir sesi agen dari event `state` stream dan `leave-agent` yang menunggu event itu.
+    var agentExits = AgentSessionExits()
     /// Antrean atau sesi yang menunggu respons `leave-agent` (lihat `isLeavingAgent`); nil = tidak ada request.
     @Published var leavingAgentScope: LiveAgentScope?
     /// Indikator "agen sedang mengetik"; dimatikan oleh `typing:false`, pesan agen, atau batas `ttl_s`.
@@ -197,8 +199,9 @@ extension TanyaAIBridge {
             updateLatestIncomingMessage()
         case .turnEnd(let seq):
             turn.end(seq: seq)
-        case .state(let state):
-            conversationState = state
+        case .state(let change):
+            agentExits.record(change)
+            conversationState = change.next
         case .notice(let notice):
             // Replay setelah reconnect bisa mengulang event yang sama; `seq` menjadi kuncinya.
             let others = liveAgentNotices.filter { $0.seq != notice.seq }
@@ -218,6 +221,7 @@ extension TanyaAIBridge {
             sentMessageIDs = []
             liveAgentNotices = []
             streamedHandoverSeqs = []
+            agentExits = AgentSessionExits()
             showAgentTyping(false)
             resetUserTyping()
             turn.cancel()

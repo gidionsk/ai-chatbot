@@ -91,7 +91,19 @@ struct ChatEventTests {
 
     @Test(arguments: [("AGENT_QUEUED", ConversationState.agentQueued), ("AGENT_ACTIVE", .agentActive), ("X", .unknown)])
     func stateFrameCarriesTheNextState(wire: String, expected: ConversationState) {
-        #expect(ChatEvent(frame(WireFixture.stateFrame(seq: 5, state: wire))) == .state(expected))
+        let change = ConversationStateChange(previous: .assistantActive, next: expected, seq: 5)
+        #expect(ChatEvent(frame(WireFixture.stateFrame(seq: 5, state: wire))) == .state(change))
+    }
+
+    /// `from` dan `id:` menandai akhir sesi agen; `from` yang tidak ada tetap memindahkan state tanpa posisi akhir.
+    @Test
+    func stateFrameMarksTheAgentExit() {
+        let exit = ChatEvent(frame(WireFixture.stateFrame(seq: 7, state: "ASSISTANT_ACTIVE", previous: "AGENT_ACTIVE")))
+        #expect(exit == .state(ConversationStateChange(previous: .agentActive, next: .assistantActive, seq: 7)))
+        let bare = ChatEvent(frame(["id: 8", "event: state", #"data: {"to":"ASSISTANT_ACTIVE"}"#, ""]))
+        let change = ConversationStateChange(previous: .unknown, next: .assistantActive, seq: 8)
+        #expect(bare == .state(change))
+        #expect(change.agentExitSeq == nil)
     }
 
     /// Token contract §7.6 yang menjadi chip atau kartu, di posisi `id:` frame-nya.

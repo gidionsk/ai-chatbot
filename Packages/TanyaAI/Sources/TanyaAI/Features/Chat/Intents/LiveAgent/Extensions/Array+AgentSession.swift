@@ -25,31 +25,26 @@ extension Array where Element == ChatMessage {
         return scan.cards
     }
 
-    /// Kartu selesai untuk sesi agen di history, karena history tidak membawa event `system`. Sesi berakhir saat bot
-    /// menjawab lagi, atau di akhir daftar bila tidak sedang antre atau dilayani agen; kartunya tepat setelah pesan
-    /// agen terakhir sesi itu. Sesi yang sudah punya kartu dari stream di antara keduanya tidak diberi kartu lagi.
-    func endedAgentSessions(isOngoing: Bool, closedBy notices: [LiveAgentNotice]) -> [LiveAgentNotice] {
-        var sessions: [(lastAgentSeq: Int, nextSeq: Int)] = []
-        var lastAgentSeq: Int?
+    /// Kartu selesai untuk sesi agen tanpa kartu penutup dari stream, karena history tidak membawa event `system`.
+    /// Batas sesi dari stream (`marks`: `agent_joined`, `agent_connecting`, dan event `state` keluar dari antre atau
+    /// agen, lihat `AgentSessionExits`) dibaca bersama pesan menurut `seq`; lihat `AgentSessionEndScan`. Pesan nasabah
+    /// selama sesi tetap di atas kartu. Penanda ber-`seq` sama dengan pesan dibaca setelah pesannya.
+    func endedAgentSessions(
+        isOngoing: Bool,
+        closedBy notices: [LiveAgentNotice],
+        marks: [AgentSessionMark]
+    ) -> [LiveAgentNotice] {
+        var scan = AgentSessionEndScan(closingNotices: notices)
+        var pending = marks.sorted()[...]
         for message in self {
-            switch message.author {
-            case .agent:
-                lastAgentSeq = message.seq
-            case .assistant:
-                guard let agentSeq = lastAgentSeq else { continue }
-                sessions.append((agentSeq, message.seq))
-                lastAgentSeq = nil
-            case .user, .unknown:
-                break
+            while let mark = pending.first, mark.seq < message.seq {
+                scan.read(mark)
+                pending = pending.dropFirst()
             }
+            scan.read(message)
         }
-        if let agentSeq = lastAgentSeq, !isOngoing {
-            sessions.append((agentSeq, .max))
-        }
-        return
-            sessions
-            .filter { session in !notices.contains { $0.seq > session.lastAgentSeq && $0.seq < session.nextSeq } }
-            .map { LiveAgentNotice(kind: .ended, seq: $0.lastAgentSeq) }
+        pending.forEach { scan.read($0) }
+        return scan.finish(isOngoing: isOngoing)
     }
 
     /// Permintaan agen yang tidak dilanjutkan: pesan bot ber-intent `liveAgent` yang tidak diikuti pesan agen sampai

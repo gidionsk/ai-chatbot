@@ -64,7 +64,8 @@ struct TanyaAIBridgeQueueCardTests {
         transport.emit(WireFixture.stateFrame(seq: 4, state: "AGENT_QUEUED"))
         transport.emit(WireFixture.systemFrame(seq: 5, type: "queue_canceled"))
         transport.emit(WireFixture.stateFrame(seq: 6, state: "ASSISTANT_ACTIVE", previous: "AGENT_QUEUED"))
-        await waitUntil { bridge.conversationState == .assistantActive }
+        // State awal sudah ASSISTANT_ACTIVE, jadi yang ditunggu event terakhir, bukan nilai state.
+        await waitUntil { bridge.eventCursor == 6 }
         transport.drop()
         await waitUntil { bridge.conversationState == .agentQueued }
         let expected = [LiveAgentNotice(kind: .canceled, seq: 5), .init(kind: .connecting, seq: .max)]

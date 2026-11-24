@@ -23,11 +23,33 @@ extension TanyaAIBridge {
         let isSettled = !conversationState.isLiveAgent && !isAwaitingReply
         var notices = openingNotices + closing
         notices += messages.connectedAgentSessions(streamNotices: liveAgentNotices)
-        notices += messages.endedAgentSessions(isOngoing: conversationState.isLiveAgent, closedBy: closing)
-        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices)
+        let ended = messages.endedAgentSessions(
+            isOngoing: conversationState.isLiveAgent,
+            closedBy: closing,
+            marks: agentSessionMarks
+        )
+        notices += ended
+        // Sesi yang terbukti dilayani agen (kartu selesai) juga menutup serah terimanya.
+        notices += messages.unfinishedHandovers(isSettled: isSettled, closedBy: streamNotices + ended)
             .filter { !streamedHandoverSeqs.contains($0.seq) }
         var seenSeqs = Set<Int>()
         return notices.filter { seenSeqs.insert($0.seq).inserted }.sorted { $0.seq < $1.seq }
+    }
+
+    /// Batas sesi dari stream untuk kartu selesai: `agent_joined`, `agent_connecting` (awal antrean), dan keluar dari
+    /// antre atau agen.
+    private var agentSessionMarks: [AgentSessionMark] {
+        let streamMarks = liveAgentNotices.compactMap { notice -> AgentSessionMark? in
+            switch notice.kind {
+            case .joined:
+                return .joined(seq: notice.seq)
+            case .connecting:
+                return .queued(seq: notice.seq)
+            default:
+                return nil
+            }
+        }
+        return streamMarks + agentExits.marks
     }
 
     /// Kartu Switching (dengan tombol batal) sedang tampil: antre dan belum ada sapaan otomatis, `agent_joined`, atau

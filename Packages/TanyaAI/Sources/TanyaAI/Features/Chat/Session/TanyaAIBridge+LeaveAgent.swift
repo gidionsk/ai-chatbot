@@ -41,6 +41,9 @@ extension TanyaAIBridge {
             let data = try await transport.leaveAgent(conversationID: conversationID)
             let result = try JSONDecoder.wire.decode(WireEnvelope<WireLeaveAgent>.self, from: data).data
             guard result.isLeft, liveAgentScope == scope else { return }
+            // Event `state` belum tiba: kartu selesai sementara setelah pesan, event, dan ack kirim terakhir.
+            let lastSeq = ([messages.latestSeq, eventCursor] + localQuestions.map(\.seq)).compactMap { $0 }.max()
+            agentExits.leave(conversationState, afterSeq: lastSeq)
             conversationState = .assistantActive
         } catch {
             didFailRequest(error, conversationID: conversationID)

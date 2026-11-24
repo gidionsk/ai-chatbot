@@ -85,11 +85,106 @@ struct ArrayLiveAgentNoticeTests {
             message(seq: 7, author: .agent)
         ]
         #expect(
-            messages.endedAgentSessions(isOngoing: true, closedBy: [])
+            ended(in: messages, isOngoing: true)
                 == [LiveAgentNotice(kind: .ended, seq: 4)])
         #expect(
-            messages.endedAgentSessions(isOngoing: false, closedBy: [LiveAgentNotice(kind: .canceled, seq: 5)])
+            ended(in: messages, isOngoing: false, closedBy: [LiveAgentNotice(kind: .canceled, seq: 5)])
                 == [LiveAgentNotice(kind: .ended, seq: 7)])
+    }
+
+    /// Posisi akhir sesi dari event `state` menggantikan tebakan pesan agen terakhir, jadi pesan nasabah selama sesi
+    /// tetap di atas kartu. Posisi di luar rentang sesi tidak dipakai; posisi sama dengan pesan dibaca setelahnya.
+    @Test
+    func endedCardUsesTheStateExitOfItsSession() {
+        let messages = [
+            message(seq: 2, author: .agent), message(seq: 3, author: .user), message(seq: 5, author: .assistant),
+            message(seq: 6, author: .agent), message(seq: 7, author: .user)
+        ]
+        let card = { LiveAgentNotice(kind: .ended, seq: $0) }
+        #expect(ended(in: messages, isOngoing: false, exitSeqs: [4, 8]) == [card(4), card(8)])
+        #expect(ended(in: messages, isOngoing: false, exitSeqs: [8]) == [card(2), card(8)])
+        #expect(ended(in: messages, isOngoing: false, exitSeqs: [7]) == [card(2), card(7)])
+    }
+
+    /// Event keluar menutup sesi yang dibuka `agent_joined` tanpa pesan agen, dan sesi berikutnya yang dimulai tanpa
+    /// jawaban bot di antaranya tidak menghapus kartu sesi sebelumnya.
+    @Test
+    func exitClosesEverySessionItBounds() {
+        let card = { LiveAgentNotice(kind: .ended, seq: $0) }
+        let joinedOnly = [message(seq: 2, author: .assistant), message(seq: 4, author: .user)]
+        #expect(ended(in: joinedOnly, isOngoing: false, joinedSeqs: [3], exitSeqs: [5]) == [card(5)])
+        #expect(ended(in: joinedOnly, isOngoing: true, joinedSeqs: [3]).isEmpty)
+
+        let back = [message(seq: 2, author: .agent), message(seq: 3, author: .user), message(seq: 6, author: .agent)]
+        #expect(ended(in: back, isOngoing: true, exitSeqs: [4]) == [card(4)])
+        #expect(ended(in: back, isOngoing: false, exitSeqs: [4, 7]) == [card(4), card(7)])
+    }
+
+    /// Kartu penutup spesifik dari stream tetap diutamakan walau datang setelah event keluar.
+    @Test
+    func specificClosingCardWinsOverTheExit() {
+        let messages = [message(seq: 2, author: .agent), message(seq: 3, author: .user)]
+        let canceled = LiveAgentNotice(kind: .canceled, seq: 5)
+        #expect(ended(in: messages, isOngoing: false, closedBy: [canceled], exitSeqs: [4]).isEmpty)
+    }
+
+    /// Antrean baru setelah event keluar menutup sesi sebelumnya, jadi kartu batal antrean itu tidak menghapus kartu
+    /// selesai sesi sebelumnya.
+    @Test
+    func nextQueueClosesThePreviousSession() {
+        let messages = [message(seq: 2, author: .agent), message(seq: 3, author: .user)]
+        let canceled = LiveAgentNotice(kind: .canceled, seq: 6)
+        let queue: [AgentSessionMark] = [.queued(seq: 5), .exit(seq: 7, isServed: false)]
+        #expect(
+            ended(in: messages, isOngoing: false, closedBy: [canceled], exitSeqs: [4], marks: queue)
+                == [LiveAgentNotice(kind: .ended, seq: 4)])
+    }
+
+    /// Keluar dari `AGENT_ACTIVE` tanpa pesan agen atau `agent_joined` tetap sesi dengan agen; keluar dari antre saja
+    /// bukan. Kartu penutup sebelum jawaban bot terakhir milik sesi lain.
+    @Test
+    func servedExitWithoutAnOpenerStillEnds() {
+        let messages = [message(seq: 2, author: .assistant), message(seq: 3, author: .user)]
+        let card = LiveAgentNotice(kind: .ended, seq: 5)
+        let olderClosing = LiveAgentNotice(kind: .ended, seq: 1)
+        let ownClosing = LiveAgentNotice(kind: .ended, seq: 4)
+        #expect(ended(in: messages, isOngoing: false, closedBy: [olderClosing], exitSeqs: [5]) == [card])
+        #expect(ended(in: messages, isOngoing: false, closedBy: [ownClosing], exitSeqs: [5]).isEmpty)
+        #expect(ended(in: messages, isOngoing: false, marks: [.exit(seq: 5, isServed: false)]).isEmpty)
+    }
+
+    /// Posisi tunggu `leave-agent` bukan batas sesi: pesan agen sesudahnya (mis. dari history setelah reconnect yang
+    /// melewatkan event `state`) memindahkan kartu ke bawahnya, tetap satu kartu. Event keluar sesi yang sama
+    /// menggantikannya; event keluar setelah jawaban bot milik sesi berikutnya.
+    @Test
+    func leavingPositionDoesNotSplitTheSession() {
+        let messages = [
+            message(seq: 4, author: .agent), message(seq: 6, author: .agent), message(seq: 8, author: .user),
+            message(seq: 9, author: .assistant)
+        ]
+        let leaving = AgentSessionMark.leaving(seq: 5, isServed: true)
+        let card = { LiveAgentNotice(kind: .ended, seq: $0) }
+        #expect(ended(in: messages, isOngoing: false, marks: [leaving]) == [card(6)])
+        #expect(ended(in: Array(messages.prefix(1)), isOngoing: false, marks: [leaving]) == [card(5)])
+        let exit = AgentSessionMark.exit(seq: 7, isServed: true)
+        #expect(ended(in: Array(messages.prefix(2)), isOngoing: false, marks: [leaving, exit]) == [card(7)])
+        #expect(
+            ended(in: messages, isOngoing: false, marks: [leaving, .exit(seq: 12, isServed: true)]) == [
+                card(6), card(12)
+            ])
+    }
+
+    /// Event antre dan bergabung yang tiba setelah posisi tunggu (replay pembuka sesi yang aktif saat init) masih sesi
+    /// yang sama; antrean baru setelah jawaban bot tidak.
+    @Test
+    func replayedOpenerAfterLeavingStaysInTheSession() {
+        let card = { LiveAgentNotice(kind: .ended, seq: $0) }
+        let leaving = AgentSessionMark.leaving(seq: 2, isServed: true)
+        let replay: [AgentSessionMark] = [leaving, .queued(seq: 3), .joined(seq: 4), .exit(seq: 7, isServed: true)]
+        #expect(ended(in: [message(seq: 2, author: .user)], isOngoing: false, marks: replay) == [card(7)])
+        let nextQueue = [message(seq: 2, author: .user), message(seq: 3)]
+        let queued: [AgentSessionMark] = [leaving, .queued(seq: 4)]
+        #expect(ended(in: nextQueue, isOngoing: true, marks: queued) == [card(2)])
     }
 
     /// Kartu dari history memakai `seq` pesan yang ditutupnya dan tampil tepat setelah pesan itu, bukan sebelumnya.
@@ -120,6 +215,19 @@ struct ArrayLiveAgentNoticeTests {
 // MARK: - Helpers
 
 private extension ArrayLiveAgentNoticeTests {
+    func ended(
+        in messages: [ChatMessage],
+        isOngoing: Bool,
+        closedBy notices: [LiveAgentNotice] = [],
+        joinedSeqs: [Int] = [],
+        exitSeqs: [Int] = [],
+        marks: [AgentSessionMark] = []
+    ) -> [LiveAgentNotice] {
+        let joined = joinedSeqs.map(AgentSessionMark.joined)
+        let served = exitSeqs.map { AgentSessionMark.exit(seq: $0, isServed: true) }
+        return messages.endedAgentSessions(isOngoing: isOngoing, closedBy: notices, marks: joined + served + marks)
+    }
+
     func connected(_ seq: Int) -> LiveAgentNotice {
         LiveAgentNotice(kind: .connected, seq: seq)
     }
