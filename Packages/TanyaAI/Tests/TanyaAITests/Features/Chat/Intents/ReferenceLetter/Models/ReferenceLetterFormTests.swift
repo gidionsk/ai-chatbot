@@ -37,7 +37,7 @@ struct ReferenceLetterFormTests {
             layouts.last
                 == .form(
                     fields: form.draft.visibleFields.map(\.id),
-                    invalid: [.accounts, .currency],
+                    invalid: [.accounts, .currency, .language],
                     selections: [.purpose: ["visa"], .format: ["HARDCOPY"]]
                 ))
         form.cancel()
