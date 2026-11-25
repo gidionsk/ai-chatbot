@@ -23,5 +23,6 @@ struct SandboxWireMessage: Encodable {
     let payload: String
     let status: String
     let clientMsgId: String?
+    var intent: String?
     let createdAt = ISO8601DateFormatter().string(from: Date())
 }

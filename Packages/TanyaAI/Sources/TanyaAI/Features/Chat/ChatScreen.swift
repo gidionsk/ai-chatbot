@@ -23,7 +23,7 @@ public struct ChatScreen<Content: View>: View {
     @State private var scrollProgress = CGFloat.zero
     @State private var isLatestVisible = true
     @State private var latestJumpID: UUID?
-    /// Bottom sheet yang sedang tampil (lampiran atau konfirmasi End Session); nil = tertutup.
+    /// Bottom sheet yang sedang tampil; nil = tertutup.
     @State private var sheet: ChatSheet?
     private let isEnabled: Bool
     private let welcome: WelcomeContent?
@@ -60,6 +60,7 @@ public struct ChatScreen<Content: View>: View {
         .modifier(
             ChatSheetModifier(
                 sheet: $sheet,
+                bridge: bridge,
                 attachmentSession: isAgentSession ? bridge.agentSessionKey : nil,
                 leaveSession: isBannerVisible ? bridge.agentSessionKey : nil,
                 onPick: attach,
@@ -110,10 +111,21 @@ public struct ChatScreen<Content: View>: View {
     /// Baris table tidak mewarisi environment halaman, jadi nilainya dipasang di sini. `id` mencegah state view
     /// terbawa saat sel dipakai ulang untuk pesan lain.
     private func listRow(_ item: ChatListItem, actions: ChatRowActions) -> some View {
-        ChatListRow(item: item, welcome: welcome, content: content, actions: actions)
-            .id(item.id)
-            .designColors(colors)
-            .environment(\.locale, locale)
+        ChatListRow(
+            item: item,
+            welcome: welcome,
+            content: content,
+            actions: actions,
+            referenceLetter: bridge.referenceLetter(for: item),
+            isReferenceLetterEnabled: bridge.isReferenceLetterEnabled(for: item),
+            onSheet: { candidate in
+                guard isEnabled, bridge.isReady else { return }
+                sheet = candidate.afterReferenceLetterCompletion(in: bridge.messages)
+            }
+        )
+        .id(item.id)
+        .designColors(colors)
+        .environment(\.locale, locale)
     }
 
     /// Hanya saat pertama dibuka; menyambung ulang tidak menutupi pesan yang sudah tampil. Gagal permanen
@@ -142,8 +154,6 @@ public struct ChatScreen<Content: View>: View {
 // MARK: - Helpers
 
 private extension ChatScreen {
-    var isSendable: Bool { bridge.isReady && !bridge.isAwaitingReply }
-
     var isBannerVisible: Bool { bridge.isAgentSessionBannerVisible }
 
     /// Lampiran hanya selama `AGENT_ACTIVE`; bar sesi agen sudah tampil sejak sapaan otomatis selama antre.
@@ -157,32 +167,19 @@ private extension ChatScreen {
     }
 
     var tableState: ChatTableState {
-        let notices = bridge.visibleLiveAgentNotices
-        return ChatTableState(
-            items: listItems(notices: notices), sentQuestionID: bridge.latestSentQuestionID,
-            incomingMessageID: bridge.incomingContentID(latestNotice: notices.last), latestJumpID: latestJumpID,
+        ChatTableState(
+            items: bridge.listItems(
+                isEnabled: isEnabled,
+                isWelcomeAvailable: welcome != nil,
+                isContentInjected: Content.self != EmptyView.self
+            ),
+            sentQuestionID: bridge.latestSentQuestionID,
+            incomingMessageID: bridge.incomingContentID(latestNotice: bridge.visibleLiveAgentNotices.last),
+            latestJumpID: latestJumpID,
             historyPhase: bridge.historyPhase,
-            rowInputs: ChatRowInputs(welcome: welcome, locale: locale, colors: colors)
+            rowInputs: ChatRowInputs(welcome: welcome, locale: locale, colors: colors),
+            referenceLetterLayouts: bridge.referenceLetterLayouts
         )
-    }
-
-    func listItems(notices: [LiveAgentNotice]) -> [ChatListItem] {
-        var items = [ChatListItem](rows: bridge.rows)
-            .inserting(notices, isLeaveEnabled: isEnabled && !bridge.isLeavingAgent)
-            .appendingAnswerLoading(isAwaitingReply: bridge.isAwaitingReply)
-        if welcome != nil, bridge.isWelcomeVisible {
-            items.insert(.welcome(isEnabled: isEnabled && isSendable), at: .zero)
-        }
-        if bridge.isAgentTyping {
-            items.append(.agentTyping)
-        }
-        if !bridge.followUps.isEmpty {
-            items.append(.followUps(bridge.followUps, isEnabled: isEnabled && isSendable))
-        }
-        if Content.self != EmptyView.self {
-            items.append(.content)
-        }
-        return items
     }
 }
 

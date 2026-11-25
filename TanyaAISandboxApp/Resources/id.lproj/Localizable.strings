@@ -48,3 +48,4 @@
 "sandbox.form.submitted" = "Permintaan terkirim";
 "sandbox.form.requiredText" = "Wajib diisi";
 "sandbox.form.requiredChoice" = "Wajib dipilih";
+"sandbox.form.ackFailure" = "Host gagal mengajukan surat referensi.";

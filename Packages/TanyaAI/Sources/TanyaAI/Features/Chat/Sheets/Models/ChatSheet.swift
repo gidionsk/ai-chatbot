@@ -13,4 +13,16 @@ enum ChatSheet: Hashable {
     case attachment(AgentSessionKey, isFormatRejected: Bool)
     /// Konfirmasi End Session untuk antrean atau sesi yang tampil saat tombol diketuk.
     case leaveAgent(AgentSessionKey)
+
+    case referenceLetterChoices(messageID: String, field: ReferenceLetterFieldID)
+    case referenceLetterPIN(messageID: String)
+
+    var referenceLetterMessageID: String? {
+        switch self {
+        case .attachment, .leaveAgent:
+            return nil
+        case .referenceLetterChoices(let messageID, _), .referenceLetterPIN(let messageID):
+            return messageID
+        }
+    }
 }

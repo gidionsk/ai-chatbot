@@ -48,3 +48,4 @@
 "sandbox.form.submitted" = "请求已发送";
 "sandbox.form.requiredText" = "请填写此项";
 "sandbox.form.requiredChoice" = "请选择一项";
+"sandbox.form.ackFailure" = "宿主未能提交资信证明申请。";

@@ -68,6 +68,10 @@ public final class TanyaAIBridge: ObservableObject {
     /// Loop sambungan yang sedang berjalan; dibatalkan saat sesi habis agar stream yang terbuka ikut ditutup.
     var connectionTask: Task<Void, Never>?
     let transport: TanyaAIChatTransport
+    let hostServices: TanyaAIHostServices?
+    var referenceLetters: [String: ReferenceLetterForm] = [:]
+    @Published var referenceLetterLayouts: [ChatListItemID: ReferenceLetterLayout] = [:]
+    @Published var submittingReferenceLetters: Set<ObjectIdentifier> = []
     let onSessionExpired: (() -> Void)?
     let onConnectionFailed: ((Error) -> Void)?
     let sleep: (TimeInterval) async throws -> Void
@@ -76,65 +80,35 @@ public final class TanyaAIBridge: ObservableObject {
     /// `onConnectionFailed` dipanggil sekali saat error yang tidak bisa di-retry (`retryable:false`) menghentikan
     /// sambungan; host menampilkan error sesuai polanya. Error berupa `TanyaAITransportError` dari transport, atau
     /// `DecodingError` bila respons init/history tidak terbaca.
+    /// `hostServices` disediakan host yang mendukung intent form.
     public convenience init(
-        transport: TanyaAIChatTransport, onSessionExpired: (() -> Void)? = nil,
+        transport: TanyaAIChatTransport,
+        hostServices: TanyaAIHostServices? = nil,
+        onSessionExpired: (() -> Void)? = nil,
         onConnectionFailed: ((Error) -> Void)? = nil
     ) {
         self.init(
-            transport: transport, onSessionExpired: onSessionExpired, onConnectionFailed: onConnectionFailed,
+            transport: transport,
+            hostServices: hostServices,
+            onSessionExpired: onSessionExpired,
+            onConnectionFailed: onConnectionFailed,
             sleep: ChatBackoff.sleep(seconds:)
         )
     }
 
     /// `sleep` disuntikkan test agar jeda reconnect instan.
     init(
-        transport: TanyaAIChatTransport, onSessionExpired: (() -> Void)?,
-        onConnectionFailed: ((Error) -> Void)? = nil, sleep: @escaping (TimeInterval) async throws -> Void
+        transport: TanyaAIChatTransport,
+        hostServices: TanyaAIHostServices? = nil,
+        onSessionExpired: (() -> Void)?,
+        onConnectionFailed: ((Error) -> Void)? = nil,
+        sleep: @escaping (TimeInterval) async throws -> Void
     ) {
         self.transport = transport
+        self.hostServices = hostServices
         self.onSessionExpired = onSessionExpired
         self.onConnectionFailed = onConnectionFailed
         self.sleep = sleep
-    }
-}
-
-// MARK: - State
-
-extension TanyaAIBridge {
-    /// Sejak kirim sampai `turn_end` pertanyaan itu; kirim dan shortcut nonaktif.
-    var isAwaitingReply: Bool { turn.isAwaiting }
-
-    /// Stop sejak kirim sampai `turn_end`.
-    var turnPhase: ChatTurnPhase { turn.phase }
-
-    /// Daftar tampil: pesan gateway dengan pertanyaan lokal di posisi saat dikirim.
-    var rows: [ChatRow] { messages.rows(with: localQuestions) }
-
-    /// Replay stream dimulai setelah pesan atau event terakhir yang sudah diterima.
-    var lastEventID: String? {
-        [messages.latestSeq, eventCursor].compactMap { $0 }.max().map(String.init)
-    }
-
-    /// Loading hanya selama pembukaan pertama masih berjalan; gagal permanen atau sesi habis menghentikannya.
-    var isLoadingHistory: Bool { !isHistoryLoaded && connection == .connecting }
-
-    var historyPhase: ChatHistoryPhase {
-        guard isHistoryLoaded else { return .loading }
-        return messages.isEmpty ? .empty : .restored
-    }
-
-    /// Sambutan hanya untuk percakapan kosong; bubble pertanyaan pertama langsung menggantikannya.
-    var isWelcomeVisible: Bool { isHistoryLoaded && messages.isEmpty && localQuestions.isEmpty }
-
-    /// Saran hanya dari jawaban terakhir, dan hilang selama menunggu jawaban berikutnya.
-    var followUps: [String] {
-        guard !isAwaitingReply, let latest = messages.last, latest.author == .assistant else { return [] }
-        return latest.followUps
-    }
-
-    /// Bisa mengirim setelah init berhasil, juga selama menyambung ulang; tidak setelah ditutup atau sesi habis.
-    var isReady: Bool {
-        conversationID != nil && connection != .closed && connection != .expired
     }
 }
 
@@ -188,6 +162,7 @@ extension TanyaAIBridge {
     func apply(_ event: ChatEvent) {
         switch event {
         case .message(let message):
+            prepareReferenceLetter(for: message)
             messages = messages.merging([message])
             if message.intent == .liveAgent {
                 streamedHandoverSeqs.insert(message.seq)
@@ -218,6 +193,7 @@ extension TanyaAIBridge {
         guard self.conversationID == nil || self.conversationID == conversationID else {
             messages = history.merging([])
             localQuestions = []
+            resetReferenceLetters()
             sentMessageIDs = []
             liveAgentNotices = []
             streamedHandoverSeqs = []

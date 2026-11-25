@@ -11,6 +11,7 @@ enum ChatIntent: String, Sendable {
     /// Pesan bot "Baik, kami akan menghubungkan…" saat percakapan diserahkan ke agen (`source` kosong).
     /// State antre/agen tetap diatur event `state` dan `system`, bukan intent ini.
     case liveAgent = "handover-to-agent"
+    case referenceLetter = "request-bank-reference-letter"
     case unknown
 
     /// Nil bila `intent` tidak ada atau kosong (pesan nasabah, agen, dan jawaban tanpa intent).

@@ -29,4 +29,22 @@ struct ChatSheetSessionTests {
         #expect(!sheet.isCurrent(attachmentSession: sessionB, leaveSession: sessionB))
         #expect(!sheet.isCurrent(attachmentSession: nil, leaveSession: nil), "bar hilang")
     }
+
+    @Test
+    func rejectedAttachmentPreservesAnOpenSheet() {
+        let pin = ChatSheet.referenceLetterPIN(messageID: "letter")
+        #expect(ChatSheet.rejectedAttachment(from: sessionA, pickerSession: sessionA, activeSheet: pin) == nil)
+        #expect(ChatSheet.rejectedAttachment(from: sessionA, pickerSession: sessionB, activeSheet: nil) == nil)
+        let retry = ChatSheet.rejectedAttachment(from: sessionA, pickerSession: sessionA, activeSheet: nil)
+        #expect(retry == .attachment(sessionA, isFormatRejected: true))
+    }
+
+    @Test
+    func conversationChangeClosesReferenceLetterSheets() {
+        #expect(ChatSheet.referenceLetterPIN(messageID: "letter").afterConversationChange() == nil)
+        let choices = ChatSheet.referenceLetterChoices(messageID: "letter", field: .format)
+        #expect(choices.afterConversationChange() == nil)
+        let leave = ChatSheet.leaveAgent(sessionA)
+        #expect(leave.afterConversationChange() == leave)
+    }
 }

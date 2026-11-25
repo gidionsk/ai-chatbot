@@ -11,11 +11,15 @@ import UIKit
 /// View model halaman Tanya AI di host: membaca `repository` UseCase dan menyusun konfigurasi package.
 /// Urutan init → history → SSE, retry, pesan, dan status menunggu jawaban milik TanyaAI (`TanyaAIBridge`).
 final class TanyaAIScreenViewModel: ScreenContentViewModel {
+    @Published var isReferenceLetterAckFailed = false
     let useCase: TanyaAIUseCase
     /// Dibuat sekali bersama view model (milik `@StateObject` destination); UseCase menjadi transport chat.
     @MainActor
     private(set) lazy var bridge = TanyaAIBridge(
         transport: useCase,
+        hostServices: SandboxHostServices { [weak self] _ in
+            self?.isReferenceLetterAckFailed = true
+        },
         onSessionExpired: { [weak self] in self?.didReceiveError(URLError(.userAuthenticationRequired)) },
         onConnectionFailed: { [weak self] error in self?.didReceiveError(error) }
     )

@@ -33,7 +33,8 @@ base `Screen` host, jadi blocker per halaman dan blocker root tetap tampil di at
 
 Data mengikuti matriks Input/Output/Repository host: coordinator menulis Input, UseCase mengolah
 Input ke Repository, view model hanya membaca Repository. UseCase halaman Tanya AI sekaligus menjadi
-`TanyaAIChatTransport` (hit API lewat service callback yang dibungkus continuation).
+`TanyaAIChatTransport` (hit API lewat service callback yang dibungkus continuation). Contoh berikut memakai
+UseCase yang sama untuk menyediakan `TanyaAIHostServices` lewat parameter `hostServices:`.
 
 ```
 UseCase induk: inquiry → output.greeting/shortcuts → callback onStartTanyaAI
@@ -59,6 +60,7 @@ init(greeting: TanyaAIInitGreeting, shortcuts: [TanyaAIInitShortcut], onBack: @e
 @MainActor
 private(set) lazy var bridge = TanyaAIBridge(
     transport: useCase,   // extension TanyaAIUseCase: TanyaAIChatTransport
+    hostServices: useCase,   // extension TanyaAIUseCase: TanyaAIHostServices
     onSessionExpired: { [weak self] in self?.handleSessionExpired() },
     onConnectionFailed: { [weak self] error in self?.didReceiveError(error) }
 )
@@ -86,6 +88,19 @@ func loadWelcome() {
     )
 }
 ```
+
+`TanyaAIHostServices` meminta satu properti per intent. Contoh ini mengambil adapter yang sudah disiapkan
+oleh fitur Surat Referensi di host.
+
+```swift
+extension TanyaAIUseCase: TanyaAIHostServices {
+    @MainActor var referenceLetter: ReferenceLetterService? { referenceLetterAdapter }
+}
+```
+
+Kembalikan `nil` dari properti itu untuk menonaktifkan Surat Referensi. Host juga bisa memakai
+objek khusus service intent, seperti [sandbox](../TanyaAISandboxApp/TanyaAI/SandboxHostServices.swift).
+Untuk halaman yang tidak mendukung intent form, panggil `TanyaAIBridge(transport: useCase)`.
 
 Input, Output, dan Repository memakai `struct`: `private(set) var repository` benar-benar mencegah view
 model mengubah isinya, dan nilai yang dioper antarhalaman tidak saling berbagi referensi. Jangan memanggil
@@ -122,10 +137,10 @@ Untuk navigasi lain cukup ganti pemanggilnya:
 - **UIKit coordinator / `UINavigationController`:**
   `navigation.pushViewController(UIHostingController(rootView: host.makeView(onBack: pop)), animated: true)`.
 
-`TanyaAIBridge` adalah jembatan host ↔ TanyaAI yang hidup selama halaman terbuka; jangan
-membuatnya di `body`. Host hanya mengimplementasikan transport per endpoint
-(body mentah); TanyaAI yang menyambung init → history → SSE selama halaman tampil, menyambung
-ulang, men-decode, dan menggabungkan pesan. Lihat [chat-gateway](CHAT_GATEWAY.md).
+`TanyaAIBridge` hidup selama halaman terbuka. Buat sekali di luar `body`. Host menyediakan transport per
+endpoint gateway (body mentah) dan service intent melalui `hostServices:` bila dibutuhkan.
+TanyaAI menyambung init → history → SSE selama halaman tampil, menyambung ulang, men-decode, dan
+menggabungkan pesan. Lihat [chat-gateway](CHAT_GATEWAY.md).
 `onSessionExpired` dipanggil sekali saat 401; `onConnectionFailed` sekali saat error `retryable:false`
 menghentikan sambungan, saat kirim menemukan percakapan sudah hilang (404/410), atau saat respons init/history
 tidak terbaca (`DecodingError`, bukan `TanyaAITransportError`); host menampilkan
@@ -221,6 +236,7 @@ karena aturan bisnis tidak masuk DesignKit.
 - `TanyaAIBridge.swift` (+ `+Connection`): objek yang dipegang host; pesan, status menunggu jawaban,
   dan siklus sambungan ke gateway.
 - `TanyaAIChatTransport.swift` / `TanyaAITransportError.swift`: seam jaringan yang diimplementasikan host.
+- `TanyaAIHostServices.swift`: kontrak service intent yang diimplementasikan host dan diberikan lewat `hostServices:`.
 
 Overload `makeView { ContentView() }` menerima konten SwiftUI untuk area scroll; sandbox
 memakainya pada mode `--header-demo`. Konten tidak perlu mempunyai ScrollView, header,

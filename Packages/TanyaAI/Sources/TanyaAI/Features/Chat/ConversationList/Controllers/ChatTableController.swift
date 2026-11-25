@@ -143,16 +143,20 @@ private extension ChatTableController {
     /// Baris yang sama dengan isi berubah di-reconfigure di tempat, supaya sel dan posisi scroll tetap.
     func applyItems(replacing previous: ChatTableState) {
         let isInputChanged = state.rowInputs != previous.rowInputs
-        guard isInputChanged || state.items != previous.items else { return }
+        let isAnyLayoutChanged = state.referenceLetterLayouts != previous.referenceLetterLayouts
+        guard isInputChanged || state.items != previous.items || isAnyLayoutChanged else { return }
         let previousByID = Dictionary(previous.items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         var snapshot = NSDiffableDataSourceSnapshot<Int, ChatListItemID>()
         snapshot.appendSections([.zero])
         snapshot.appendItems(state.items.map(\.id))
-        snapshot.reconfigureItems(
-            state.items.filter { item in
-                previousByID[item.id].map { isInputChanged || $0 != item } ?? false
-            }.map(\.id)
-        )
+        let changedIDs = state.items.compactMap { item -> ChatListItemID? in
+            let id = item.id
+            guard let oldItem = previousByID[id] else { return nil }
+            let isLayoutChanged = state.referenceLetterLayouts[id] != previous.referenceLetterLayouts[id]
+            if isLayoutChanged { measuredHeights.removeValue(forKey: id) }
+            return isInputChanged || oldItem != item || isLayoutChanged ? id : nil
+        }
+        snapshot.reconfigureItems(changedIDs)
         apply(snapshot)
     }
 
