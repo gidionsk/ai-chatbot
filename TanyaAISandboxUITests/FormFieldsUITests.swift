@@ -89,6 +89,8 @@ final class FormFieldsUITests: XCTestCase {
         let table = application.tables["chat.messages"]
         let loadingRow = table.cells.containing(.any, identifier: "chat.referenceLetter.loading").firstMatch
         XCTAssertTrue(loadingRow.waitForExistence(timeout: 5))
+        let loading = application.descendants(matching: .any)["chat.referenceLetter.loading"]
+        XCTAssertEqual(loading.label, "Preparing an answer...")
         let loadingHeight = loadingRow.frame.height
         let formRow = table.cells.containing(.any, identifier: "chat.referenceLetter.form").firstMatch
         XCTAssertTrue(formRow.waitForExistence(timeout: 8))

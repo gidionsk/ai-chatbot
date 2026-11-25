@@ -33,10 +33,18 @@ struct ReferenceLetterCard: View {
                 }
                 fields
             } else if form.layout == .loading {
-                LoadingIndicator()
-                    .accessibilityIdentifier(ChatElementIdentifier.referenceLetterLoading)
+                loading
             }
         }
+    }
+
+    /// Titik yang sama dengan loading jawaban bot, karena form adalah lanjutan jawaban itu.
+    private var loading: some View {
+        TypingDots()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement()
+            .accessibilityLabel(String(ChatCopy.answerLoading, locale: locale))
+            .accessibilityIdentifier(ChatElementIdentifier.referenceLetterLoading)
     }
 
     private var fields: some View {

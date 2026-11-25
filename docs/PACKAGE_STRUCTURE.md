@@ -58,7 +58,8 @@ Contoh penempatan yang sudah diterapkan:
 - `Components/Actions/FilledButton.swift`: tombol selebar wadah; `.regular` (Konfirmasi, Pilih), `.outlined` (aksi
   kedua bergaris seukuran `.regular`, mis. Batalkan di form atau di kartu antre), dan `.link` (teks kecil bergaris
   bawah).
-- `Components/Feedback/LoadingIndicator.swift`: spinner untuk semua loading.
+- `Components/Feedback/LoadingIndicator.swift`: spinner untuk memuat data (history pertama, ikon kartu, daftar pilihan).
+- `Components/Feedback/TypingDots.swift`: titik berdenyut selama jawaban bot atau form intent disiapkan.
 - `Components/Feedback/StatusCaption.swift`: teks status kecil di bawah pesan terakhir (agen mengetik).
 - `Components/Feedback/ConfirmationPrompt.swift`: isi bottom sheet konfirmasi (judul, keterangan, aksi utama dan
   tombol batal bertumpuk sebagai footer), mis. konfirmasi End Session.
