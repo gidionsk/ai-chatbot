@@ -56,9 +56,9 @@ private extension ReferenceLetterFieldID {
             ),
             choice(.currency, options: inquiry.currencies),
             FormField(id: .balance, initialValue: .toggle(true)),
-            FormField(id: .investment, initialValue: .toggle(false))
+            FormField(id: .investment, initialValue: .toggle(false)),
+            choice(.language, options: inquiry.languages)
         ]
-        if !inquiry.languages.isEmpty { fields.append(choice(.language, options: inquiry.languages)) }
         if case .singleSelection(let code?) = format, ReferenceLetterDocumentFormat(code: code) == .softcopy {
             fields.append(FormField(id: .email, initialValue: .text(inquiry.decryptedEmail), isEnabled: false))
         }

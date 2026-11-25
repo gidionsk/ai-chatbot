@@ -43,7 +43,7 @@ struct ReferenceLetterRequestTests {
         #expect(request.documentFormat.code == format)
         #expect(request.embassy == "Example Embassy")
         #expect(request.currency.code == "002")
-        #expect(request.language?.code == "IN")
+        #expect(request.language.code == "IN")
         #expect(request.isShowBalance && request.isShowInvestmentFund)
         #expect(request.address == (format == "HARDCOPY" ? inquiry.address : nil))
         #expect(request.encryptedEmail == (format == "SOFTCOPY" ? inquiry.encryptedEmail : nil))
@@ -70,15 +70,29 @@ struct ReferenceLetterRequestTests {
 
     @Test(arguments: [false, true])
     @MainActor
-    func deliveryAndLanguageFollowInquiry(isLanguageAvailable: Bool) {
+    func deliveryFollowsFormatAndLanguageIsRequired(isLanguageAvailable: Bool) {
         let inquiry = ReferenceLetterServiceDouble.makeInquiry(isLanguageAvailable: isLanguageAvailable)
         var draft = IntentFormState(rules: ReferenceLetterFieldID.rules(inquiry: inquiry))
         #expect(draft.visibleFields.first { $0.id == .email }?.isEnabled == false)
-        #expect((draft.value(for: .language) != nil) == isLanguageAvailable)
+        #expect(draft.value(for: .language) == .singleSelection(nil))
         draft.select(["HARDCOPY"], for: .format)
         #expect(draft.value(for: .email) == nil)
         #expect(draft[text: .address] == inquiry.address)
         #expect(draft.visibleFields.first { $0.id == .address }?.isEnabled == false)
+
+        draft[text: .embassy] = "Example Embassy"
+        draft.select(["account"], for: .accounts)
+        draft.select(["002"], for: .currency)
+
+        let isValidWithoutLanguage = draft.validate()
+        #expect(!isValidWithoutLanguage)
+        #expect(draft.firstInvalidChoiceID == .language)
+        #expect(ReferenceLetterRequest(draft: draft, inquiry: inquiry) == nil)
+
+        draft.select(["IN"], for: .language)
+        let isValidWithLanguage = draft.validate()
+        #expect(isValidWithLanguage == isLanguageAvailable)
+        #expect((ReferenceLetterRequest(draft: draft, inquiry: inquiry) != nil) == isLanguageAvailable)
     }
 }
 

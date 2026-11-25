@@ -35,7 +35,7 @@ final class ReferenceLetterServiceDouble: ReferenceLetterService {
         displayedErrors.append(error)
     }
 
-    static func makeInquiry(isLanguageAvailable: Bool = false) -> ReferenceLetterInquiry {
+    static func makeInquiry(isLanguageAvailable: Bool = true) -> ReferenceLetterInquiry {
         ReferenceLetterInquiry(
             introduction: "**Introduction**",
             purposes: [FormOption(code: "visa", title: "Visa")],
@@ -63,5 +63,6 @@ final class ReferenceLetterServiceDouble: ReferenceLetterService {
         form.draft[text: .embassy] = "Example Embassy"
         form.draft.select(["account"], for: .accounts)
         form.draft.select(["002"], for: .currency)
+        form.draft.select(["IN"], for: .language)
     }
 }

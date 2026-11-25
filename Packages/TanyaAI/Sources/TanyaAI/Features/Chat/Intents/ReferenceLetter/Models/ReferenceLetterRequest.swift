@@ -18,7 +18,7 @@ public struct ReferenceLetterRequest {
     public let isShowInvestmentFund: Bool
     public let address: String?
     public let encryptedEmail: String?
-    public let language: FormOption?
+    public let language: FormOption
     public let onlineSessionID: String
 }
 
@@ -27,13 +27,13 @@ extension ReferenceLetterRequest {
         guard let purpose = draft.selectedOption(for: .purpose),
             let format = draft.selectedOption(for: .format),
             let delivery = ReferenceLetterDocumentFormat(code: format.code),
-            let currency = draft.selectedOption(for: .currency)
+            let currency = draft.selectedOption(for: .currency),
+            let language = draft.selectedOption(for: .language)
         else { return nil }
         let accounts = draft.visibleFields.first { $0.id == .accounts }?.options ?? []
         let selectedAccounts = Set(draft.value(for: .accounts)?.selectedCodes ?? [])
         let sourceAccounts = accounts.filter { selectedAccounts.contains($0.code) }
-        let language = draft.selectedOption(for: .language)
-        guard !sourceAccounts.isEmpty, inquiry.languages.isEmpty || language != nil else { return nil }
+        guard !sourceAccounts.isEmpty else { return nil }
         self.init(
             purpose: purpose,
             documentFormat: format,

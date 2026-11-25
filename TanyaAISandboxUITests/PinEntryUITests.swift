@@ -84,7 +84,7 @@ final class PinEntryUITests: XCTestCase {
 private extension PinEntryUITests {
     var dots: XCUIElement { application.descendants(matching: .any)["pin.dots"] }
 
-    /// Format softcopy sudah terpilih. Isi kedutaan, rekening, dan mata uang sebelum mengirim.
+    /// Format softcopy sudah terpilih. Lengkapi kedutaan, rekening, mata uang, dan bahasa.
     @discardableResult
     func openPinSheet(extraArguments: [String] = []) -> XCUIElement {
         application.launchReferenceLetter(extraArguments: extraArguments)
@@ -107,6 +107,12 @@ private extension PinEntryUITests {
         application.revealReferenceLetter(currency)
         currency.tap()
         application.buttons["IDR"].tap()
+        waitUntilGone(sheet)
+
+        let language = application.buttons["Letter language"]
+        application.revealReferenceLetter(language)
+        language.tap()
+        application.buttons["Indonesia"].tap()
         waitUntilGone(sheet)
 
         let confirm = application.buttons["Confirm"]

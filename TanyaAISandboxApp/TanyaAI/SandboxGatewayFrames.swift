@@ -105,6 +105,7 @@ struct SandboxGatewayFrames {
                 FormOption(code: "account-2", title: "Giro Bisnis - 7781 2003 4551")
             ],
             currencies: [FormOption(code: "001", title: "IDR"), FormOption(code: "002", title: "USD")],
+            languages: [FormOption(code: "IN", title: "Indonesia")],
             address: "Jl. Contoh No. 10, Tangerang Selatan",
             decryptedEmail: "lara@example.com",
             encryptedEmail: "sandbox-encrypted-email",
