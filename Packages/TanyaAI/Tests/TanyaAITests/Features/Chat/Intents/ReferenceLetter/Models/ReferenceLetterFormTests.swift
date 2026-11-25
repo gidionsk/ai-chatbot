@@ -110,25 +110,20 @@ struct ReferenceLetterFormTests {
         #expect(form.draft.visibleFields.isEmpty)
     }
 
-    @Test(arguments: [false, true])
-    func verificationFailureStaysOnPIN(isBlocked: Bool) async throws {
+    @Test(arguments: [nil, "Safe PIN error"] as [String?])
+    func verificationFailureStaysOnPIN(expectedMessage: String?) async throws {
         let service = ReferenceLetterServiceDouble()
         let form = ReferenceLetterForm(service: service)
         await form.load()
         ReferenceLetterServiceDouble.fill(form)
-        service.submitResult = .failure(
-            ReferenceLetterSubmissionError.pinVerification(
-                message: "Safe PIN error",
-                isBlocked: isBlocked
-            ))
+        service.submitResult = .failure(ReferenceLetterSubmissionError.pinVerification(message: expectedMessage))
         let result = try await form.submit(pin: "123456")
         #expect(result == nil)
-        guard case .pinVerification(let message, let blocked) = form.pinError else {
+        guard case .pinVerification(let message) = form.pinError else {
             Issue.record("Expected a PIN verification error")
             return
         }
-        #expect(message == "Safe PIN error")
-        #expect(blocked == isBlocked)
+        #expect(message == expectedMessage)
         #expect(service.displayedErrors.isEmpty)
 
         form.clearSubmissionError()

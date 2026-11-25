@@ -45,6 +45,7 @@
 "sandbox.form.pinTitle" = "Enter your 6-digit transaction PIN";
 "sandbox.form.pinDelete" = "Delete";
 "sandbox.form.pinWrong" = "Wrong PIN. Please try again.";
+"sandbox.form.pinBlocked" = "Your transaction PIN is blocked.";
 "sandbox.form.submitted" = "Request sent";
 "sandbox.form.requiredText" = "Please fill this in";
 "sandbox.form.requiredChoice" = "Please choose one";

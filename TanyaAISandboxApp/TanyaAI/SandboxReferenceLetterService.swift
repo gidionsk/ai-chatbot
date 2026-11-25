@@ -33,12 +33,13 @@ final class SandboxReferenceLetterService: ReferenceLetterService {
     func submit(_ request: ReferenceLetterRequest, pin: String) async throws -> ReferenceLetterReceipt {
         try await Task.sleep(nanoseconds: SandboxOptions.formVerifyNanoseconds)
         if SandboxOptions.current.isFormPINBlocked {
-            throw ReferenceLetterSubmissionError.pinVerification(message: nil, isBlocked: true)
+            throw ReferenceLetterSubmissionError.pinVerification(
+                message: String(SandboxCopy.formPinBlocked, locale: locale)
+            )
         }
         guard pin == SandboxOptions.formPin else {
             throw ReferenceLetterSubmissionError.pinVerification(
-                message: String(SandboxCopy.formPinWrong, locale: locale),
-                isBlocked: false
+                message: String(SandboxCopy.formPinWrong, locale: locale)
             )
         }
         if SandboxOptions.current.isFormAckFailing {

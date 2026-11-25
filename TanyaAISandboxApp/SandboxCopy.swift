@@ -53,6 +53,7 @@ enum SandboxCopy: String, CaseIterable {
     case formPinDelete = "sandbox.form.pinDelete"
     case formAckFailure = "sandbox.form.ackFailure"
     case formPinWrong = "sandbox.form.pinWrong"
+    case formPinBlocked = "sandbox.form.pinBlocked"
     case formSubmitted = "sandbox.form.submitted"
     case formRequiredText = "sandbox.form.requiredText"
     case formRequiredChoice = "sandbox.form.requiredChoice"

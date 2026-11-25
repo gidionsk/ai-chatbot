@@ -64,7 +64,6 @@
 "referenceLetter.accountCount" = "已选择 %ld 个账户";
 "referenceLetter.PIN" = "请输入 6 位交易密码";
 "referenceLetter.deleteDigit" = "删除数字";
-"referenceLetter.pinBlocked" = "你的交易密码已锁定。";
 "referenceLetter.submitFailed" = "无法提交申请。请重试。";
 "referenceLetter.complete" = "资信证明申请已提交。";
 "referenceLetter.cancelled" = "资信证明申请已取消。";

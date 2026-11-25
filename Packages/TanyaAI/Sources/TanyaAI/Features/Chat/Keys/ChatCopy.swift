@@ -79,7 +79,6 @@ enum ChatCopy: String, CaseIterable {
     case referenceLetterAccountCount = "referenceLetter.accountCount"
     case referenceLetterPIN = "referenceLetter.PIN"
     case referenceLetterDeleteDigit = "referenceLetter.deleteDigit"
-    case referenceLetterPINBlocked = "referenceLetter.pinBlocked"
     case referenceLetterSubmitFailed = "referenceLetter.submitFailed"
     case referenceLetterComplete = "referenceLetter.complete"
     case referenceLetterCancelled = "referenceLetter.cancelled"

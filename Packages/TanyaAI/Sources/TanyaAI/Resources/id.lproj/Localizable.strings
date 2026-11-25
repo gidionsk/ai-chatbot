@@ -64,7 +64,6 @@
 "referenceLetter.accountCount" = "Terpilih %ld rekening";
 "referenceLetter.PIN" = "Masukkan 6 digit PIN Transaksi kamu";
 "referenceLetter.deleteDigit" = "Hapus angka";
-"referenceLetter.pinBlocked" = "PIN transaksi kamu diblokir.";
 "referenceLetter.submitFailed" = "Permintaan belum berhasil dikirim. Coba lagi.";
 "referenceLetter.complete" = "Kamu telah melakukan pemesanan surat referensi.";
 "referenceLetter.cancelled" = "Kamu membatalkan pemesanan surat referensi.";

@@ -7,8 +7,8 @@
 
 /// Host memetakan status verifikasi dan balikan ACK ke hasil yang berbeda.
 public enum ReferenceLetterSubmissionError: Error {
-    /// Pesan aman untuk pengguna. `isBlocked` mengikuti status blokir yang dikembalikan backend host.
-    case pinVerification(message: String?, isBlocked: Bool)
+    /// Pesan aman dari host untuk kegagalan verifikasi PIN. Nil memakai pesan bawaan sheet PIN.
+    case pinVerification(message: String?)
     /// Error ACK asli diteruskan kembali ke host setelah sheet PIN ditutup.
     case acknowledgement(Error)
 }

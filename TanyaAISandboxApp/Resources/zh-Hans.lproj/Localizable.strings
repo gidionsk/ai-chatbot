@@ -45,6 +45,7 @@
 "sandbox.form.pinTitle" = "请输入6位交易密码";
 "sandbox.form.pinDelete" = "删除";
 "sandbox.form.pinWrong" = "密码错误，请重试。";
+"sandbox.form.pinBlocked" = "你的交易密码已锁定。";
 "sandbox.form.submitted" = "请求已发送";
 "sandbox.form.requiredText" = "请填写此项";
 "sandbox.form.requiredChoice" = "请选择一项";

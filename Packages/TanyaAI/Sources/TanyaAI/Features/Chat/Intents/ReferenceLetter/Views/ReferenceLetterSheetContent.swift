@@ -65,9 +65,8 @@ struct ReferenceLetterSheetContent: View {
 
 private extension ReferenceLetterSheetContent {
     var errorText: String? {
-        guard case .pinVerification(let message, let isBlocked) = form.pinError else { return nil }
-        let fallback: ChatCopy = isBlocked ? .referenceLetterPINBlocked : .referenceLetterSubmitFailed
-        return message ?? String(fallback, locale: locale)
+        guard case .pinVerification(let message) = form.pinError else { return nil }
+        return message ?? String(ChatCopy.referenceLetterSubmitFailed, locale: locale)
     }
 
     func complete(_ value: String) {

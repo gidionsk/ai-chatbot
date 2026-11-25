@@ -64,7 +64,6 @@
 "referenceLetter.accountCount" = "%ld accounts selected";
 "referenceLetter.PIN" = "Enter your 6-digit transaction PIN";
 "referenceLetter.deleteDigit" = "Delete digit";
-"referenceLetter.pinBlocked" = "Your transaction PIN is blocked.";
 "referenceLetter.submitFailed" = "Unable to send the request. Try again.";
 "referenceLetter.complete" = "You have ordered a reference letter.";
 "referenceLetter.cancelled" = "You cancelled the reference letter request.";
